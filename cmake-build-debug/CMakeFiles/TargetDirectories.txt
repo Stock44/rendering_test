@@ -1,0 +1,12 @@
+/home/hiram/Projects/cityy/cmake-build-debug/CMakeFiles/cityy.dir
+/home/hiram/Projects/cityy/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/hiram/Projects/cityy/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/hiram/Projects/cityy/cmake-build-debug/lib/CMakeFiles/edit_cache.dir
+/home/hiram/Projects/cityy/cmake-build-debug/lib/CMakeFiles/rebuild_cache.dir
+/home/hiram/Projects/cityy/cmake-build-debug/lib/glad/CMakeFiles/glad.dir
+/home/hiram/Projects/cityy/cmake-build-debug/lib/glad/CMakeFiles/edit_cache.dir
+/home/hiram/Projects/cityy/cmake-build-debug/lib/glad/CMakeFiles/rebuild_cache.dir
+/home/hiram/Projects/cityy/cmake-build-debug/lib/stb_image/CMakeFiles/stb_image.dir
+/home/hiram/Projects/cityy/cmake-build-debug/lib/stb_image/CMakeFiles/Download_stb_image.dir
+/home/hiram/Projects/cityy/cmake-build-debug/lib/stb_image/CMakeFiles/edit_cache.dir
+/home/hiram/Projects/cityy/cmake-build-debug/lib/stb_image/CMakeFiles/rebuild_cache.dir
