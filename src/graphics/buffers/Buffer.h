@@ -13,6 +13,8 @@ namespace graphics {
     public:
         Buffer();
 
+        virtual ~Buffer() = default;
+
         virtual int getSize() = 0;
 
         virtual void enableAttribs() = 0;

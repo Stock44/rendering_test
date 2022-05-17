@@ -6,49 +6,18 @@
 #include "VertexArrayBuilder.h"
 
 
-graphics::GraphicsEngine::GraphicsEngine(std::pair<int, int> viewSize) : camera(glm::dvec3(0.0, 0.0, 0.0), 35.0,
-                                                                                viewSize, 0.0, 0.0),
-                                                                         shader("/home/hiram/Projects/cityy/shaders/vertex.vsh",
-                                                                                "/home/hiram/Projects/cityy/shaders/fragment.fsh") {}
-
-void graphics::GraphicsEngine::start() {
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    auto viewSize = camera.getViewSize();
-    window = glfwCreateWindow(viewSize.first, viewSize.second, "cityy", nullptr, nullptr);
-
-    if (window == nullptr) {
-        glfwTerminate();
-        throw std::runtime_error("Failed to create GLFW window");
-    }
-
-    glfwSetWindowUserPointer(window, this);
-
-    glfwMakeContextCurrent(window);
+graphics::GraphicsEngine::GraphicsEngine(Window &window, Camera &camera) : window(window),
+                                                                           camera(camera),
+                                                                           viewportSize(window.getSize()),
+                                                                           shader("/home/hiram/Projects/citty/shaders/vertex.vsh",
+                                                                  "/home/hiram/Projects/citty/shaders/fragment.fsh") {
+    window.useWindowContext();
 
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
         throw std::runtime_error("Failed to initialize GLAD");
     }
 
-    glViewport(0, 0, viewSize.first, viewSize.second);
-
-    glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width, int height) {
-        auto engine = (GraphicsEngine *) glfwGetWindowUserPointer(window);
-        engine->onViewSizeChange(window, width, height);
-    });
-
-    glfwSetCursorPosCallback(window, [](GLFWwindow *window, double xPos, double yPos) {
-        auto engine = (GraphicsEngine *) glfwGetWindowUserPointer(window);
-        engine->onMouseMove(window, xPos, yPos);
-    });
-
-    glfwSetScrollCallback(window, [](GLFWwindow *window, double xOffset, double yOffset) {
-        auto engine = (GraphicsEngine *) glfwGetWindowUserPointer(window);
-        engine->onMouseScroll(window, xOffset, yOffset);
-    });
+    glViewport(0, 0, viewportSize.first, viewportSize.second);
 
     glEnable(GL_DEPTH_TEST);
 //    glEnable(GL_CULL_FACE);
@@ -59,151 +28,19 @@ void graphics::GraphicsEngine::start() {
     // TODO make shader follow RAII principle
     shader.init();
 
-    VBO = std::make_shared<VertexBuffer>();
-    EBO = std::make_shared<IndexBuffer>();
-}
-
-void graphics::GraphicsEngine::onViewSizeChange(GLFWwindow *window, int width, int height) {
-    camera.setViewSize(std::make_pair(width, height));
-    glViewport(0, 0, width, height);
-}
-
-void graphics::GraphicsEngine::onMouseScroll(GLFWwindow *window, double xOffset, double yOffset) {
-    static const float minFov = 1.0f;
-    static const float maxFov = 35.0f;
-
-    camera.setFov(camera.getFov() - yOffset);
-
-    const double fov = camera.getFov();
-
-    if (fov > maxFov) {
-        camera.setFov(maxFov);
-    } else if (fov < minFov) {
-        camera.setFov(minFov);
-    }
-}
-
-void graphics::GraphicsEngine::onMouseMove(GLFWwindow *window, double xPos, double yPos) {
-    float xOffset = (float) xPos - lastMousePos.first;
-    float yOffset = lastMousePos.second - (float) yPos;
-
-    xOffset *= mouseSensitivity;
-    yOffset *= mouseSensitivity;
-
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS) {
-        camera.setYaw(camera.getYaw() + xOffset);
-        camera.setPitch(camera.getPitch() + yOffset);
-    }
-
-    lastMousePos = std::make_pair(xPos, yPos);
-}
-
-void graphics::GraphicsEngine::handleInput() {
-    const float cameraSpeed = 2.5f * deltaTime;
-    auto cameraPos = camera.getCameraPos();
-    auto cameraFront = camera.getCameraFront();
-    auto cameraUp = camera.getCameraUp();
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
-    }
-    if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    }
-    if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        cameraPos += cameraSpeed * cameraFront;
-    }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-    }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        cameraPos -= cameraSpeed * cameraFront;
-    }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-    }
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-        cameraPos += glm::normalize(-cameraUp) * cameraSpeed;
-    }
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-        cameraPos += glm::normalize(cameraUp) * cameraSpeed;
-    }
-    camera.setCameraPos(cameraPos);
-
-
+    VBO.reset(new VertexBuffer());
+    EBO.reset(new IndexBuffer());
 }
 
 void graphics::GraphicsEngine::update() {
-    // For every item in the loading queue:
-    while (!objectLoadingQueue.empty()) {
-        // Object
-        auto object = objectLoadingQueue.front();
-        //Get the instances model data
-        auto model = object->getModel();
-        auto modelName = model->getName();
-
-        // If model is not loaded, add it to add it to newVertices
-        if (modelMap.count(modelName) == 0) {
-            // Get vertices
-            auto modelVertices = model->getVertices();
-            // Get the location in the VBO of the model
-            auto start = VBO->getSize();
-            auto location = ModelLoc(start, modelVertices.size());
-
-            // Initialize data of this model
-            ModelData data;
-            data.location = location;
-            data.modelMats = std::make_shared<ModelMatBuffer>();
-
-            VertexArrayBuilder builder;
-            builder.addBuffer(VBO);
-            builder.addBuffer(data.modelMats);
-
-            // If the model has index data, add it to the total data and bind EBO.
-            if (model->usesElements()) {
-                auto modelIndices = model->getIndices();
-                auto indicesStart = EBO->getSize();
-                auto indicesLocation = ModelLoc(indicesStart, modelIndices.size());
-
-                data.indicesLocation = {indicesLocation};
-                builder.addBuffer(EBO);
-
-                std::for_each(modelIndices.begin(), modelIndices.end(), [&](uint index) {
-                    EBO->addIndex(index + location.first);
-                });
-            }
-
-            data.modelVAO = builder.build();
-            modelMap[modelName] = data;
-            VBO->addVertices(modelVertices);
-        }
-
-        // Add object to the vector
-        auto &objectVector = modelMap[modelName].instances;
-        auto modelMatrix = object->getModelMatrix();
-        objectVector.insert(objectVector.end(), object);
-
-        modelMap[modelName].modelMats->addModelMat(modelMatrix);
-        // Remove object from the newModelMats
-        objectLoadingQueue.pop();
-    }
-
     if (VBO->isDirty()) {
-        // add and load everything at once.
         VBO->upload();
     }
     if (EBO->isDirty()) {
         EBO->upload();
     }
 
-    deltaTime = (float) glfwGetTime() - lastUpdateTime;
-    lastUpdateTime = (float) glfwGetTime();
-    handleInput();
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
     shader.use();
     camera.use(shader);
@@ -211,6 +48,18 @@ void graphics::GraphicsEngine::update() {
     // For all models, add any new model mats.
     for (auto &modelType: modelMap) {
         auto &data = modelType.second;
+
+        auto &instances = data.instances;
+
+        for(auto it = instances.begin(); it != instances.end(); it++) {
+            auto object = it->get();
+            if(object->isDirty()){
+                int index = std::distance(instances.begin(), it);
+                data.modelMats->replaceModelMat(object->getModelMatrix(), index);
+                object->setDirty(false);
+            }
+        }
+
         // If the model mats haven't been added, add them.
         if (data.modelMats->isDirty()) {
             data.modelMats->upload();
@@ -232,21 +81,85 @@ void graphics::GraphicsEngine::update() {
         }
     }
 
-    glfwPollEvents();
-    glfwSwapBuffers(window);
+    window.swapBuffers();
 }
 
-bool graphics::GraphicsEngine::shouldRun() {
-    return !glfwWindowShouldClose(window);
+graphics::GraphicsEngine::ObjectID graphics::GraphicsEngine::addObject(const graphics::GraphicsEngine::ObjectPtr &object) {
+    auto model = object->getModel();
+    auto modelName = model->getName();
+
+    // If model is not loaded, add it to add it to newVertices
+    if (modelMap.count(modelName) == 0) {
+       addModel(model);
+    }
+
+    // Add object to the vector
+    auto &objectVector = modelMap[modelName].instances;
+    auto modelMatrix = object->getModelMatrix();
+    objectVector.insert(objectVector.end(), object);
+
+    modelMap[modelName].modelMats->addModelMat(modelMatrix);
+    // Remove object from the newModelMats
+    return {object->getModel()->getName(), modelMap.at(modelName).instances.size() - 1 };
 }
 
-graphics::GraphicsEngine::~GraphicsEngine() {
-    glfwTerminate();
+void graphics::GraphicsEngine::setCamera(graphics::Camera &newCamera) {
+    camera = newCamera;
 }
 
-void graphics::GraphicsEngine::addObject(const graphics::GraphicsEngine::ObjectPtr &object) {
-    objectLoadingQueue.push(object);
+void graphics::GraphicsEngine::setViewportSize(std::pair<int, int> newSize) {
+    glViewport(0, 0, newSize.first, newSize.second);
+    viewportSize = newSize;
 }
+
+void graphics::GraphicsEngine::deleteObject(const ObjectID &id) {
+    auto objectModelName = id.first;
+    auto objectIndex = id.second;
+
+    auto &modelData = modelMap.at(objectModelName);
+    auto &instances = modelData.instances;
+    auto modelMats = modelData.modelMats;
+
+    instances.erase(instances.begin() + objectIndex);
+    modelMats->deleteModelMat(objectIndex);
+}
+
+void graphics::GraphicsEngine::addModel(const graphics::GraphicsEngine::ModelPtr model) {
+    // Get vertices
+    auto modelVertices = model->getVertices();
+    // Get the verticesLocation in the VBO of the model
+    auto start = VBO->getSize();
+    auto verticesLocation = ModelLoc(start, modelVertices.size());
+
+    // Initialize newModelData of this model
+    ModelData newModelData;
+    newModelData.location = verticesLocation;
+    newModelData.modelMats.reset(new ModelMatBuffer());
+
+    VertexArrayBuilder builder;
+    builder.addBuffer(VBO);
+    builder.addBuffer(newModelData.modelMats);
+
+    // If the model has index newModelData, add it to the total newModelData and bind EBO.
+    if (model->usesElements()) {
+        auto modelIndices = model->getIndices();
+        auto indicesStart = EBO->getSize();
+        auto indicesLocation = ModelLoc(indicesStart, modelIndices.size());
+
+        newModelData.indicesLocation = {indicesLocation};
+        builder.addBuffer(EBO);
+
+        std::for_each(modelIndices.begin(), modelIndices.end(), [&](uint index) {
+            EBO->addIndex(index + verticesLocation.first);
+        });
+    }
+
+    newModelData.modelVAO = builder.build();
+    modelMap[model->getName()] = newModelData;
+    VBO->addVertices(modelVertices);
+}
+
+
 
 
 

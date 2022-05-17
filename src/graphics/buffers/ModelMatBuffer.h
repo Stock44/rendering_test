@@ -24,7 +24,9 @@ namespace graphics {
 
         void setModelMats(std::vector<glm::mat4> newMats);
 
-        void modifyModelMats(std::vector<glm::mat4> modifiedMats, uint position);
+        void replaceModelMat(glm::mat4 newMat, int index);
+
+        void deleteModelMat(int index);
 
         void upload() override;
 

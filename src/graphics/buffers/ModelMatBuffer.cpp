@@ -2,6 +2,7 @@
 // Created by hiram on 5/5/22.
 //
 
+#include <algorithm>
 #include "ModelMatBuffer.h"
 
 namespace graphics {
@@ -36,10 +37,6 @@ namespace graphics {
         dirty = true;
     }
 
-    void ModelMatBuffer::modifyModelMats(std::vector<glm::mat4> modifiedMats, uint position) {
-        // oop
-    }
-
     void ModelMatBuffer::upload() {
         glBindBuffer(GL_ARRAY_BUFFER, ID);
         glBufferData(GL_ARRAY_BUFFER, modelMats.size() * sizeof(glm::mat4), &modelMats[0], GL_STATIC_DRAW);
@@ -47,6 +44,15 @@ namespace graphics {
 
     void ModelMatBuffer::addModelMat(glm::mat4 newMat) {
         modelMats.push_back(newMat);
+        dirty = true;
+    }
+
+    void ModelMatBuffer::replaceModelMat(glm::mat4 newMat, int index) {
+        modelMats.at(index) = newMat;
+    }
+
+    void ModelMatBuffer::deleteModelMat(int index) {
+        modelMats.erase(modelMats.begin() + index);
         dirty = true;
     }
 } // graphics

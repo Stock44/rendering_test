@@ -13,59 +13,51 @@
 #include "buffers/ModelMatBuffer.h"
 #include "VertexArray.h"
 #include "buffers/IndexBuffer.h"
+#include "../Window.h"
 #include <queue>
 #include <unordered_map>
 
 namespace graphics {
-    // TODO extract window startup and input handling out of here
     class GraphicsEngine {
     public:
+        typedef std::pair<std::string, int> ObjectID;
         typedef std::shared_ptr<Object> ObjectPtr;
+        typedef std::shared_ptr<Model> ModelPtr;
         typedef std::pair<uint, uint> ModelLoc;
         // TODO implement removal of objects from rendering:
-        // use sequential IDs per model type
-        typedef std::pair<ObjectPtr, int> ObjectTracker; // Keep object Id in tracker pair object,
-        // TODO check if this is necessary
 
         struct ModelData {
             ModelLoc location; // Model location in engine's VBO
             std::optional<ModelLoc> indicesLocation; // If model uses elements, location of the indices in the EBO.
             std::vector<ObjectPtr> instances; // Model instances
-            std::shared_ptr<VertexArray> modelVAO; // VAO of this specific model (should be bound to engine VBO and modelMats of this model
-            std::shared_ptr<ModelMatBuffer> modelMats; // MBO of this model's instances
+            std::shared_ptr<VertexArray> modelVAO = nullptr; // VAO of this specific model (should be bound to engine VBO and modelMats of this model
+            std::shared_ptr<ModelMatBuffer> modelMats = nullptr; // MBO of this model's instances
         };
 
-        ~GraphicsEngine();
-
-        explicit GraphicsEngine(std::pair<int, int> viewSize);
-
-        void start();
-
-        void onViewSizeChange(GLFWwindow *window, int width, int height);
-
-        void onMouseScroll(GLFWwindow *window, double xOffset, double yOffset);
-
-        void onMouseMove(GLFWwindow *window, double xPos, double yPos);
-
-        void handleInput();
-
-        bool shouldRun();
+        explicit GraphicsEngine(Window &window, Camera &camera);
 
         void update();
 
-        void addObject(const ObjectPtr& object);
+        // TODO function to delete a model from memory
+        void addModel(ModelPtr model);
+
+        ObjectID addObject(const ObjectPtr &object);
+
+        void deleteObject(const ObjectID &id);
+
+        void setCamera(Camera &newCamera);
+
+        void setViewportSize(std::pair<int, int> newSize);
 
     private:
-        GLFWwindow *window;
-        float deltaTime = 0.0f;
-        float lastUpdateTime = 0.0f;
-        Camera camera;
+        Window &window;
+        Camera &camera;
         Shader shader;
-        std::pair<float, float> lastMousePos;
-        float mouseSensitivity = 0.2f;
 
-        std::shared_ptr<VertexBuffer> VBO;
-        std::shared_ptr<IndexBuffer> EBO;
+        std::pair<int, int> viewportSize;
+
+        std::shared_ptr<VertexBuffer> VBO = nullptr;
+        std::shared_ptr<IndexBuffer> EBO = nullptr;
 
         std::queue<ObjectPtr> objectLoadingQueue;
         std::unordered_map<std::string, ModelData> modelMap; // Find model data by the model name

@@ -12,7 +12,7 @@
 namespace graphics {
     class Camera {
     public:
-        Camera(const glm::vec3 &cameraPos, double fov, std::pair<int, int> viewSize, double pitch, double yaw);
+        Camera(const glm::vec3 &cameraPos, float fov, float aspectRatio, float pitch, float yaw);
 
         [[nodiscard]] const glm::vec3 &getCameraPos() const;
 
@@ -22,11 +22,9 @@ namespace graphics {
 
         [[nodiscard]] const glm::vec3 &getCameraUp() const;
 
-        [[nodiscard]] double getFov() const;
+        [[nodiscard]] float getFov() const;
 
-        void setFov(double fov);
-
-        [[nodiscard]] const std::pair<int, int> &getViewSize() const;
+        void setFov(float fov);
 
         [[nodiscard]] float getPitch() const;
 
@@ -38,17 +36,19 @@ namespace graphics {
 
         void use(Shader &shader);
 
-        void setViewSize(const std::pair<double, double> &viewSize);
+        [[nodiscard]] float getAspectRatio() const;
+
+        void setAspectRatio(float aspectRatio);
 
     private:
         glm::vec3 cameraPos;
         glm::vec3 cameraFront = glm::dvec3(0.0f, 0.0f, 0.0f);
         glm::vec3 cameraUp = glm::dvec3(0.0f, 1.0f, 0.0f);
 
-        double fov;
 
-        std::pair<int, int> viewSize;
+        float aspectRatio = 1.0f;
 
+        float fov = 120.0f;
         float pitch = 0.0f;
         float yaw = 0.0f;
     };

@@ -4,35 +4,108 @@
 #include "graphics/Model.h"
 #include "graphics/Object.h"
 #include <map>
+#include <ctime>
+#include <chrono>
+#include <thread>
+
+
+
 
 int main() {
-    graphics::GraphicsEngine graphics = graphics::GraphicsEngine(std::make_pair(500, 500));
+    // Initialize window, camera and graphics engine.
+    Window window({500, 500});
+    graphics::Camera camera(glm::dvec3(0.0f, 0.0f, 0.0f), 35.0f,
+                            1.0f , 0.0f, 0.0f);
+    graphics::GraphicsEngine graphics = graphics::GraphicsEngine(window, camera);
 
-    std::map<unsigned int, sim::Node> nodes;
-    nodes.insert(std::pair(0, sim::Node(0, 0, 0)));
-    nodes.insert(std::pair(1, sim::Node(1, 0, 0)));
-    nodes.insert(std::pair(2, sim::Node(0, 1, 0)));
+    // Keep track of frame duration
+    auto lastFrame = std::chrono::steady_clock::now(); // Start time of last frame
+    std::chrono::duration<float, std::milli> deltaTime{}; // Duration of last frame in seconds
+    const int FPSLimit = 120;
+    const auto frameDuration = std::chrono::duration<float, std::milli>(1000.0f / static_cast<float>(FPSLimit));
 
-    nodes.find(0)->second.addOutgoingRoad(1);
-    nodes.find(1)->second.addIncomingRoad(0);
+    // Keep track of last known mouse position
+    auto lastMousePos = std::make_pair(0.0f, 0.0f);
 
-    nodes.find(2)->second.addOutgoingRoad(0);
-    nodes.find(0)->second.addIncomingRoad(2);
+    // Input handlers
+    auto handleInput = [&] {
+        const float cameraSpeed = 2.5f * deltaTime.count() / 1000.0f;
+        auto cameraPos = camera.getCameraPos();
+        auto cameraFront = camera.getCameraFront();
+        auto cameraUp = camera.getCameraUp();
+        if (window.getKeyState(GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+            window.close();
+        }
+        if (window.getKeyState(GLFW_KEY_1) == GLFW_PRESS) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+        if (window.getKeyState(GLFW_KEY_2) == GLFW_PRESS) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+        if (window.getKeyState(GLFW_KEY_W) == GLFW_PRESS) {
+            cameraPos += cameraSpeed * cameraFront;
+        }
+        if (window.getKeyState(GLFW_KEY_A) == GLFW_PRESS) {
+            cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        }
+        if (window.getKeyState(GLFW_KEY_S) == GLFW_PRESS) {
+            cameraPos -= cameraSpeed * cameraFront;
+        }
+        if (window.getKeyState(GLFW_KEY_D) == GLFW_PRESS) {
+            cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        }
+        if (window.getKeyState(GLFW_KEY_Q) == GLFW_PRESS) {
+            cameraPos += glm::normalize(-cameraUp) * cameraSpeed;
+        }
+        if (window.getKeyState(GLFW_KEY_E) == GLFW_PRESS) {
+            cameraPos += glm::normalize(cameraUp) * cameraSpeed;
+        }
+        camera.setCameraPos(cameraPos);
+    };
 
-    nodes.find(1)->second.addOutgoingRoad(2);
-    nodes.find(2)->second.addIncomingRoad(1);
+    const float mouseSensitivity = 0.2f;
 
-    graphics.start();
+    auto onMouseMove = [&](std::pair<float, float> position) {
+        float xOffset = position.first - lastMousePos.first;
+        float yOffset = lastMousePos.second - position.second;
 
-    std::vector<graphics::Vertex> vertices({
-                                                   graphics::Vertex(1.0f, 0.0f, 1.0f),
-                                                   graphics::Vertex(-1.0f, 0.0f, 1.0f),
-                                                   graphics::Vertex(-1.0f, 0.0f, -1.0f),
-                                                   graphics::Vertex(1.0f, 0.0f, 1.0f),
-                                                   graphics::Vertex(-1.0f, 0.0f, -1.0f),
-                                                   graphics::Vertex(1.0f, 0.0f, -1.0f),
-                                           });
+        xOffset *= mouseSensitivity;
+        yOffset *= mouseSensitivity;
 
+        if (window.getMouseButtonState(GLFW_MOUSE_BUTTON_1) == GLFW_PRESS) {
+            camera.setYaw(camera.getYaw() + xOffset);
+            camera.setPitch(camera.getPitch() + yOffset);
+        }
+
+        lastMousePos = position;
+    };
+
+    auto onViewSizeChange = [&](std::pair<int, int> newSize) {
+        camera.setAspectRatio(static_cast<float>(newSize.first) / static_cast<float>(newSize.second));
+        graphics.setViewportSize(newSize);
+    };
+
+    auto onMouseScroll = [&] (std::pair<float, float> offset) {
+        static const float minFov = 1.0f;
+        static const float maxFov = 35.0f;
+
+        camera.setFov(camera.getFov() - offset.second);
+
+        const double fov = camera.getFov();
+
+        if (fov > maxFov) {
+            camera.setFov(maxFov);
+        } else if (fov < minFov) {
+            camera.setFov(minFov);
+        }
+    };
+
+    // Register callbacks
+    window.setMouseMoveCallback(onMouseMove);
+    window.setViewSizeCallback(onViewSizeChange);
+    window.setMouseScrollCallback(onMouseScroll);
+
+    // Set up basic geometry
     std::vector<graphics::Vertex> triangleVertices({
                                                            graphics::Vertex(0.0f, 0.0f, 0.0f),
                                                            graphics::Vertex(0.0f, 2.0f, 0.0f),
@@ -65,6 +138,7 @@ int main() {
                                           1, 5, 6,
                                   });
 
+    // Initialize basic models and objects
     auto cube = std::make_shared<graphics::Model>("cube", cubeVertices, cubeIndices);
     auto pyramid = std::make_shared<graphics::Model>("triangle", triangleVertices, triangleIndices);
 
@@ -79,17 +153,42 @@ int main() {
     auto object5 = std::make_shared<graphics::Object>(cube, glm::vec3(1.0f, -1.0f, 1.0f), glm::radians(0.0f),
                                                       glm::vec3(1.0f, 0.0f, 0.0f));
 
-    graphics.addObject(object2);
+    // Register objects
+    auto object2ID = graphics.addObject(object2);
     graphics.addObject(object1);
     graphics.addObject(object5);
     graphics.addObject(object3);
     graphics.addObject(object4);
 
-    // TODO extract input logic
-    // TODO extract delta time
-    // TODO shouldRun() shouldn't be inside graphics, extract.
-    while (graphics.shouldRun()) {
+    bool deleted = false;
+
+    // Render loop
+    while (window.shouldWindowClose()) {
+        lastFrame = std::chrono::steady_clock::now(); // Store starting time-point of current frame;
+
+        std::cout << "FPS: " << 1000.0f / deltaTime.count() << std::endl;
+
+        handleInput();
+
+        object5->setPosition(object5->getPosition() + glm::vec3(0.0f, 1.0f * deltaTime.count() / 1000.0f, 0.0f));
+
+        if (!deleted && object2->getPosition().x > 5){
+            deleted = true;
+            graphics.deleteObject(object2ID);
+        } else {
+            object2->setPosition(object2->getPosition() + glm::vec3(0.5f * deltaTime.count() / 1000.0f, 0.1f * deltaTime.count() / 1000.0f, 0.0f));
+        }
+
         graphics.update();
+
+        glfwPollEvents();
+        deltaTime = std::chrono::steady_clock::now() - lastFrame;
+        auto extraTime = frameDuration - deltaTime;
+        if(extraTime.count() > 0){
+            std::this_thread::sleep_for(extraTime);
+        }
+
+        deltaTime = std::chrono::steady_clock::now() - lastFrame;
     }
 
     return 0;

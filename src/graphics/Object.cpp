@@ -66,4 +66,24 @@ namespace graphics {
     bool Object::isDirty() {
         return dirty;
     }
+
+    void Object::setDirty(bool isDirty) {
+        dirty = isDirty;
+    }
+
+    const glm::vec3 &Object::getScale() const {
+        return scale;
+    }
+
+    const glm::vec3 &Object::getPosition() const {
+        return position;
+    }
+
+    const glm::vec3 &Object::getRotationAxis() const {
+        return rotationAxis;
+    }
+
+    float Object::getRotationAngle() const {
+        return rotationAngle;
+    }
 } // graphics

@@ -21,23 +21,15 @@ void graphics::Camera::use(Shader &shader) {
 
     glm::dmat4 view = glm::dmat4(1.0);
     view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    glm::mat4 proj = glm::perspective(glm::radians(fov), (double) viewSize.first / viewSize.second, 0.1, 100.0);
+    glm::mat4 proj = glm::perspective(glm::radians(fov), aspectRatio, 0.1f, 100.0f);
 
     shader.setMatrix("view", view);
     shader.setMatrix("projection", proj);
 }
 
-graphics::Camera::Camera(const glm::vec3 &cameraPos, double fov, std::pair<int, int> viewSize, double pitch,
-                         double yaw) : cameraPos(cameraPos), fov(fov), viewSize(std::move(viewSize)), pitch(pitch),
-                                       yaw(yaw) {}
-
-const std::pair<int, int> &graphics::Camera::getViewSize() const {
-    return viewSize;
-}
-
-void graphics::Camera::setViewSize(const std::pair<double, double> &viewSize) {
-    Camera::viewSize = viewSize;
-}
+graphics::Camera::Camera(const glm::vec3 &cameraPos, float fov, float aspectRatio, float pitch,
+                         float yaw) : cameraPos(cameraPos), fov(fov), aspectRatio(aspectRatio), pitch(pitch),
+                                      yaw(yaw) {}
 
 const glm::vec3 &graphics::Camera::getCameraPos() const {
     return cameraPos;
@@ -55,11 +47,11 @@ const glm::vec3 &graphics::Camera::getCameraUp() const {
     return cameraUp;
 }
 
-double graphics::Camera::getFov() const {
+float graphics::Camera::getFov() const {
     return fov;
 }
 
-void graphics::Camera::setFov(double fov) {
+void graphics::Camera::setFov(float fov) {
     Camera::fov = fov;
 }
 
@@ -77,4 +69,12 @@ float graphics::Camera::getYaw() const {
 
 void graphics::Camera::setYaw(float yaw) {
     Camera::yaw = yaw;
+}
+
+float graphics::Camera::getAspectRatio() const {
+    return aspectRatio;
+}
+
+void graphics::Camera::setAspectRatio(float aspectRatio) {
+    Camera::aspectRatio = aspectRatio;
 }
