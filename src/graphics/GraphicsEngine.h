@@ -18,13 +18,14 @@
 #include <unordered_map>
 
 namespace graphics {
+    // TODO implement color for objects
+    // TODO implement textures for objects
     class GraphicsEngine {
     public:
         typedef std::pair<std::string, int> ObjectID;
         typedef std::shared_ptr<Object> ObjectPtr;
         typedef std::shared_ptr<Model> ModelPtr;
         typedef std::pair<uint, uint> ModelLoc;
-        // TODO implement removal of objects from rendering:
 
         struct ModelData {
             ModelLoc location; // Model location in engine's VBO
