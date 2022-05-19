@@ -8,7 +8,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(rapidxml VERSION 1.13)
 
-set(CMAKE_CXX_STANDARD 13)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-add_library(rapidxml rapidxml.hpp rapidxml_iterators.hpp rapidxml_print.hpp rapidxml_utils.hpp)
+add_library(rapidxml rapidxml.hpp)
 set_target_properties(rapidxml PROPERTIES LINKER_LANGUAGE CXX)
+target_include_directories(rapidxml PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

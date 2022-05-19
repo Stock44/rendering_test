@@ -2,8 +2,8 @@
 // Created by hiram on 4/24/22.
 //
 
-#ifndef CITYY_VERTEX_H
-#define CITYY_VERTEX_H
+#ifndef CITYY_GRAPHICS_TYPES_H
+#define CITYY_GRAPHICS_TYPES_H
 
 #include <glm/glm.hpp>
 #include <glad/glad.h>
@@ -18,9 +18,6 @@ namespace graphics {
         Vertex(float x, float y, float z) : position(x, y, z), normal(0.0f, 1.0f, 0.0f), texCoords(0.0f, 0.0f) {}
     };
 
-    struct ColorVertex {
-        glm::vec3 color;
-    };
-
+    typedef glm::vec4 Color;
 }
-#endif //CITYY_VERTEX_H
+#endif //CITYY_GRAPHICS_TYPES_H

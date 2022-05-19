@@ -21,7 +21,7 @@ void graphics::Camera::use(Shader &shader) {
 
     glm::dmat4 view = glm::dmat4(1.0);
     view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    glm::mat4 proj = glm::perspective(glm::radians(fov), aspectRatio, 0.1f, 100.0f);
+    glm::mat4 proj = glm::perspective(glm::radians(fov), aspectRatio, 0.1f, 10000.0f);
 
     shader.setMatrix("view", view);
     shader.setMatrix("projection", proj);

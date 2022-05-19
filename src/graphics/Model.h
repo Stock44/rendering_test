@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <optional>
-#include "Vertex.h"
+#include "types.h"
 
 namespace graphics {
     class Model {

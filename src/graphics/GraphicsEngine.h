@@ -14,6 +14,7 @@
 #include "VertexArray.h"
 #include "buffers/IndexBuffer.h"
 #include "../Window.h"
+#include "buffers/ColorVertexBuffer.h"
 #include <queue>
 #include <unordered_map>
 
@@ -32,6 +33,7 @@ namespace graphics {
             std::optional<ModelLoc> indicesLocation; // If model uses elements, location of the indices in the EBO.
             std::vector<ObjectPtr> instances; // Model instances
             std::shared_ptr<VertexArray> modelVAO = nullptr; // VAO of this specific model (should be bound to engine VBO and modelMats of this model
+            std::shared_ptr<ColorVertexBuffer> colors = nullptr; // Vertex buffer to store this model's instance colors.
             std::shared_ptr<ModelMatBuffer> modelMats = nullptr; // MBO of this model's instances
         };
 

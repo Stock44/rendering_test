@@ -13,7 +13,8 @@ namespace graphics {
     Object::Object(std::shared_ptr<Model> model) : model(model) {}
 
     Object::Object(std::shared_ptr<Model> model, glm::vec3 position) : model(model), position(position) {
-        modelMatrix = glm::translate(modelMatrix, position);
+        updateModelMatrix();
+        dirty = false;
     }
 
     Object::Object(std::shared_ptr<Model> model, float rotationAngle, glm::vec3 rotationAxis) : model(model),
@@ -21,13 +22,14 @@ namespace graphics {
                                                                                                         rotationAngle),
                                                                                                 rotationAxis(
                                                                                                         rotationAxis) {
-        modelMatrix = glm::rotate(modelMatrix, rotationAngle, rotationAxis);
+        updateModelMatrix();
+        dirty = false;
     }
 
     Object::Object(std::shared_ptr<Model> model, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis)
             : model(model), rotationAngle(rotationAngle), rotationAxis(rotationAxis), position(position) {
-        modelMatrix = glm::rotate(modelMatrix, rotationAngle, rotationAxis);
-        modelMatrix = glm::translate(modelMatrix, position);
+        updateModelMatrix();
+        dirty = false;
     }
 
     glm::mat4 Object::getModelMatrix() {
@@ -52,9 +54,9 @@ namespace graphics {
 
     void Object::updateModelMatrix() {
         modelMatrix = glm::mat4(1.0f);
-        modelMatrix = glm::scale(modelMatrix, scale);
-        modelMatrix = glm::rotate(modelMatrix, glm::radians(rotationAngle), rotationAxis);
         modelMatrix = glm::translate(modelMatrix, position);
+        modelMatrix = glm::rotate(modelMatrix, rotationAngle, rotationAxis);
+        modelMatrix = glm::scale(modelMatrix, scale);
 
         dirty = true;
     }
@@ -85,5 +87,28 @@ namespace graphics {
 
     float Object::getRotationAngle() const {
         return rotationAngle;
+    }
+
+    Object::Object(std::shared_ptr<Model> model, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis,
+                   glm::vec3 scale) : model(model), rotationAngle(rotationAngle), rotationAxis(rotationAxis),
+                                      position(position), scale(scale) {
+        updateModelMatrix();
+        dirty = false;
+    }
+
+    Object::Object(std::shared_ptr<Model> model, glm::vec4 color, glm::vec3 position, float rotationAngle,
+                   glm::vec3 rotationAxis, glm::vec3 scale) : model(model), color(color), rotationAngle(rotationAngle), rotationAxis(rotationAxis),
+                                                              position(position), scale(scale){
+        updateModelMatrix();
+        dirty = false;
+    }
+
+    const glm::vec4 &Object::getColor() const {
+        return color;
+    }
+
+    void Object::setColor(const glm::vec4 &color) {
+        dirty = true;
+        Object::color = color;
     }
 } // graphics

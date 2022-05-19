@@ -1,6 +1,8 @@
 #include "graphics/GraphicsEngine.h"
 #include "graphics/Model.h"
 #include "graphics/Object.h"
+#include "map/MapXMLTree.h"
+#include <cmath>
 #include <map>
 #include <chrono>
 #include <memory>
@@ -27,7 +29,7 @@ int main() {
 
     // Input handlers
     auto handleInput = [&] {
-        const float cameraSpeed = 2.5f * deltaTime.count() / 1000.0f;
+        const float cameraSpeed = 100.0f * deltaTime.count() / 1000.0f;
         auto cameraPos = camera.getCameraPos();
         auto cameraFront = camera.getCameraFront();
         auto cameraUp = camera.getCameraUp();
@@ -136,49 +138,59 @@ int main() {
                                           1, 5, 6,
                                   });
 
+    std::vector<graphics::Vertex> roadVertices({
+        graphics::Vertex(-0.5f, 0.0f, -0.5f),
+        graphics::Vertex(-0.5f, 0.0f, 0.5f),
+        graphics::Vertex(0.5f, 0.0f, 0.5f),
+        graphics::Vertex(0.5f, 0.0f, -0.5f),
+    });
+
+    std::vector<uint> roadIndices({
+        0, 1, 2,
+        0, 2, 3,
+
+    });
+
     // Initialize basic models and objects
     auto cube = std::make_shared<graphics::Model>("cube", cubeVertices, cubeIndices);
     auto pyramid = std::make_shared<graphics::Model>("triangle", triangleVertices, triangleIndices);
+    auto road = std::make_shared<graphics::Model>("road", roadVertices, roadIndices);
 
-    auto object1 = std::make_shared<graphics::Object>(cube, glm::vec3(0.0f, 0.0f, 0.0f), glm::radians(0.0f),
-                                                      glm::vec3(1.0f, 0.0f, 0.0f));
-    auto object2 = std::make_shared<graphics::Object>(pyramid, glm::vec3(0.0f, 0.0f, 0.0f), glm::radians(90.0f),
-                                                      glm::vec3(0.0f, 1.0f, 0.0f));
-    auto object3 = std::make_shared<graphics::Object>(pyramid, glm::vec3(3.0f, 0.0f, 0.0f), glm::radians(90.0f),
-                                                      glm::vec3(1.0f, 0.0f, 0.0f));
-    auto object4 = std::make_shared<graphics::Object>(pyramid, glm::vec3(0.0f, 0.0f, -3.0f), glm::radians(90.0f),
-                                                      glm::vec3(0.0f, 0.0f, 1.0f));
-    auto object5 = std::make_shared<graphics::Object>(cube, glm::vec3(1.0f, -1.0f, 1.0f), glm::radians(0.0f),
-                                                      glm::vec3(1.0f, 0.0f, 0.0f));
+    map::MapXMLTree tree = {"/home/hiram/Projects/citty/samples/sample_map.osm"};
+    auto network = tree.generateNetwork();
 
-    // Register objects
-    auto object2ID = graphics.addObject(object2);
-    graphics.addObject(object1);
-    graphics.addObject(object5);
-    graphics.addObject(object3);
-    graphics.addObject(object4);
+    std::cout << network.getHighwayCount() << std::endl;
+    std::cout << network.getNodeCount() << std::endl;
 
-    bool deleted = false;
+    auto highways = network.getHighways();
+    for (auto &highway : highways) {
+        auto highwayNodes = highway.second->getNodes();
+        for (auto index = 1; index != highwayNodes.size(); ++index){
+            auto origin = highwayNodes.at(index - 1)->getCoords();
+            auto destination = highwayNodes.at(index)->getCoords();
+            auto xDistance = destination.x - origin.x;
+            auto zDistance = destination.z - origin.z;
+            auto distance = sqrt(pow(xDistance, 2) + pow(zDistance, 2));
 
+            auto newObject = std::make_shared<graphics::Object>(road, glm::vec3(destination.x - xDistance, 0.0f, destination.z - zDistance),
+                                                                std::atan2(xDistance, zDistance) + std::numbers::pi / 2,
+                                                                glm::vec3(0.0f, 1.0f, 0.0f),
+                                                                glm::vec3(distance, 1.0f, 1.0f));
+            graphics.addObject(newObject);
+        }
+    }
     // Render loop
     while (window.shouldWindowClose()) {
         lastFrame = std::chrono::steady_clock::now(); // Store starting time-point of current frame;
 
         std::cout << "FPS: " << 1000.0f / deltaTime.count() << std::endl;
+       // expansion begin, add anything in here
 
+
+
+       // expansion end
         handleInput();
-
-        object5->setPosition(object5->getPosition() + glm::vec3(0.0f, 1.0f * deltaTime.count() / 1000.0f, 0.0f));
-
-        if (!deleted && object2->getPosition().x > 5){
-            deleted = true;
-            graphics.deleteObject(object2ID);
-        } else {
-            object2->setPosition(object2->getPosition() + glm::vec3(0.5f * deltaTime.count() / 1000.0f, 0.1f * deltaTime.count() / 1000.0f, 0.0f));
-        }
-
         graphics.update();
-
         glfwPollEvents();
         deltaTime = std::chrono::steady_clock::now() - lastFrame;
         auto extraTime = frameDuration - deltaTime;

@@ -7,7 +7,7 @@
 
 
 #include <vector>
-#include "../Vertex.h"
+#include "../types.h"
 #include "Buffer.h"
 
 namespace graphics {
@@ -22,6 +22,8 @@ namespace graphics {
         void setVertices(std::vector<Vertex> newVertices);
 
         void modifyVertices(std::vector<Vertex> modifiedVertices, uint position);
+
+        void deleteVertex(int index);
 
         void upload() override;
     private:

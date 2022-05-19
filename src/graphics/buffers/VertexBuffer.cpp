@@ -38,4 +38,9 @@ void graphics::VertexBuffer::enableAttribs() {
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid *) offsetof(Vertex, texCoords));
     glEnableVertexAttribArray(3);
 
+}
+
+void graphics::VertexBuffer::deleteVertex(int index) {
+    vertices.erase(vertices.begin() + index);
+    dirty = true;
 };

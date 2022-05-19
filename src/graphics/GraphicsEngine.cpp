@@ -65,6 +65,10 @@ void graphics::GraphicsEngine::update() {
             data.modelMats->upload();
         }
 
+        if (data.colors->isDirty()) {
+            data.colors->upload();
+        }
+
         // Bind model data
         data.modelVAO->bind();
         auto &location = data.location;
@@ -89,16 +93,17 @@ graphics::GraphicsEngine::ObjectID graphics::GraphicsEngine::addObject(const gra
     auto modelName = model->getName();
 
     // If model is not loaded, add it to add it to newVertices
-    if (modelMap.count(modelName) == 0) {
-       addModel(model);
-    }
+    if (modelMap.count(modelName) == 0) addModel(model);
 
     // Add object to the vector
     auto &objectVector = modelMap[modelName].instances;
     auto modelMatrix = object->getModelMatrix();
+    auto modelColor = object->getColor();
     objectVector.insert(objectVector.end(), object);
 
+
     modelMap[modelName].modelMats->addModelMat(modelMatrix);
+    modelMap.at(modelName).colors->addVertex(modelColor);
     // Remove object from the newModelMats
     return {object->getModel()->getName(), modelMap.at(modelName).instances.size() - 1 };
 }
@@ -119,12 +124,14 @@ void graphics::GraphicsEngine::deleteObject(const ObjectID &id) {
     auto &modelData = modelMap.at(objectModelName);
     auto &instances = modelData.instances;
     auto modelMats = modelData.modelMats;
+    auto colors = modelData.colors;
 
     instances.erase(instances.begin() + objectIndex);
     modelMats->deleteModelMat(objectIndex);
+    colors->deleteVertex(objectIndex);
 }
 
-void graphics::GraphicsEngine::addModel(const graphics::GraphicsEngine::ModelPtr model) {
+void graphics::GraphicsEngine::addModel(const ModelPtr model) {
     // Get vertices
     auto modelVertices = model->getVertices();
     // Get the verticesLocation in the VBO of the model
@@ -134,11 +141,13 @@ void graphics::GraphicsEngine::addModel(const graphics::GraphicsEngine::ModelPtr
     // Initialize newModelData of this model
     ModelData newModelData;
     newModelData.location = verticesLocation;
+    newModelData.colors.reset(new ColorVertexBuffer());
     newModelData.modelMats.reset(new ModelMatBuffer());
 
     VertexArrayBuilder builder;
     builder.addBuffer(VBO);
     builder.addBuffer(newModelData.modelMats);
+    builder.addBuffer(newModelData.colors);
 
     // If the model has index newModelData, add it to the total newModelData and bind EBO.
     if (model->usesElements()) {
