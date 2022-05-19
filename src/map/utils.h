@@ -74,11 +74,15 @@ namespace rapidxml {
 
     // first is latitude, second is longitude
     double distanceLatLon(std::pair<double, double> c1, std::pair<double,double> c2) {
-        static double rad = M_PI / 180;
-        double a = 0.5 - cos((c2.first - c1.first) * rad) / 2.0 +
+        static double radius = 6371000;
+        static double rad = M_PI / 180.0;
+        double dLat = c2.first - c1.first;
+        double dLon = c2.second - c1.second;
+        double a = sin(dLat * rad / 2.0) * sin(dLat * rad / 2.0) +
                 cos(c1.first * rad) * cos(c2.first * rad) *
-                        (1 - cos((c2.second - c1.second) * rad)) / 2.0;
-        return 12742000.0 * asin(sqrt(a)); // in meters
+                sin(dLon * rad / 2.0) * sin(dLon * rad / 2.0);
+        double c = 2.0 * atan2(sqrt(a), sqrt(1.0 - a));
+        return radius * c; // in meters
     }
 }
 

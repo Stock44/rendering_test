@@ -9,6 +9,7 @@
 #include <cstring>
 #include <queue>
 #include <iostream>
+#include <glm/vec4.hpp>
 #include "MapXMLTree.h"
 #include "rapidxml.hpp"
 #include "rapidxml_iterators.hpp"
@@ -29,7 +30,9 @@ namespace map {
         std::pair<double, double> latBounds, lonBounds;
 
         double latMidpoint = 0;
+        double latRange = 0;
         double lonMidpoint = 0;
+        double lonRange = 0;
 
         std::map<std::string_view, int> nodeIDMap;
         map::HighwayMap highways;
@@ -44,8 +47,10 @@ namespace map {
                              std::strtod(&nodeAttributes.at("maxlat")[0], nullptr)};
                 lonBounds = {std::strtod(&nodeAttributes.at("minlon")[0], nullptr),
                              std::strtod(&nodeAttributes.at("maxlon")[0], nullptr)};
-                latMidpoint = latBounds.second - (latBounds.second - latBounds.first) / 2.0;
-                lonMidpoint = lonBounds.second - (lonBounds.second - lonBounds.first) / 2.0;
+                latRange = latBounds.second - latBounds.first;
+                lonRange = lonBounds.second - lonBounds.first;
+                latMidpoint = latBounds.second - latRange / 2.0;
+                lonMidpoint = lonBounds.second - lonRange / 2.0;
             } else if (elementName == "node") {
                 auto nodeAttributes = getAttributes<char>(element);
 
@@ -55,15 +60,17 @@ namespace map {
                 auto lon = std::strtod(&nodeAttributes.at("lon")[0], nullptr);
                 auto x = distanceLatLon({0, lon - lonMidpoint}, {0, 0});
                 auto y = distanceLatLon({lat - latMidpoint, 0}, {0, 0});
+                x = lon - lonMidpoint > 0 ? x : -x;
+                y = lat - latMidpoint > 0 ? y : -y;
                 nodes.insert({nodes.size(), std::make_shared<Node>(glm::vec3(x, 0.0f, y))});
             } else if (elementName == "way") {
                 auto wayTags = getTags<char>(element);
-                static std::vector<std::string> allowedHighways = {"residential", "unclassified", "tertiary", "secondary", "primary", "trunk", "motorway"};
                 if (wayTags.contains("highway")) {
-                    auto foo = std::find(std::begin(allowedHighways), std::end(allowedHighways), wayTags.at("highway"));
-                    if (foo != allowedHighways.end()){
+                    auto highwayValue = std::string(wayTags.at("highway"));
+                    if (osmHighwayToType.contains(highwayValue)){
                         auto memberNodesIDs = getWayMemberNodesIDs<char>(element);
-                        auto newHighway = std::make_shared<Highway>();
+                        auto type = osmHighwayToType.at(highwayValue);
+                        auto newHighway = std::make_shared<Highway>(type);
                         for (const auto &nodeID: memberNodesIDs) {
                             newHighway->addNode(nodes.at(nodeIDMap.at(nodeID)));
                         }

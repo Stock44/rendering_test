@@ -9,6 +9,7 @@ namespace graphics {
         glBindBuffer(GL_ARRAY_BUFFER, ID);
         glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(Color), nullptr);
         glEnableVertexAttribArray(7);
+        glVertexAttribDivisor(7, 1);
     }
 
     int ColorVertexBuffer::getSize() {

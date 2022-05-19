@@ -9,13 +9,11 @@
 #include <thread>
 
 
-
-
 int main() {
     // Initialize window, camera and graphics engine.
     Window window({500, 500});
     graphics::Camera camera(glm::dvec3(0.0f, 0.0f, 0.0f), 35.0f,
-                            1.0f , 0.0f, 0.0f);
+                            1.0f, 0.0f, 0.0f);
     graphics::GraphicsEngine graphics = graphics::GraphicsEngine(window, camera);
 
     // Keep track of frame duration
@@ -85,7 +83,7 @@ int main() {
         graphics.setViewportSize(newSize);
     };
 
-    auto onMouseScroll = [&] (std::pair<float, float> offset) {
+    auto onMouseScroll = [&](std::pair<float, float> offset) {
         static const float minFov = 1.0f;
         static const float maxFov = 35.0f;
 
@@ -139,17 +137,17 @@ int main() {
                                   });
 
     std::vector<graphics::Vertex> roadVertices({
-        graphics::Vertex(-0.5f, 0.0f, -0.5f),
-        graphics::Vertex(-0.5f, 0.0f, 0.5f),
-        graphics::Vertex(0.5f, 0.0f, 0.5f),
-        graphics::Vertex(0.5f, 0.0f, -0.5f),
-    });
+                                                       graphics::Vertex(-0.5f, 0.0f, -0.5f),
+                                                       graphics::Vertex(-0.5f, 0.0f, 0.5f),
+                                                       graphics::Vertex(0.5f, 0.0f, 0.5f),
+                                                       graphics::Vertex(0.5f, 0.0f, -0.5f),
+                                               });
 
     std::vector<uint> roadIndices({
-        0, 1, 2,
-        0, 2, 3,
+                                          0, 1, 2,
+                                          0, 2, 3,
 
-    });
+                                  });
 
     // Initialize basic models and objects
     auto cube = std::make_shared<graphics::Model>("cube", cubeVertices, cubeIndices);
@@ -163,19 +161,46 @@ int main() {
     std::cout << network.getNodeCount() << std::endl;
 
     auto highways = network.getHighways();
-    for (auto &highway : highways) {
+    for (auto &highway: highways) {
         auto highwayNodes = highway.second->getNodes();
-        for (auto index = 1; index != highwayNodes.size(); ++index){
+        auto color = glm::vec4(1.0f);
+
+        switch (highway.second->getType()) {
+            case map::UNKNOWN:
+                color = glm::vec4(1.0f);
+                break;
+            case map::MOTORWAY:
+                color = glm::vec4(233.0 / 255.0, 144.0 / 255.0, 160.0 / 255.0, 1.0f);
+                break;
+            case map::TRUNK:
+                color = glm::vec4(251.0 / 255.0, 192.0 / 255.0, 172.0 / 255.0, 1.0f);
+                break;
+            case map::PRIMARY:
+                color = glm::vec4(253.0 / 255.0, 215.0 / 255.0, 161.0 / 255.0, 1.0f);
+                break;
+            case map::SECONDARY:
+                color = glm::vec4(246.0 / 255.0, 250.0 / 255.0, 187.0 / 255.0, 1.0f);
+                break;
+            case map::RESIDENTIAL:
+                color = glm::vec4(1.0f);
+            default:
+                break;
+        }
+        for (auto index = 1; index != highwayNodes.size(); ++index) {
             auto origin = highwayNodes.at(index - 1)->getCoords();
             auto destination = highwayNodes.at(index)->getCoords();
             auto xDistance = destination.x - origin.x;
             auto zDistance = destination.z - origin.z;
             auto distance = sqrt(pow(xDistance, 2) + pow(zDistance, 2));
 
-            auto newObject = std::make_shared<graphics::Object>(road, glm::vec3(destination.x - xDistance, 0.0f, destination.z - zDistance),
+
+            auto newObject = std::make_shared<graphics::Object>(road, color,
+                                                                glm::vec3(origin.x + xDistance / 2.0f, 0.0f,
+                                                                          origin.z + zDistance / 2.0f),
                                                                 std::atan2(xDistance, zDistance) + std::numbers::pi / 2,
                                                                 glm::vec3(0.0f, 1.0f, 0.0f),
-                                                                glm::vec3(distance, 1.0f, 1.0f));
+                                                                glm::vec3(distance, 5.0f, 5.0f));
+//            auto nodeddObject(node);
             graphics.addObject(newObject);
         }
     }
@@ -183,18 +208,18 @@ int main() {
     while (window.shouldWindowClose()) {
         lastFrame = std::chrono::steady_clock::now(); // Store starting time-point of current frame;
 
-        std::cout << "FPS: " << 1000.0f / deltaTime.count() << std::endl;
-       // expansion begin, add anything in here
+//        std::cout << "FPS: " << 1000.0f / deltaTime.count() << std::endl;
+        // expansion begin, add anything in here
 
 
 
-       // expansion end
+        // expansion end
         handleInput();
         graphics.update();
         glfwPollEvents();
         deltaTime = std::chrono::steady_clock::now() - lastFrame;
         auto extraTime = frameDuration - deltaTime;
-        if(extraTime.count() > 0){
+        if (extraTime.count() > 0) {
             std::this_thread::sleep_for(extraTime);
         }
 
