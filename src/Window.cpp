@@ -51,7 +51,7 @@ void Window::swapBuffers() {
 }
 
 bool Window::shouldWindowClose() {
-    return !glfwWindowShouldClose(window);
+    return glfwWindowShouldClose(window);
 }
 
 std::pair<int, int> Window::getSize() {

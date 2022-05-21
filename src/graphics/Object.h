@@ -15,21 +15,21 @@ namespace graphics {
     // TODO implement object textures
     class Object {
     public:
-        explicit Object(std::shared_ptr<Model> model);
+        explicit Object(ModelPtr model);
 
-        Object(std::shared_ptr<Model> model, glm::vec3 position);
+        Object(ModelPtr model, glm::vec3 position);
 
-        Object(std::shared_ptr<Model> model, float rotationAngle, glm::vec3 rotationAxis);
+        Object(ModelPtr model, float rotationAngle, glm::vec3 rotationAxis);
 
-        Object(std::shared_ptr<Model> model, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis);
+        Object(ModelPtr model, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis);
 
-        Object(std::shared_ptr<Model> model, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis,
+        Object(ModelPtr model, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis,
                glm::vec3 scale);
 
-        Object(std::shared_ptr<Model> model, glm::vec4 color, glm::vec3 position, float rotationAngle,
+        Object(ModelPtr model, glm::vec4 color, glm::vec3 position, float rotationAngle,
                glm::vec3 rotationAxis, glm::vec3 scale);
 
-        [[nodiscard]] std::shared_ptr<Model> getModel();
+        [[nodiscard]] ModelPtr getModel();
 
         [[nodiscard]] glm::mat4 getModelMatrix();
 
@@ -60,7 +60,7 @@ namespace graphics {
 
         bool dirty = false;
 
-        std::shared_ptr<Model> model;
+        ModelPtr model;
 
         glm::mat4 modelMatrix = glm::mat4(1.0f);
 
@@ -74,6 +74,7 @@ namespace graphics {
         float rotationAngle = 0.0f;
     };
 
+    typedef std::shared_ptr<Object> ObjectPtr;
 } // graphics
 
 #endif //CITYY_OBJECT_H

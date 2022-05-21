@@ -2,17 +2,17 @@
 #include "graphics/Model.h"
 #include "graphics/Object.h"
 #include "map/MapXMLTree.h"
+#include "map/TransitNetworkRenderer.h"
 #include <cmath>
 #include <map>
 #include <chrono>
 #include <memory>
 #include <thread>
 
-
 int main() {
     // Initialize window, camera and graphics engine.
     Window window({500, 500});
-    graphics::Camera camera(glm::dvec3(0.0f, 0.0f, 0.0f), 35.0f,
+    graphics::Camera camera(glm::dvec3(0.0f, 1000.0f, 0.0f), 35.0f,
                             1.0f, 0.0f, 0.0f);
     graphics::GraphicsEngine graphics = graphics::GraphicsEngine(window, camera);
 
@@ -27,7 +27,7 @@ int main() {
 
     // Input handlers
     auto handleInput = [&] {
-        const float cameraSpeed = 100.0f * deltaTime.count() / 1000.0f;
+        const float cameraSpeed = 200.0f * deltaTime.count() / 1000.0f;
         auto cameraPos = camera.getCameraPos();
         auto cameraFront = camera.getCameraFront();
         auto cameraUp = camera.getCameraUp();
@@ -103,112 +103,169 @@ int main() {
     window.setViewSizeCallback(onViewSizeChange);
     window.setMouseScrollCallback(onMouseScroll);
 
-    // Set up basic geometry
-    std::vector<graphics::Vertex> triangleVertices({
-                                                           graphics::Vertex(0.0f, 0.0f, 0.0f),
-                                                           graphics::Vertex(0.0f, 2.0f, 0.0f),
-                                                           graphics::Vertex(2.0f, 0.0f, 0.0f),
-                                                           graphics::Vertex(0.0f, 0.0f, 2.0f),
-                                                   });
-
-    std::vector<uint> triangleIndices({
-                                              0, 1, 2,
-                                              0, 2, 3,
-                                              1, 2, 3,
-                                              0, 1, 3,
-                                      });
-
     std::vector<graphics::Vertex> cubeVertices({
-                                                       graphics::Vertex(0.0f, 0.0f, 0.0f),
-                                                       graphics::Vertex(1.0f, 0.0f, 0.0f),
-                                                       graphics::Vertex(1.0f, 1.0f, 0.0f),
-                                                       graphics::Vertex(0.0f, 1.0f, 0.0f),
-                                                       graphics::Vertex(0.0f, 0.0f, 1.0f),
-                                                       graphics::Vertex(1.0f, 0.0f, 1.0f),
-                                                       graphics::Vertex(1.0f, 1.0f, 1.0f),
-                                                       graphics::Vertex(0.0f, 1.0f, 1.0f),
+                                                       graphics::Vertex(0.5f, 0.5f, 0.5f),
+                                                       graphics::Vertex(-0.5f, 0.5f, 0.5f),
+                                                       graphics::Vertex(-0.5f, -0.5f, 0.5f),
+                                                       graphics::Vertex(0.5f, -0.5f, 0.5f),
+                                                       graphics::Vertex(0.5f, 0.5f, -0.5f),
+                                                       graphics::Vertex(-0.5f, 0.5f, -0.5f),
+                                                       graphics::Vertex(-0.5f, -0.5f, -0.5f),
+                                                       graphics::Vertex(0.5f, -0.5f, -0.5f),
                                                });
 
     std::vector<uint> cubeIndices({
-                                          0, 1, 2,
-                                          0, 2, 3,
-                                          1, 6, 2,
-                                          1, 5, 6,
+                                          3, 2, 1,
+                                          3, 1, 0,
+                                          7, 3, 0,
+                                          7, 0, 4,
+                                          6, 7, 4,
+                                          6, 4, 5,
+                                          2, 6, 5,
+                                          2, 5, 1,
+                                          0, 4, 5,
+                                          1, 0, 5,
+                                          2, 3, 7,
+                                          2, 7, 6,
                                   });
 
-    std::vector<graphics::Vertex> roadVertices({
-                                                       graphics::Vertex(-0.5f, 0.0f, -0.5f),
-                                                       graphics::Vertex(-0.5f, 0.0f, 0.5f),
-                                                       graphics::Vertex(0.5f, 0.0f, 0.5f),
-                                                       graphics::Vertex(0.5f, 0.0f, -0.5f),
-                                               });
+    auto cube = std::make_shared<graphics::Model>("cube", cubeVertices, cubeIndices);
 
-    std::vector<uint> roadIndices({
-                                          0, 1, 2,
-                                          0, 2, 3,
-
-                                  });
+    auto destinationMarker = std::make_shared<graphics::Object>(cube);
+    destinationMarker->setColor(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+    destinationMarker->setScale(glm::vec3(10.0f));
+    auto car = std::make_shared<graphics::Object>(cube);
+    car->setScale(glm::vec3(1.9f, 1.5f, 4.7f));
+    car->setColor(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
+    graphics.addObject(car);
+    graphics.addObject(destinationMarker);
 
     // Initialize basic models and objects
-    auto cube = std::make_shared<graphics::Model>("cube", cubeVertices, cubeIndices);
-    auto pyramid = std::make_shared<graphics::Model>("triangle", triangleVertices, triangleIndices);
-    auto road = std::make_shared<graphics::Model>("road", roadVertices, roadIndices);
 
     map::MapXMLTree tree = {"/home/hiram/Projects/citty/samples/sample_map.osm"};
     auto network = tree.generateNetwork();
+    map::TransitNetworkRenderer networkRenderer(network, graphics);
+
+    int currentNodeIndex = 0;
+    auto currentWay = network.getHighways().at(10);
+
+    auto initialNode = network.getClosestNodeToCoord(glm::vec3(200.0f, 0.0f, -300.0f));
+    auto targetNode = network.getClosestNodeToCoord(glm::vec3(-1500.0f, 0.0f, 800.0f));
+
+
+    car->setPosition(initialNode->getCoords());
+    destinationMarker->setPosition(targetNode->getCoords());
+
+    camera.setCameraPos(car->getPosition());
+
+    networkRenderer.render();
 
     std::cout << network.getHighwayCount() << std::endl;
     std::cout << network.getNodeCount() << std::endl;
 
-    auto highways = network.getHighways();
-    for (auto &highway: highways) {
-        auto highwayNodes = highway.second->getNodes();
-        auto color = glm::vec4(1.0f);
+    std::cout << "Initial node: " << initialNode->getId() << std::endl;
 
-        switch (highway.second->getType()) {
-            case map::UNKNOWN:
-                color = glm::vec4(1.0f);
-                break;
-            case map::MOTORWAY:
-                color = glm::vec4(233.0 / 255.0, 144.0 / 255.0, 160.0 / 255.0, 1.0f);
-                break;
-            case map::TRUNK:
-                color = glm::vec4(251.0 / 255.0, 192.0 / 255.0, 172.0 / 255.0, 1.0f);
-                break;
-            case map::PRIMARY:
-                color = glm::vec4(253.0 / 255.0, 215.0 / 255.0, 161.0 / 255.0, 1.0f);
-                break;
-            case map::SECONDARY:
-                color = glm::vec4(246.0 / 255.0, 250.0 / 255.0, 187.0 / 255.0, 1.0f);
-                break;
-            case map::RESIDENTIAL:
-                color = glm::vec4(1.0f);
-            default:
-                break;
+    // A* algorithm implementation
+    auto pathfindingThread = std::thread([&] {
+        std::unordered_map<int, float> nodeDistances = {{initialNode->getId(), 0}};
+        std::unordered_map<int, float> nodeCosts = {
+                {initialNode->getId(), glm::distance(initialNode->getCoords(), targetNode->getCoords())}};
+        std::unordered_map<int, map::NodePtr> visitedNodes;
+        std::unordered_map<int, map::NodePtr> unvisitedNodes = {{initialNode->getId(), initialNode}};
+        std::unordered_map<int, map::NodePtr> visitedFrom;
+
+        std::vector<graphics::ObjectPtr> nodeMarkers;
+
+        while (!window.shouldWindowClose()) {
+            map::NodePtr visitorNode;
+            // Find the visited node that has the lowest distance
+            for (auto nodeRecord: unvisitedNodes) {
+                // Don't do anything if this node is not closer than the currently selected node.
+                if (!visitorNode) visitorNode = (*unvisitedNodes.begin()).second;
+
+                float currentCompoundValue = nodeDistances.at(visitorNode->getId()) + nodeCosts.at(visitorNode->getId());
+
+                float recordCompoundValue = nodeDistances.at(nodeRecord.first) + nodeCosts.at(nodeRecord.first);
+
+                if (recordCompoundValue >= currentCompoundValue) continue;
+                visitorNode = nodeRecord.second;
+                currentCompoundValue = nodeDistances.at(nodeRecord.first);
+            }
+
+            if (visitorNode->getId() == targetNode->getId()) break;
+
+            visitedNodes[visitorNode->getId()] = unvisitedNodes.at(visitorNode->getId());
+            unvisitedNodes.erase(visitorNode->getId());
+            // For the selected node, find its neighbors, check if they're registered,
+            for (auto way: visitorNode->getParentWays()) {
+                auto lanes = std::reinterpret_pointer_cast<map::Highway>(way.lock())->getLanes();
+                auto wayNodes = way.lock()->getNodes();
+
+                std::vector<map::NodePtr> neighbors;
+                for (auto nodeIt = wayNodes.begin(); nodeIt != wayNodes.end(); nodeIt++) {
+                    auto id = (*nodeIt)->getId();
+                    if (visitorNode->getId() != id) continue;
+
+                    if (nodeIt < wayNodes.end() - 1 && lanes.first > 0) neighbors.push_back(*(nodeIt + 1));
+
+                    if (nodeIt != wayNodes.begin() && lanes.second > 0) neighbors.push_back(*(nodeIt - 1));
+
+                    break;
+                }
+                for (auto node: neighbors) {
+                    // Is the previous node in the way connected to the current one?
+                    auto tentativeCost =
+                            nodeDistances.at(visitorNode->getId()) + glm::distance(visitorNode->getCoords(), node->getCoords());
+                    if (nodeDistances.contains(node->getId())) {
+                        auto assignedCost = nodeDistances.at(node->getId());
+                        if (assignedCost > tentativeCost) {
+                            nodeDistances.at(node->getId()) = tentativeCost;
+                            visitedFrom.at(node->getId()) = visitorNode;
+                        }
+                    } else {
+                        nodeDistances[node->getId()] =
+                                nodeDistances.at(visitorNode->getId()) + glm::distance(visitorNode->getCoords(), node->getCoords());
+                        nodeCosts[node->getId()] = glm::distance(node->getCoords(), targetNode->getCoords());
+                        unvisitedNodes[node->getId()] = node;
+                        visitedFrom[node->getId()] = visitorNode;
+                    }
+
+                    // Just for visualization
+                    auto marker = std::make_shared<graphics::Object>(cube);
+                    marker->setPosition(node->getCoords());
+                    marker->setColor(glm::vec4(0.0f, 0.5f, 0.0f, 1.0f));
+                    marker->setScale(glm::vec3(5.0f));
+                    graphics.addObject(marker);
+                    nodeMarkers.push_back(marker);
+                }
+            }
         }
-        for (auto index = 1; index != highwayNodes.size(); ++index) {
-            auto origin = highwayNodes.at(index - 1)->getCoords();
-            auto destination = highwayNodes.at(index)->getCoords();
-            auto xDistance = destination.x - origin.x;
-            auto zDistance = destination.z - origin.z;
-            auto distance = sqrt(pow(xDistance, 2) + pow(zDistance, 2));
 
 
-            auto newObject = std::make_shared<graphics::Object>(road, color,
-                                                                glm::vec3(origin.x + xDistance / 2.0f, 0.0f,
-                                                                          origin.z + zDistance / 2.0f),
-                                                                std::atan2(xDistance, zDistance) + std::numbers::pi / 2,
-                                                                glm::vec3(0.0f, 1.0f, 0.0f),
-                                                                glm::vec3(distance, 5.0f, 5.0f));
-//            auto nodeddObject(node);
-            graphics.addObject(newObject);
+        auto currentNode = targetNode;
+        while (visitedFrom.contains(currentNode->getId())) {
+            auto prevNode = visitedFrom.at(currentNode->getId());
+            float distance = glm::distance(prevNode->getCoords(), currentNode->getCoords());
+            auto object = std::make_shared<graphics::Object>(cube);
+            float xDistance = currentNode->getCoords().x - prevNode->getCoords().x;
+            float zDistance = currentNode->getCoords().z - prevNode->getCoords().z;
+            float lineRotation = std::atan2(xDistance, zDistance) + std::numbers::pi_v<float> / 2.0f;
+            auto linePosition = prevNode->getCoords() + ((currentNode->getCoords() - prevNode->getCoords()) / 2.0f) +
+                                glm::vec3(0.0f, 1.0f, 0.0f);
+            object->setPosition(linePosition);
+            object->setColor({1.0f, 0.6f, 0.1f, 1.0f});
+            object->setScale({distance, 1.0f, 0.5f});
+            object->setRotation(lineRotation, glm::vec3(0.0f, 1.0f, 0.0f));
+            graphics.addObject(object);
+            currentNode = prevNode;
         }
-    }
+    });
+
     // Render loop
-    while (window.shouldWindowClose()) {
+    while (!window.shouldWindowClose()) {
         lastFrame = std::chrono::steady_clock::now(); // Store starting time-point of current frame;
 
-//        std::cout << "FPS: " << 1000.0f / deltaTime.count() << std::endl;
+        std::cout << "FPS: " << 1000.0f / deltaTime.count() << std::endl;
         // expansion begin, add anything in here
 
 
@@ -226,5 +283,6 @@ int main() {
         deltaTime = std::chrono::steady_clock::now() - lastFrame;
     }
 
+    pathfindingThread.join();
     return 0;
 }

@@ -19,6 +19,11 @@ namespace map {
             {"tertiary",     TERTIARY},
             {"unclassified", QUATERNARY},
             {"residential",  RESIDENTIAL},
+            {"motorway_link",  LINK},
+            {"trunk_link",  LINK},
+            {"primary_link",  LINK},
+            {"secondary_link",  LINK},
+            {"tertiary_link",  LINK},
     };
 
     class MapXMLTree {

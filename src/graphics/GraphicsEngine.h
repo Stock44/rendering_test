@@ -23,10 +23,7 @@ namespace graphics {
     // TODO implement textures for objects
     class GraphicsEngine {
     public:
-        typedef std::pair<std::string, int> ObjectID;
-        typedef std::shared_ptr<Object> ObjectPtr;
-        typedef std::shared_ptr<Model> ModelPtr;
-        typedef std::pair<uint, uint> ModelLoc;
+
 
         struct ModelData {
             ModelLoc location; // Model location in engine's VBO
@@ -44,6 +41,7 @@ namespace graphics {
         // TODO function to delete a model from memory
         void addModel(ModelPtr model);
 
+        // Thread safe!
         ObjectID addObject(const ObjectPtr &object);
 
         void deleteObject(const ObjectID &id);
@@ -65,7 +63,7 @@ namespace graphics {
         std::queue<ObjectPtr> objectLoadingQueue;
         std::unordered_map<std::string, ModelData> modelMap; // Find model data by the model name
 
-
+        std::mutex objectMutex, modelMutex;
     };
 }
 

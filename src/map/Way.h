@@ -7,10 +7,10 @@
 
 #include <memory>
 #include <vector>
-#include "Node.h"
 
 namespace map {
 
+    class Node;
     class Way {
     public:
 

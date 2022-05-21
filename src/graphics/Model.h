@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <optional>
+
 #include "types.h"
 
 namespace graphics {
@@ -30,6 +31,7 @@ namespace graphics {
         std::string name;
     };
 
+    typedef std::shared_ptr<Model> ModelPtr;
 } // graphics
 
 #endif //CITYY_MODEL_H

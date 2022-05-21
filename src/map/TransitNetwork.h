@@ -21,6 +21,8 @@ namespace map {
         const HighwayMap &getHighways();
         int getNodeCount();
         int getHighwayCount();
+        // O(n) complexity to the number of nodes
+        NodePtr getClosestNodeToCoord(glm::vec3 coord);
     private:
         HighwayMap highways;
         NodeMap nodes;

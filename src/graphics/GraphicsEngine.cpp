@@ -10,7 +10,7 @@ graphics::GraphicsEngine::GraphicsEngine(Window &window, Camera &camera) : windo
                                                                            camera(camera),
                                                                            viewportSize(window.getSize()),
                                                                            shader("/home/hiram/Projects/citty/shaders/vertex.vsh",
-                                                                  "/home/hiram/Projects/citty/shaders/fragment.fsh") {
+                                                                                  "/home/hiram/Projects/citty/shaders/fragment.fsh") {
     window.useWindowContext();
 
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
@@ -20,7 +20,7 @@ graphics::GraphicsEngine::GraphicsEngine(Window &window, Camera &camera) : windo
     glViewport(0, 0, viewportSize.first, viewportSize.second);
 
     glEnable(GL_DEPTH_TEST);
-//    glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
 //    glFrontFace(GL_CCW);
 //    glCullFace(GL_FRONT);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -46,14 +46,18 @@ void graphics::GraphicsEngine::update() {
     camera.use(shader);
 
     // For all models, add any new model mats.
+
+    std::lock_guard<std::mutex> modelGuard(modelMutex);
     for (auto &modelType: modelMap) {
+        // Guard against any object modifications
+        std::lock_guard<std::mutex> objectGuard(objectMutex);
         auto &data = modelType.second;
 
         auto &instances = data.instances;
 
-        for(auto it = instances.begin(); it != instances.end(); it++) {
+        for (auto it = instances.begin(); it != instances.end(); it++) {
             auto object = it->get();
-            if(object->isDirty()){
+            if (object->isDirty()) {
                 int index = std::distance(instances.begin(), it);
                 data.modelMats->replaceModelMat(object->getModelMatrix(), index);
                 object->setDirty(false);
@@ -88,7 +92,7 @@ void graphics::GraphicsEngine::update() {
     window.swapBuffers();
 }
 
-graphics::GraphicsEngine::ObjectID graphics::GraphicsEngine::addObject(const graphics::GraphicsEngine::ObjectPtr &object) {
+graphics::ObjectID graphics::GraphicsEngine::addObject(const graphics::ObjectPtr &object) {
     auto model = object->getModel();
     auto modelName = model->getName();
 
@@ -96,16 +100,18 @@ graphics::GraphicsEngine::ObjectID graphics::GraphicsEngine::addObject(const gra
     if (modelMap.count(modelName) == 0) addModel(model);
 
     // Add object to the vector
+
+    std::lock_guard<std::mutex> guard(objectMutex);
     auto &objectVector = modelMap[modelName].instances;
     auto modelMatrix = object->getModelMatrix();
     auto modelColor = object->getColor();
     objectVector.insert(objectVector.end(), object);
 
 
-    modelMap[modelName].modelMats->addModelMat(modelMatrix);
+    modelMap.at(modelName).modelMats->addModelMat(modelMatrix);
     modelMap.at(modelName).colors->addVertex(modelColor);
     // Remove object from the newModelMats
-    return {object->getModel()->getName(), modelMap.at(modelName).instances.size() - 1 };
+    return {object->getModel()->getName(), modelMap.at(modelName).instances.size() - 1};
 }
 
 void graphics::GraphicsEngine::setCamera(graphics::Camera &newCamera) {
@@ -121,6 +127,7 @@ void graphics::GraphicsEngine::deleteObject(const ObjectID &id) {
     auto objectModelName = id.first;
     auto objectIndex = id.second;
 
+    std::lock_guard<std::mutex> guard(objectMutex);
     auto &modelData = modelMap.at(objectModelName);
     auto &instances = modelData.instances;
     auto modelMats = modelData.modelMats;
@@ -163,6 +170,7 @@ void graphics::GraphicsEngine::addModel(const ModelPtr model) {
         });
     }
 
+    std::lock_guard<std::mutex> guard(modelMutex);
     newModelData.modelVAO = builder.build();
     modelMap[model->getName()] = newModelData;
     VBO->addVertices(modelVertices);

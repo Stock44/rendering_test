@@ -18,6 +18,8 @@ namespace map {
     // ID to element mapping storage
     typedef std::unordered_map<int, NodePtr> NodeMap;
     typedef std::unordered_map<int, HighwayPtr> HighwayMap;
+
+    // Lane definition for a highway, first is lanes in the way's direction, second is in the reverse direection
 }
 
 #endif //CITYY_MAP_TYPES_H
