@@ -21,8 +21,8 @@ graphics::GraphicsEngine::GraphicsEngine(Window &window, Camera &camera) : windo
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-//    glFrontFace(GL_CCW);
-//    glCullFace(GL_FRONT);
+    glFrontFace(GL_CCW);
+    glCullFace(GL_FRONT);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
     // TODO make shader follow RAII principle

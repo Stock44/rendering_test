@@ -123,8 +123,8 @@ int main() {
                                           6, 4, 5,
                                           2, 6, 5,
                                           2, 5, 1,
-                                          0, 4, 5,
-                                          1, 0, 5,
+                                          5, 4, 0,
+                                          5, 0, 1,
                                           2, 3, 7,
                                           2, 7, 6,
                                   });
@@ -174,7 +174,7 @@ int main() {
         std::unordered_map<int, map::NodePtr> unvisitedNodes = {{initialNode->getId(), initialNode}};
         std::unordered_map<int, map::NodePtr> visitedFrom;
 
-        std::vector<graphics::ObjectPtr> nodeMarkers;
+        std::vector<graphics::ObjectID> nodeMarkers;
 
         while (!window.shouldWindowClose()) {
             map::NodePtr visitorNode;
@@ -183,13 +183,13 @@ int main() {
                 // Don't do anything if this node is not closer than the currently selected node.
                 if (!visitorNode) visitorNode = (*unvisitedNodes.begin()).second;
 
-                float currentCompoundValue = nodeDistances.at(visitorNode->getId()) + nodeCosts.at(visitorNode->getId());
+                float currentCompoundValue =
+                        nodeDistances.at(visitorNode->getId()) + nodeCosts.at(visitorNode->getId());
 
                 float recordCompoundValue = nodeDistances.at(nodeRecord.first) + nodeCosts.at(nodeRecord.first);
 
                 if (recordCompoundValue >= currentCompoundValue) continue;
                 visitorNode = nodeRecord.second;
-                currentCompoundValue = nodeDistances.at(nodeRecord.first);
             }
 
             if (visitorNode->getId() == targetNode->getId()) break;
@@ -215,7 +215,8 @@ int main() {
                 for (auto node: neighbors) {
                     // Is the previous node in the way connected to the current one?
                     auto tentativeCost =
-                            nodeDistances.at(visitorNode->getId()) + glm::distance(visitorNode->getCoords(), node->getCoords());
+                            nodeDistances.at(visitorNode->getId()) +
+                            glm::distance(visitorNode->getCoords(), node->getCoords());
                     if (nodeDistances.contains(node->getId())) {
                         auto assignedCost = nodeDistances.at(node->getId());
                         if (assignedCost > tentativeCost) {
@@ -224,7 +225,8 @@ int main() {
                         }
                     } else {
                         nodeDistances[node->getId()] =
-                                nodeDistances.at(visitorNode->getId()) + glm::distance(visitorNode->getCoords(), node->getCoords());
+                                nodeDistances.at(visitorNode->getId()) +
+                                glm::distance(visitorNode->getCoords(), node->getCoords());
                         nodeCosts[node->getId()] = glm::distance(node->getCoords(), targetNode->getCoords());
                         unvisitedNodes[node->getId()] = node;
                         visitedFrom[node->getId()] = visitorNode;
@@ -235,12 +237,24 @@ int main() {
                     marker->setPosition(node->getCoords());
                     marker->setColor(glm::vec4(0.0f, 0.5f, 0.0f, 1.0f));
                     marker->setScale(glm::vec3(5.0f));
-                    graphics.addObject(marker);
-                    nodeMarkers.push_back(marker);
+
+                    nodeMarkers.push_back(graphics.addObject(marker));
                 }
             }
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+        for (auto object: nodeMarkers) {
+            graphics.deleteObject(object);
         }
 
+        nodeMarkers.clear();
+
+        auto marker = std::make_shared<graphics::Object>(cube);
+        marker->setPosition(targetNode->getCoords());
+        marker->setColor(glm::vec4(0.0f, 1.0f, 0.5f, 1.0f));
+        marker->setScale(glm::vec3(20.0f));
+
+        nodeMarkers.push_back(graphics.addObject(marker));
 
         auto currentNode = targetNode;
         while (visitedFrom.contains(currentNode->getId())) {
@@ -259,6 +273,8 @@ int main() {
             graphics.addObject(object);
             currentNode = prevNode;
         }
+
+
     });
 
     // Render loop

@@ -32,8 +32,8 @@ namespace map {
 
 
         static const inline std::vector<uint> roadIndices = {
-                0, 1, 2,
-                0, 2, 3,
+                2, 1, 0,
+                3, 2, 0,
         };
 
         static const inline auto road = std::make_shared<graphics::Model>("road", roadVertices, roadIndices);
