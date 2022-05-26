@@ -5,7 +5,7 @@
 # Prerequisites
 *.d
 
-# Compiled Object files
+# Compiled Drawable files
 *.slo
 *.lo
 *.o

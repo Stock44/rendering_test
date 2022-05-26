@@ -63,19 +63,19 @@ namespace map {
                 for (int lane = 0; lane < totalLanes + 1; lane++) {
                     auto laneOffsetDistance = static_cast<float>(lane) * laneWidth - (laneWidth * totalLanes) / 2;
                     auto laneOffset = glm::vec3(laneOffsetDistance * sin(roadRotation), 0.1f, laneOffsetDistance * cos(roadRotation));
-                    auto newLaneSeparator = std::make_shared<graphics::Object>(road, glm::vec4(0.0f),
+                    auto newLaneSeparator = std::make_shared<graphics::Drawable>(road, glm::vec4(0.0f),
                                                                                roadPosition + laneOffset, roadRotation,
-                                                                               glm::vec3(0.0f, 1.0f, 0.0f),
-                                                                               glm::vec3(distance, 1.0f, 0.1f));
+                                                                                 glm::vec3(0.0f, 1.0f, 0.0f),
+                                                                                 glm::vec3(distance, 1.0f, 0.1f));
 
                     objects.push_back(newLaneSeparator);
                 }
 
-                auto newObject = std::make_shared<graphics::Object>(road, color,
-                                                                    roadPosition,
-                                                                    roadRotation,
-                                                                    glm::vec3(0.0f, 1.0f, 0.0f),
-                                                                    glm::vec3(distance, 5.0f,
+                auto newObject = std::make_shared<graphics::Drawable>(road, color,
+                                                                      roadPosition,
+                                                                      roadRotation,
+                                                                      glm::vec3(0.0f, 1.0f, 0.0f),
+                                                                      glm::vec3(distance, 5.0f,
                                                                               static_cast<float>(
                                                                                       lanes.second +
                                                                                       lanes.first) * laneWidth));

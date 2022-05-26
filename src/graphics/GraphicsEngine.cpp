@@ -8,9 +8,9 @@
 
 graphics::GraphicsEngine::GraphicsEngine(Window &window, Camera &camera) : window(window),
                                                                            camera(camera),
-                                                                           viewportSize(window.getSize()),
                                                                            shader("/home/hiram/Projects/citty/shaders/vertex.vsh",
-                                                                                  "/home/hiram/Projects/citty/shaders/fragment.fsh") {
+                                                                                  "/home/hiram/Projects/citty/shaders/fragment.fsh"),
+                                                                           viewportSize(window.getSize()) {
     window.useWindowContext();
 
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
@@ -20,9 +20,9 @@ graphics::GraphicsEngine::GraphicsEngine(Window &window, Camera &camera) : windo
     glViewport(0, 0, viewportSize.first, viewportSize.second);
 
     glEnable(GL_DEPTH_TEST);
-//    glEnable(GL_CULL_FACE);
-//    glFrontFace(GL_CCW);
-//    glCullFace(GL_FRONT);
+    glEnable(GL_CULL_FACE);
+    glFrontFace(GL_CCW);
+    glCullFace(GL_FRONT);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
     // TODO make shader follow RAII principle
@@ -51,9 +51,9 @@ void graphics::GraphicsEngine::update() {
 
 
 void graphics::GraphicsEngine::runDrawCommands() {
-    if (drawCommandSet.empty()) return;
+    if (drawCommands.empty()) return;
 
-    auto currentMesh = drawCommandSet.begin()->object->getMesh();
+    auto currentMesh = drawCommands.begin()->object->getMesh();
     std::vector<glm::mat4> upcomingDrawMats;
     std::vector<glm::vec4> upcomingDrawColors;
 
@@ -70,20 +70,18 @@ void graphics::GraphicsEngine::runDrawCommands() {
 
         record.arrayObject->bind();
 
-        glDrawElementsInstanced(GL_TRIANGLES, mesh->getIndices().size(), GL_UNSIGNED_INT, (const GLvoid *)(record.indicesIndex * sizeof(uint)), instanceCount);
+        glDrawElementsInstanced(GL_TRIANGLES, mesh->getIndices().size(), GL_UNSIGNED_INT,
+                                (const GLvoid *) (record.indicesIndex * sizeof(uint)), instanceCount);
 
         upcomingDrawMats.clear();
         upcomingDrawColors.clear();
     };
 
-    for (auto &command: drawCommandSet) {
+    for (auto &command: drawCommands) {
         auto &object = command.object;
         // If the end of the current mesh bucket, render the bucket and reset
         if (object->getMesh() != currentMesh) {
             drawMesh(currentMesh);
-
-
-
             currentMesh = command.object->getMesh();
         }
 
@@ -93,7 +91,6 @@ void graphics::GraphicsEngine::runDrawCommands() {
 
     drawMesh(currentMesh);
 
-    drawCommandSet.clear();
 }
 
 void graphics::GraphicsEngine::setCamera(graphics::Camera &newCamera) {
@@ -118,7 +115,11 @@ void graphics::GraphicsEngine::draw(ObjectPtr object) {
     DrawCommand command;
     command.object = object;
 
-    drawCommandSet.insert(command);
+    drawCommands.insert(command);
+}
+
+void graphics::GraphicsEngine::remove(const graphics::ObjectPtr &object) {
+    std::erase_if(drawCommands, [&object](const DrawCommand &command) { return command.object == object; });
 }
 
 void graphics::GraphicsEngine::loadQueueIntoBuffers() {
@@ -132,9 +133,6 @@ void graphics::GraphicsEngine::loadQueueIntoBuffers() {
         meshRecord.colorBuffer = std::make_shared<ColorVertexBuffer>();
         meshRecord.matBuffer = std::make_shared<ModelMatBuffer>();
 
-        std::cout << "New mesh, loading at vertex index " << meshRecord.verticesIndex << ", indices index " << meshRecord.indicesIndex << std::endl;
-        std::cout << "with vertices size of " << mesh->getVertices().size() << " indices size of " << mesh->getIndices().size() << std::endl;
-
         VertexArrayBuilder builder;
         builder.addBuffer(vertexBuffer);
         builder.addBuffer(indexBuffer);
@@ -145,7 +143,7 @@ void graphics::GraphicsEngine::loadQueueIntoBuffers() {
 
         auto &meshIndices = mesh->getIndices();
 
-        for (auto index : meshIndices){
+        for (auto index: meshIndices) {
             indexBuffer->addIndex(index + meshRecord.verticesIndex);
         }
 

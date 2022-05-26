@@ -7,7 +7,7 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include "Object.h"
+#include "Drawable.h"
 #include "Camera.h"
 #include "buffers/VertexBuffer.h"
 #include "buffers/ModelMatBuffer.h"
@@ -45,6 +45,8 @@ namespace graphics {
 
         void draw(ObjectPtr object);
 
+        void remove(const ObjectPtr &object);
+
         void update();
 
         void setCamera(Camera &newCamera);
@@ -68,7 +70,7 @@ namespace graphics {
 
         std::unordered_map<MeshPtr, MeshRecord> loadedMeshes; // Meshes that have been loaded and their positions on the VBO and IBO;
         std::queue<MeshPtr> meshLoadingQueue;
-        std::multiset<DrawCommand> drawCommandSet; // Provides bucketing of commands based on DrawCommand < less operator
+        std::multiset<DrawCommand> drawCommands; // Provides bucketing of commands based on DrawCommand < less operator
 
         std::mutex objectMutex, modelMutex;
     };

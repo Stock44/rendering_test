@@ -2,8 +2,8 @@
 // Created by hiram on 5/4/22.
 //
 
-#ifndef CITYY_OBJECT_H
-#define CITYY_OBJECT_H
+#ifndef CITYY_DRAWABLE_H
+#define CITYY_DRAWABLE_H
 
 #include <glm/vec3.hpp>
 #include <memory>
@@ -13,21 +13,21 @@ namespace graphics {
 
     // TODO implement object color
     // TODO implement object textures
-    class Object {
+    class Drawable {
     public:
-        explicit Object(MeshPtr mesh);
+        explicit Drawable(MeshPtr mesh);
 
-        Object(MeshPtr mesh, glm::vec3 position);
+        Drawable(MeshPtr mesh, glm::vec3 position);
 
-        Object(MeshPtr mesh, float rotationAngle, glm::vec3 rotationAxis);
+        Drawable(MeshPtr mesh, float rotationAngle, glm::vec3 rotationAxis);
 
-        Object(MeshPtr mesh, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis);
+        Drawable(MeshPtr mesh, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis);
 
-        Object(MeshPtr mesh, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis,
-               glm::vec3 scale);
+        Drawable(MeshPtr mesh, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis,
+                 glm::vec3 scale);
 
-        Object(MeshPtr mesh, glm::vec4 color, glm::vec3 position, float rotationAngle,
-               glm::vec3 rotationAxis, glm::vec3 scale);
+        Drawable(MeshPtr mesh, glm::vec4 color, glm::vec3 position, float rotationAngle,
+                 glm::vec3 rotationAxis, glm::vec3 scale);
 
         [[nodiscard]] MeshPtr getMesh();
 
@@ -74,7 +74,7 @@ namespace graphics {
         float rotationAngle = 0.0f;
     };
 
-    typedef std::shared_ptr<Object> ObjectPtr;
+    typedef std::shared_ptr<Drawable> ObjectPtr;
 } // graphics
 
-#endif //CITYY_OBJECT_H
+#endif //CITYY_DRAWABLE_H

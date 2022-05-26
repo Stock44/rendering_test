@@ -8,7 +8,7 @@
 #include <span>
 #include "../graphics/GraphicsEngine.h"
 #include "TransitNetwork.h"
-#include "../graphics/Object.h"
+#include "../graphics/Drawable.h"
 
 namespace map {
     using namespace graphics;
