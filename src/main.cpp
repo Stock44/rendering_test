@@ -144,7 +144,7 @@ int main() {
 
     map::MapXMLTree tree = {"/home/hiram/Projects/citty/samples/sample_map.osm"};
     auto network = tree.generateNetwork();
-    map::TransitNetworkRenderer networkRenderer(network, graphics);
+    map::TransitNetworkRenderer networkRenderer(network);
 
     int currentNodeIndex = 0;
     auto currentWay = network.getHighways().at(10);
@@ -157,8 +157,6 @@ int main() {
     destinationMarker->setPosition(targetNode->getCoords());
 
 //    camera.setCameraPos(car->getPosition());
-
-    networkRenderer.render();
 
     std::cout << network.getHighwayCount() << std::endl;
     std::cout << network.getNodeCount() << std::endl;
@@ -283,6 +281,7 @@ int main() {
 
 //        std::cout << "FPS: " << 1000.0f / deltaTime.count() << std::endl;
         // expansion begin, add anything in here
+        networkRenderer.render(graphics);
 
         // expansion end
         handleInput();

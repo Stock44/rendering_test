@@ -6,12 +6,8 @@
 #include <memory>
 
 namespace map {
-    TransitNetworkRenderer::TransitNetworkRenderer(TransitNetwork &network, GraphicsEngine &graphics) : network(
-            network), graphics(graphics) {
-
-    }
-
-    void TransitNetworkRenderer::render() {
+    TransitNetworkRenderer::TransitNetworkRenderer(TransitNetwork &network) : network(
+            network) {
         static const float laneWidth = 2.75;
 
         auto highways = network.getHighways();
@@ -61,11 +57,8 @@ namespace map {
                 auto zDistance = destination.z - origin.z;
                 auto distance = sqrt(pow(xDistance, 2) + pow(zDistance, 2));
 
-
                 auto roadPosition = glm::vec3(origin.x + xDistance / 2.0f, 0.0f, origin.z + zDistance / 2.0f);
                 auto roadRotation = std::atan2(xDistance, zDistance) + std::numbers::pi / 2.0f;
-
-
 
                 for (int lane = 0; lane < totalLanes + 1; lane++) {
                     auto laneOffsetDistance = static_cast<float>(lane) * laneWidth - (laneWidth * totalLanes) / 2;
@@ -74,8 +67,8 @@ namespace map {
                                                                                roadPosition + laneOffset, roadRotation,
                                                                                glm::vec3(0.0f, 1.0f, 0.0f),
                                                                                glm::vec3(distance, 1.0f, 0.1f));
-//                    auto newLaneSeparatorID = graphics.addObject(newLaneSeparator);
-//                    highwayObjects[highwayID].push_back(newLaneSeparatorID);
+
+                    objects.push_back(newLaneSeparator);
                 }
 
                 auto newObject = std::make_shared<graphics::Object>(road, color,
@@ -86,10 +79,14 @@ namespace map {
                                                                               static_cast<float>(
                                                                                       lanes.second +
                                                                                       lanes.first) * laneWidth));
-//                auto newObjectID = graphics.addObject(newObject);
 
-//                highwayObjects[highwayID].push_back(newObjectID);
+
+                objects.push_back(newObject);
             }
         }
+    }
+
+    void TransitNetworkRenderer::render(GraphicsEngine &graphics) {
+        for (auto object : objects) graphics.draw(object);
     }
 } // map

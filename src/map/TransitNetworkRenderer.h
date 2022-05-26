@@ -17,9 +17,9 @@ namespace map {
     // TODO implement support for updating the map if the transit network changes.
     class TransitNetworkRenderer {
     public:
-        TransitNetworkRenderer(TransitNetwork &network, GraphicsEngine &graphics);
+        explicit TransitNetworkRenderer(TransitNetwork &network);
 
-        void render();
+        void render(GraphicsEngine &graphics);
 
 
     private:
@@ -38,10 +38,9 @@ namespace map {
 
         static const inline auto road = std::make_shared<graphics::Mesh>(roadVertices, roadIndices);
 
-        // Each highway (per ID) has a vector of 3D graphics objects that represent it
-        std::unordered_map<int, std::vector<ObjectID>> highwayObjects;
+        // Each highway (per ID) has a vector of 3D graphics objects that represents it
+        std::vector<ObjectPtr> objects;
         TransitNetwork &network;
-        GraphicsEngine &graphics;
     };
 
 } // map
