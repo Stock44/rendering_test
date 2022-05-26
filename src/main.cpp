@@ -284,10 +284,6 @@ int main() {
 //        std::cout << "FPS: " << 1000.0f / deltaTime.count() << std::endl;
         // expansion begin, add anything in here
 
-        auto object = std::make_shared<graphics::Object> (cube);
-//        object->setColor({1.0f, 1.0f, 1.0f, 1.0f});
-        graphics.draw(object);
-
         // expansion end
         handleInput();
         graphics.update();

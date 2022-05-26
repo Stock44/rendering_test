@@ -38,12 +38,11 @@ void graphics::GraphicsEngine::update() {
     if (vertexBuffer->isDirty()) vertexBuffer->upload();
     if (indexBuffer->isDirty()) indexBuffer->upload();
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     shader.use();
     camera.use(shader);
 
-    // For all models, add any new mesh mats.
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     runDrawCommands();
 
