@@ -39,7 +39,7 @@ namespace map {
         static const inline auto road = std::make_shared<graphics::Mesh>(roadVertices, roadIndices);
 
         // Each highway (per ID) has a vector of 3D graphics objects that represents it
-        std::vector<ObjectPtr> objects;
+        std::vector<DrawablePtr> objects;
         TransitNetwork &network;
     };
 

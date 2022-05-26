@@ -74,7 +74,7 @@ namespace graphics {
         float rotationAngle = 0.0f;
     };
 
-    typedef std::shared_ptr<Drawable> ObjectPtr;
+    typedef std::shared_ptr<Drawable> DrawablePtr;
 } // graphics
 
 #endif //CITYY_DRAWABLE_H

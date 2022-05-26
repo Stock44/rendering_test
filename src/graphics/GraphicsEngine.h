@@ -25,7 +25,7 @@ namespace graphics {
     class GraphicsEngine {
     public:
         struct DrawCommand {
-            ObjectPtr object;
+            DrawablePtr object;
 
             // Provides ordering of commands into buckets by multiset
             bool operator<(const DrawCommand &other) const;
@@ -43,9 +43,9 @@ namespace graphics {
 
         void loadMesh(MeshPtr mesh);
 
-        void draw(ObjectPtr object);
+        void draw(DrawablePtr object);
 
-        void remove(const ObjectPtr &object);
+        void remove(const DrawablePtr &object);
 
         void update();
 

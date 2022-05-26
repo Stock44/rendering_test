@@ -109,7 +109,7 @@ void graphics::GraphicsEngine::loadMesh(graphics::MeshPtr mesh) {
     meshLoadingQueue.push(mesh);
 }
 
-void graphics::GraphicsEngine::draw(ObjectPtr object) {
+void graphics::GraphicsEngine::draw(DrawablePtr object) {
     loadMesh(object->getMesh());
 
     DrawCommand command;
@@ -118,7 +118,7 @@ void graphics::GraphicsEngine::draw(ObjectPtr object) {
     drawCommands.insert(command);
 }
 
-void graphics::GraphicsEngine::remove(const graphics::ObjectPtr &object) {
+void graphics::GraphicsEngine::remove(const graphics::DrawablePtr &object) {
     std::erase_if(drawCommands, [&object](const DrawCommand &command) { return command.object == object; });
 }
 
