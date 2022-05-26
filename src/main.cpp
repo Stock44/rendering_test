@@ -1,5 +1,5 @@
 #include "graphics/GraphicsEngine.h"
-#include "graphics/Model.h"
+#include "graphics/Mesh.h"
 #include "graphics/Object.h"
 #include "map/MapXMLTree.h"
 #include "map/TransitNetworkRenderer.h"
@@ -12,7 +12,7 @@
 int main() {
     // Initialize window, camera and graphics engine.
     Window window({500, 500});
-    graphics::Camera camera(glm::dvec3(0.0f, 1000.0f, 0.0f), 35.0f,
+    graphics::Camera camera(glm::dvec3(0.0f, 1.0f, 0.0f), 35.0f,
                             1.0f, 0.0f, 0.0f);
     graphics::GraphicsEngine graphics = graphics::GraphicsEngine(window, camera);
 
@@ -27,7 +27,7 @@ int main() {
 
     // Input handlers
     auto handleInput = [&] {
-        const float cameraSpeed = 200.0f * deltaTime.count() / 1000.0f;
+        const float cameraSpeed = 2.0f * deltaTime.count() / 1000.0f;
         auto cameraPos = camera.getCameraPos();
         auto cameraFront = camera.getCameraFront();
         auto cameraUp = camera.getCameraUp();
@@ -129,7 +129,7 @@ int main() {
                                           2, 7, 6,
                                   });
 
-    auto cube = std::make_shared<graphics::Model>("cube", cubeVertices, cubeIndices);
+    auto cube = std::make_shared<graphics::Mesh>(cubeVertices, cubeIndices);
 
     auto destinationMarker = std::make_shared<graphics::Object>(cube);
     destinationMarker->setColor(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
@@ -137,8 +137,8 @@ int main() {
     auto car = std::make_shared<graphics::Object>(cube);
     car->setScale(glm::vec3(1.9f, 1.5f, 4.7f));
     car->setColor(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-    graphics.addObject(car);
-    graphics.addObject(destinationMarker);
+//    graphics.addObject(car);
+//    graphics.addObject(destinationMarker);
 
     // Initialize basic models and objects
 
@@ -156,7 +156,7 @@ int main() {
     car->setPosition(initialNode->getCoords());
     destinationMarker->setPosition(targetNode->getCoords());
 
-    camera.setCameraPos(car->getPosition());
+//    camera.setCameraPos(car->getPosition());
 
     networkRenderer.render();
 
@@ -166,7 +166,7 @@ int main() {
     std::cout << "Initial node: " << initialNode->getId() << std::endl;
 
     // A* algorithm implementation
-    auto pathfindingThread = std::thread([&] {
+    auto pathfindingThread = [&] {
         std::unordered_map<int, float> nodeDistances = {{initialNode->getId(), 0}};
         std::unordered_map<int, float> nodeCosts = {
                 {initialNode->getId(), glm::distance(initialNode->getCoords(), targetNode->getCoords())}};
@@ -238,13 +238,13 @@ int main() {
                     marker->setColor(glm::vec4(0.0f, 0.5f, 0.0f, 1.0f));
                     marker->setScale(glm::vec3(5.0f));
 
-                    nodeMarkers.push_back(graphics.addObject(marker));
+//                    nodeMarkers.push_back(graphics.addObject(marker));
                 }
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
         for (auto object: nodeMarkers) {
-            graphics.deleteObject(object);
+//            graphics.deleteObject(object);
         }
 
         nodeMarkers.clear();
@@ -254,7 +254,7 @@ int main() {
         marker->setColor(glm::vec4(0.0f, 1.0f, 0.5f, 1.0f));
         marker->setScale(glm::vec3(20.0f));
 
-        nodeMarkers.push_back(graphics.addObject(marker));
+//        nodeMarkers.push_back(graphics.addObject(marker));
 
         auto currentNode = targetNode;
         while (visitedFrom.contains(currentNode->getId())) {
@@ -270,21 +270,23 @@ int main() {
             object->setColor({1.0f, 0.6f, 0.1f, 1.0f});
             object->setScale({distance, 1.0f, 0.5f});
             object->setRotation(lineRotation, glm::vec3(0.0f, 1.0f, 0.0f));
-            graphics.addObject(object);
+//            graphics.addObject(object);
             currentNode = prevNode;
         }
 
 
-    });
+    };
 
     // Render loop
     while (!window.shouldWindowClose()) {
         lastFrame = std::chrono::steady_clock::now(); // Store starting time-point of current frame;
 
-        std::cout << "FPS: " << 1000.0f / deltaTime.count() << std::endl;
+//        std::cout << "FPS: " << 1000.0f / deltaTime.count() << std::endl;
         // expansion begin, add anything in here
 
-
+        auto object = std::make_shared<graphics::Object> (cube);
+//        object->setColor({1.0f, 1.0f, 1.0f, 1.0f});
+        graphics.draw(object);
 
         // expansion end
         handleInput();
@@ -299,6 +301,6 @@ int main() {
         deltaTime = std::chrono::steady_clock::now() - lastFrame;
     }
 
-    pathfindingThread.join();
+//    pathfindingThread.join();
     return 0;
 }

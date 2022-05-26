@@ -36,7 +36,7 @@ namespace map {
                 3, 2, 0,
         };
 
-        static const inline auto road = std::make_shared<graphics::Model>("road", roadVertices, roadIndices);
+        static const inline auto road = std::make_shared<graphics::Mesh>(roadVertices, roadIndices);
 
         // Each highway (per ID) has a vector of 3D graphics objects that represent it
         std::unordered_map<int, std::vector<ObjectID>> highwayObjects;

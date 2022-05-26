@@ -7,7 +7,7 @@
 
 #include <glm/vec3.hpp>
 #include <memory>
-#include "Model.h"
+#include "Mesh.h"
 
 namespace graphics {
 
@@ -15,21 +15,21 @@ namespace graphics {
     // TODO implement object textures
     class Object {
     public:
-        explicit Object(ModelPtr model);
+        explicit Object(MeshPtr mesh);
 
-        Object(ModelPtr model, glm::vec3 position);
+        Object(MeshPtr mesh, glm::vec3 position);
 
-        Object(ModelPtr model, float rotationAngle, glm::vec3 rotationAxis);
+        Object(MeshPtr mesh, float rotationAngle, glm::vec3 rotationAxis);
 
-        Object(ModelPtr model, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis);
+        Object(MeshPtr mesh, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis);
 
-        Object(ModelPtr model, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis,
+        Object(MeshPtr mesh, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis,
                glm::vec3 scale);
 
-        Object(ModelPtr model, glm::vec4 color, glm::vec3 position, float rotationAngle,
+        Object(MeshPtr mesh, glm::vec4 color, glm::vec3 position, float rotationAngle,
                glm::vec3 rotationAxis, glm::vec3 scale);
 
-        [[nodiscard]] ModelPtr getModel();
+        [[nodiscard]] MeshPtr getMesh();
 
         [[nodiscard]] glm::mat4 getModelMatrix();
 
@@ -60,7 +60,7 @@ namespace graphics {
 
         bool dirty = false;
 
-        ModelPtr model;
+        MeshPtr mesh;
 
         glm::mat4 modelMatrix = glm::mat4(1.0f);
 

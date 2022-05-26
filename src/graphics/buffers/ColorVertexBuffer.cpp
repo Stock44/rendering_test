@@ -4,6 +4,8 @@
 
 #include "ColorVertexBuffer.h"
 
+#include <utility>
+
 namespace graphics {
     void ColorVertexBuffer::enableAttribs() {
         glBindBuffer(GL_ARRAY_BUFFER, ID);
@@ -22,7 +24,7 @@ namespace graphics {
     }
 
     void ColorVertexBuffer::setVertices(std::vector<Color> newVertices) {
-        vertices = newVertices;
+        vertices = std::move(newVertices);
         dirty = true;
     }
 

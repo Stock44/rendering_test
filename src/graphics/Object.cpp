@@ -10,24 +10,24 @@
 #include <glm/ext/matrix_transform.hpp>
 
 namespace graphics {
-    Object::Object(std::shared_ptr<Model> model) : model(model) {}
+    Object::Object(std::shared_ptr<Mesh> mesh) : mesh(mesh) {}
 
-    Object::Object(std::shared_ptr<Model> model, glm::vec3 position) : model(model), position(position) {
+    Object::Object(std::shared_ptr<Mesh> mesh, glm::vec3 position) : mesh(mesh), position(position) {
         updateModelMatrix();
         dirty = false;
     }
 
-    Object::Object(std::shared_ptr<Model> model, float rotationAngle, glm::vec3 rotationAxis) : model(model),
-                                                                                                rotationAngle(
+    Object::Object(std::shared_ptr<Mesh> mesh, float rotationAngle, glm::vec3 rotationAxis) : mesh(mesh),
+                                                                                               rotationAngle(
                                                                                                         rotationAngle),
-                                                                                                rotationAxis(
+                                                                                               rotationAxis(
                                                                                                         rotationAxis) {
         updateModelMatrix();
         dirty = false;
     }
 
-    Object::Object(std::shared_ptr<Model> model, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis)
-            : model(model), rotationAngle(rotationAngle), rotationAxis(rotationAxis), position(position) {
+    Object::Object(std::shared_ptr<Mesh> mesh, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis)
+            : mesh(mesh), rotationAngle(rotationAngle), rotationAxis(rotationAxis), position(position) {
         updateModelMatrix();
         dirty = false;
     }
@@ -61,8 +61,8 @@ namespace graphics {
         dirty = true;
     }
 
-    std::shared_ptr<Model> Object::getModel() {
-        return model;
+    std::shared_ptr<Mesh> Object::getMesh() {
+        return mesh;
     }
 
     bool Object::isDirty() {
@@ -89,15 +89,15 @@ namespace graphics {
         return rotationAngle;
     }
 
-    Object::Object(std::shared_ptr<Model> model, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis,
-                   glm::vec3 scale) : model(model), rotationAngle(rotationAngle), rotationAxis(rotationAxis),
+    Object::Object(std::shared_ptr<Mesh> model, glm::vec3 position, float rotationAngle, glm::vec3 rotationAxis,
+                   glm::vec3 scale) : mesh(model), rotationAngle(rotationAngle), rotationAxis(rotationAxis),
                                       position(position), scale(scale) {
         updateModelMatrix();
         dirty = false;
     }
 
-    Object::Object(std::shared_ptr<Model> model, glm::vec4 color, glm::vec3 position, float rotationAngle,
-                   glm::vec3 rotationAxis, glm::vec3 scale) : model(model), color(color), rotationAngle(rotationAngle), rotationAxis(rotationAxis),
+    Object::Object(std::shared_ptr<Mesh> model, glm::vec4 color, glm::vec3 position, float rotationAngle,
+                   glm::vec3 rotationAxis, glm::vec3 scale) : mesh(model), color(color), rotationAngle(rotationAngle), rotationAxis(rotationAxis),
                                                               position(position), scale(scale){
         updateModelMatrix();
         dirty = false;

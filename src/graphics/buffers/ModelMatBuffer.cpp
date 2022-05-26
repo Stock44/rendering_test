@@ -3,6 +3,7 @@
 //
 
 #include <algorithm>
+#include <utility>
 #include "ModelMatBuffer.h"
 
 namespace graphics {
@@ -33,7 +34,7 @@ namespace graphics {
     }
 
     void ModelMatBuffer::setModelMats(std::vector<glm::mat4> newMats) {
-        modelMats = newMats;
+        modelMats = std::move(newMats);
         dirty = true;
     }
 

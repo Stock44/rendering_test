@@ -17,51 +17,58 @@
 #include "buffers/ColorVertexBuffer.h"
 #include <queue>
 #include <unordered_map>
+#include <set>
 
 namespace graphics {
     // TODO implement color for objects
     // TODO implement textures for objects
     class GraphicsEngine {
     public:
+        struct DrawCommand {
+            ObjectPtr object;
 
+            // Provides ordering of commands into buckets by multiset
+            bool operator<(const DrawCommand &other) const;
+        };
 
-        struct ModelData {
-            ModelLoc location; // Model location in engine's VBO
-            std::optional<ModelLoc> indicesLocation; // If model uses elements, location of the indices in the EBO.
-            std::vector<ObjectPtr> instances; // Model instances
-            std::shared_ptr<VertexArray> modelVAO = nullptr; // VAO of this specific model (should be bound to engine VBO and modelMats of this model
-            std::shared_ptr<ColorVertexBuffer> colors = nullptr; // Vertex buffer to store this model's instance colors.
-            std::shared_ptr<ModelMatBuffer> modelMats = nullptr; // MBO of this model's instances
+        struct MeshRecord {
+            uint verticesIndex;
+            uint indicesIndex;
+            std::shared_ptr<VertexArray> arrayObject = nullptr; // VAO of this specific mesh (should be bound to engine VBO and modelMats of this mesh
+            std::shared_ptr<ColorVertexBuffer> colorBuffer = nullptr;
+            std::shared_ptr<ModelMatBuffer> matBuffer = nullptr;
         };
 
         explicit GraphicsEngine(Window &window, Camera &camera);
 
+        void loadMesh(MeshPtr mesh);
+
+        void draw(ObjectPtr object);
+
         void update();
-
-        // TODO function to delete a model from memory
-        void addModel(ModelPtr model);
-
-        // Thread safe!
-        ObjectID addObject(const ObjectPtr &object);
-
-        void deleteObject(const ObjectID &id);
 
         void setCamera(Camera &newCamera);
 
         void setViewportSize(std::pair<int, int> newSize);
 
     private:
+
+        void loadQueueIntoBuffers();
+
+        void runDrawCommands();
+
         Window &window;
         Camera &camera;
         Shader shader;
 
         std::pair<int, int> viewportSize;
 
-        std::shared_ptr<VertexBuffer> VBO = nullptr;
-        std::shared_ptr<IndexBuffer> EBO = nullptr;
+        std::shared_ptr<VertexBuffer> vertexBuffer = nullptr; // Shared VBO for all models
+        std::shared_ptr<IndexBuffer> indexBuffer = nullptr; // Shared EBO for all models
 
-        std::queue<ObjectPtr> objectLoadingQueue;
-        std::unordered_map<std::string, ModelData> modelMap; // Find model data by the model name
+        std::unordered_map<MeshPtr, MeshRecord> loadedMeshes; // Meshes that have been loaded and their positions on the VBO and IBO;
+        std::queue<MeshPtr> meshLoadingQueue;
+        std::multiset<DrawCommand> drawCommandSet; // Provides bucketing of commands based on DrawCommand < less operator
 
         std::mutex objectMutex, modelMutex;
     };

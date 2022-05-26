@@ -20,98 +20,81 @@ graphics::GraphicsEngine::GraphicsEngine(Window &window, Camera &camera) : windo
     glViewport(0, 0, viewportSize.first, viewportSize.second);
 
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glFrontFace(GL_CCW);
-    glCullFace(GL_FRONT);
+//    glEnable(GL_CULL_FACE);
+//    glFrontFace(GL_CCW);
+//    glCullFace(GL_FRONT);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
     // TODO make shader follow RAII principle
     shader.init();
 
-    VBO.reset(new VertexBuffer());
-    EBO.reset(new IndexBuffer());
+    vertexBuffer.reset(new VertexBuffer());
+    indexBuffer.reset(new IndexBuffer());
 }
 
 void graphics::GraphicsEngine::update() {
-    if (VBO->isDirty()) {
-        VBO->upload();
-    }
-    if (EBO->isDirty()) {
-        EBO->upload();
-    }
+    loadQueueIntoBuffers();
+
+    if (vertexBuffer->isDirty()) vertexBuffer->upload();
+    if (indexBuffer->isDirty()) indexBuffer->upload();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     shader.use();
     camera.use(shader);
 
-    // For all models, add any new model mats.
+    // For all models, add any new mesh mats.
 
-    std::lock_guard<std::mutex> modelGuard(modelMutex);
-    for (auto &modelType: modelMap) {
-        // Guard against any object modifications
-        std::lock_guard<std::mutex> objectGuard(objectMutex);
-        auto &data = modelType.second;
-
-        auto &instances = data.instances;
-
-        for (auto it = instances.begin(); it != instances.end(); it++) {
-            auto object = it->get();
-            if (object->isDirty()) {
-                int index = std::distance(instances.begin(), it);
-                data.modelMats->replaceModelMat(object->getModelMatrix(), index);
-                object->setDirty(false);
-            }
-        }
-
-        // If the model mats haven't been added, add them.
-        if (data.modelMats->isDirty()) {
-            data.modelMats->upload();
-        }
-
-        if (data.colors->isDirty()) {
-            data.colors->upload();
-        }
-
-        // Bind model data
-        data.modelVAO->bind();
-        auto &location = data.location;
-
-        // If model has indices, render as elements.
-        // Else render vertices directly
-        if (data.indicesLocation.has_value()) {
-            auto &indicesLocation = data.indicesLocation.value();
-            glDrawElementsInstanced(GL_TRIANGLES, indicesLocation.second, GL_UNSIGNED_INT,
-                                    (const GLvoid *) (indicesLocation.first * sizeof(uint)),
-                                    modelType.second.instances.size());
-        } else {
-            glDrawArraysInstanced(GL_TRIANGLES, location.first, location.second, data.instances.size());
-        }
-    }
+    runDrawCommands();
 
     window.swapBuffers();
 }
 
-graphics::ObjectID graphics::GraphicsEngine::addObject(const graphics::ObjectPtr &object) {
-    auto model = object->getModel();
-    auto modelName = model->getName();
 
-    // If model is not loaded, add it to add it to newVertices
-    if (modelMap.count(modelName) == 0) addModel(model);
+void graphics::GraphicsEngine::runDrawCommands() {
+    if (drawCommandSet.empty()) return;
 
-    // Add object to the vector
+    auto currentMesh = drawCommandSet.begin()->object->getMesh();
+    std::vector<glm::mat4> upcomingDrawMats;
+    std::vector<glm::vec4> upcomingDrawColors;
 
-    std::lock_guard<std::mutex> guard(objectMutex);
-    auto &objectVector = modelMap[modelName].instances;
-    auto modelMatrix = object->getModelMatrix();
-    auto modelColor = object->getColor();
-    objectVector.insert(objectVector.end(), object);
+    auto drawMesh = [&upcomingDrawColors, &upcomingDrawMats, this](MeshPtr mesh) {
+        auto &record = this->loadedMeshes.at(mesh);
+
+        uint instanceCount = upcomingDrawColors.size();
+
+        record.matBuffer->setModelMats(upcomingDrawMats);
+        record.colorBuffer->setVertices(upcomingDrawColors);
+
+        record.matBuffer->upload();
+        record.colorBuffer->upload();
+
+        record.arrayObject->bind();
+
+        glDrawElementsInstanced(GL_TRIANGLES, mesh->getIndices().size(), GL_UNSIGNED_INT, (const GLvoid *)(record.indicesIndex * sizeof(uint)), instanceCount);
+
+        upcomingDrawMats.clear();
+        upcomingDrawColors.clear();
+    };
+
+    for (auto &command: drawCommandSet) {
+        auto &object = command.object;
+        // If the end of the current mesh bucket, render the bucket and reset
+        if (object->getMesh() != currentMesh) {
+            drawMesh(currentMesh);
 
 
-    modelMap.at(modelName).modelMats->addModelMat(modelMatrix);
-    modelMap.at(modelName).colors->addVertex(modelColor);
-    // Remove object from the newModelMats
-    return {object->getModel()->getName(), modelMap.at(modelName).instances.size() - 1};
+
+            currentMesh = command.object->getMesh();
+        }
+
+        upcomingDrawColors.push_back(object->getColor());
+        upcomingDrawMats.push_back(object->getModelMatrix());
+    }
+
+    drawMesh(currentMesh);
+
+    drawCommandSet.clear();
 }
 
 void graphics::GraphicsEngine::setCamera(graphics::Camera &newCamera) {
@@ -123,63 +106,58 @@ void graphics::GraphicsEngine::setViewportSize(std::pair<int, int> newSize) {
     viewportSize = newSize;
 }
 
-void graphics::GraphicsEngine::deleteObject(const ObjectID &id) {
-    auto objectModelName = id.first;
-    auto objectIndex = id.second;
-
-    std::lock_guard<std::mutex> guard(objectMutex);
-    auto &modelData = modelMap.at(objectModelName);
-    auto &instances = modelData.instances;
-    auto modelMats = modelData.modelMats;
-    auto colors = modelData.colors;
-
-    instances.erase(instances.begin() + objectIndex);
-    modelMats->deleteModelMat(objectIndex);
-    colors->deleteVertex(objectIndex);
+void graphics::GraphicsEngine::loadMesh(graphics::MeshPtr mesh) {
+    // If mesh is already loaded, don't add it
+    if (loadedMeshes.contains(mesh)) return;
+    loadedMeshes.emplace(mesh, MeshRecord());
+    meshLoadingQueue.push(mesh);
 }
 
-void graphics::GraphicsEngine::addModel(const ModelPtr model) {
-    // Get vertices
-    auto modelVertices = model->getVertices();
-    // Get the verticesLocation in the VBO of the model
-    auto start = VBO->getSize();
-    auto verticesLocation = ModelLoc(start, modelVertices.size());
+void graphics::GraphicsEngine::draw(ObjectPtr object) {
+    loadMesh(object->getMesh());
 
-    // Initialize newModelData of this model
-    ModelData newModelData;
-    newModelData.location = verticesLocation;
-    newModelData.colors.reset(new ColorVertexBuffer());
-    newModelData.modelMats.reset(new ModelMatBuffer());
+    DrawCommand command;
+    command.object = object;
 
-    VertexArrayBuilder builder;
-    builder.addBuffer(VBO);
-    builder.addBuffer(newModelData.modelMats);
-    builder.addBuffer(newModelData.colors);
+    drawCommandSet.insert(command);
+}
 
-    // If the model has index newModelData, add it to the total newModelData and bind EBO.
-    if (model->usesElements()) {
-        auto modelIndices = model->getIndices();
-        auto indicesStart = EBO->getSize();
-        auto indicesLocation = ModelLoc(indicesStart, modelIndices.size());
+void graphics::GraphicsEngine::loadQueueIntoBuffers() {
+    while (!meshLoadingQueue.empty()) {
 
-        newModelData.indicesLocation = {indicesLocation};
-        builder.addBuffer(EBO);
+        auto mesh = meshLoadingQueue.front();
+        auto &meshRecord = loadedMeshes.at(mesh);
 
-        std::for_each(modelIndices.begin(), modelIndices.end(), [&](uint index) {
-            EBO->addIndex(index + verticesLocation.first);
-        });
+        meshRecord.verticesIndex = vertexBuffer->getSize();
+        meshRecord.indicesIndex = indexBuffer->getSize();
+        meshRecord.colorBuffer = std::make_shared<ColorVertexBuffer>();
+        meshRecord.matBuffer = std::make_shared<ModelMatBuffer>();
+
+        std::cout << "New mesh, loading at vertex index " << meshRecord.verticesIndex << ", indices index " << meshRecord.indicesIndex << std::endl;
+        std::cout << "with vertices size of " << mesh->getVertices().size() << " indices size of " << mesh->getIndices().size() << std::endl;
+
+        VertexArrayBuilder builder;
+        builder.addBuffer(vertexBuffer);
+        builder.addBuffer(indexBuffer);
+        builder.addBuffer(meshRecord.colorBuffer);
+        builder.addBuffer(meshRecord.matBuffer);
+
+        meshRecord.arrayObject = builder.build();
+
+        auto &meshIndices = mesh->getIndices();
+
+        for (auto index : meshIndices){
+            indexBuffer->addIndex(index + meshRecord.verticesIndex);
+        }
+
+        vertexBuffer->addVertices(mesh->getVertices());
+
+        meshLoadingQueue.pop();
     }
-
-    std::lock_guard<std::mutex> guard(modelMutex);
-    newModelData.modelVAO = builder.build();
-    modelMap[model->getName()] = newModelData;
-    VBO->addVertices(modelVertices);
 }
 
 
-
-
-
-
-
-
+bool graphics::GraphicsEngine::DrawCommand::operator<(const graphics::GraphicsEngine::DrawCommand &other) const {
+    // Separate by mesh used
+    return other.object->getMesh() < object->getMesh();
+}

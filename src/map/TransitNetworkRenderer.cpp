@@ -74,8 +74,8 @@ namespace map {
                                                                                roadPosition + laneOffset, roadRotation,
                                                                                glm::vec3(0.0f, 1.0f, 0.0f),
                                                                                glm::vec3(distance, 1.0f, 0.1f));
-                    auto newLaneSeparatorID = graphics.addObject(newLaneSeparator);
-                    highwayObjects[highwayID].push_back(newLaneSeparatorID);
+//                    auto newLaneSeparatorID = graphics.addObject(newLaneSeparator);
+//                    highwayObjects[highwayID].push_back(newLaneSeparatorID);
                 }
 
                 auto newObject = std::make_shared<graphics::Object>(road, color,
@@ -86,9 +86,9 @@ namespace map {
                                                                               static_cast<float>(
                                                                                       lanes.second +
                                                                                       lanes.first) * laneWidth));
-                auto newObjectID = graphics.addObject(newObject);
+//                auto newObjectID = graphics.addObject(newObject);
 
-                highwayObjects[highwayID].push_back(newObjectID);
+//                highwayObjects[highwayID].push_back(newObjectID);
             }
         }
     }
