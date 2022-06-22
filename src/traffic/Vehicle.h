@@ -6,7 +6,6 @@
 #define CITYY_VEHICLE_H
 
 #include <glm/vec3.hpp>
-#include "../graphics/Drawable.h"
 
 namespace traffic {
 
@@ -26,7 +25,6 @@ namespace traffic {
         void setSpeed(float speed);
 
     private:
-        graphics::DrawablePtr drawable;
         glm::vec3 position = glm::vec3(0.0f);
         float angle = 0.0f;
         float speed = 0.0f;

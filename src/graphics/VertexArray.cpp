@@ -4,14 +4,33 @@
 
 #include "VertexArray.h"
 
-#include <utility>
-
 namespace graphics {
 
-    void VertexArray::bind() {
+    void VertexArray::bind() const {
         glBindVertexArray(ID);
     }
 
-    VertexArray::VertexArray(GLuint ID, std::vector<std::shared_ptr<Buffer>>) : ID(ID), buffers(std::move(
-            buffers)) {}
+    VertexArray::VertexArray() { // NOLINT(cppcoreguidelines-pro-type-member-init)
+        glGenVertexArrays(1, &ID);
+    }
+
+    void VertexArray::registerBuffer(Buffer *buffer) {
+        glBindVertexArray(ID);
+
+        buffer->enableAttribs();
+
+        glBindVertexArray(0);
+    }
+
+    void VertexArray::registerBuffer(Buffer &buffer) {
+        glBindVertexArray(ID);
+
+        buffer.enableAttribs();
+
+        glBindVertexArray(0);
+    }
+
+    VertexArray::~VertexArray() {
+        glDeleteVertexArrays(1, &ID);
+    }
 } // graphics

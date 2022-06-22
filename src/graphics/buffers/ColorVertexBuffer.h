@@ -6,28 +6,34 @@
 #define CITYY_COLORVERTEXBUFFER_H
 
 #include <vector>
+#include <glm/detail/type_vec3.hpp>
 #include "Buffer.h"
-#include "../types.h"
+#include "../components/Color.h"
 
 namespace graphics {
 
     class ColorVertexBuffer : public Buffer{
     public:
+        [[nodiscard]] long getSize() const override;
+
         void enableAttribs() override;
-
-        int getSize() override;
-
-        void addVertices(std::vector<Color> newVertices);
 
         void addVertex(Color newVertex);
 
-        void setVertices(std::vector<Color> newVertices);
+        void addVertices(std::vector<Color> const &newVertices);
 
-        void modifyVertices(std::vector<Color> modifiedVertices, uint position);
+        void setVertices(std::vector<Color> &&newVertices);
 
-        void deleteVertex(int index);
+        void setVertices(std::vector<Color> const &newVertices);
+
+        void modifyVertices(std::vector<Color> modVertices, long modPosition);
+
+        void deleteVertex(long position);
 
         void upload() override;
+
+        void setVertex(Color newColor, long modPosition);
+
     private:
         std::vector<Color> vertices;
     };

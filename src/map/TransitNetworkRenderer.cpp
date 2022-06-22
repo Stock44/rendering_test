@@ -16,7 +16,8 @@ namespace map {
             auto highwayID = highwayRecord.first;
             auto highway = highwayRecord.second;
 
-            auto highwayNodes = highway->getNodes();
+            auto startNode = highway->getOrigin();
+            auto endNode = highway->getDestination();
             auto color = glm::vec4(1.0f);
 
             // Switch for selecting way color
@@ -46,47 +47,41 @@ namespace map {
                     break;
             }
 
-            auto lanes = highway->getLanes();
-            auto totalLanes = lanes.first + lanes.second;
+            auto [forwardLanes, backwardLanes] = highway->getLanes();
+            auto totalLanes = forwardLanes + backwardLanes;
 
-            // For each node in the highway, render a highway segment
-            for (auto index = 1; index != highwayNodes.size(); ++index) {
-                auto origin = highwayNodes.at(index - 1)->getCoords();
-                auto destination = highwayNodes.at(index)->getCoords();
-                auto xDistance = destination.x - origin.x;
-                auto zDistance = destination.z - origin.z;
-                auto distance = sqrt(pow(xDistance, 2) + pow(zDistance, 2));
+            auto xDistance = endNode->getPosition().x - startNode->getPosition().x;
+            auto zDistance = endNode->getPosition().z - startNode->getPosition().z;
+            auto distance = sqrt(pow(xDistance, 2) + pow(zDistance, 2));
 
-                auto roadPosition = glm::vec3(origin.x + xDistance / 2.0f, 0.0f, origin.z + zDistance / 2.0f);
-                auto roadRotation = std::atan2(xDistance, zDistance) + std::numbers::pi / 2.0f;
+            auto roadPosition = glm::vec3(startNode->getPosition().x + xDistance / 2.0f, 0.0f,
+                                          startNode->getPosition().z + zDistance / 2.0f);
+            auto roadRotation = std::atan2(xDistance, zDistance) + std::numbers::pi / 2.0f;
 
-                for (int lane = 0; lane < totalLanes + 1; lane++) {
-                    auto laneOffsetDistance = static_cast<float>(lane) * laneWidth - (laneWidth * totalLanes) / 2;
-                    auto laneOffset = glm::vec3(laneOffsetDistance * sin(roadRotation), 0.1f, laneOffsetDistance * cos(roadRotation));
-                    auto newLaneSeparator = std::make_shared<graphics::Drawable>(road, glm::vec4(0.0f),
-                                                                               roadPosition + laneOffset, roadRotation,
-                                                                                 glm::vec3(0.0f, 1.0f, 0.0f),
-                                                                                 glm::vec3(distance, 1.0f, 0.1f));
+            for (int lane = 0; lane < totalLanes + 1; lane++) {
+                auto laneOffsetDistance = static_cast<float>(lane) * laneWidth - (laneWidth * totalLanes) / 2;
+                auto laneOffset = glm::vec3(laneOffsetDistance * sin(roadRotation), 0.1f,
+                                            laneOffsetDistance * cos(roadRotation));
+                auto newLaneSeparator = std::make_shared<graphics::Drawable>(road, glm::vec4(0.0f),
+                                                                             roadPosition + laneOffset, roadRotation,
+                                                                             glm::vec3(0.0f, 1.0f, 0.0f),
+                                                                             glm::vec3(distance, 1.0f, 0.1f));
 
-                    objects.push_back(newLaneSeparator);
-                }
-
-                auto newObject = std::make_shared<graphics::Drawable>(road, color,
-                                                                      roadPosition,
-                                                                      roadRotation,
-                                                                      glm::vec3(0.0f, 1.0f, 0.0f),
-                                                                      glm::vec3(distance, 5.0f,
-                                                                              static_cast<float>(
-                                                                                      lanes.second +
-                                                                                      lanes.first) * laneWidth));
-
-
-                objects.push_back(newObject);
+                objects.push_back(newLaneSeparator);
             }
+
+            auto newObject = std::make_shared<graphics::Drawable>(road, color,
+                                                                  roadPosition,
+                                                                  roadRotation,
+                                                                  glm::vec3(0.0f, 1.0f, 0.0f),
+                                                                  glm::vec3(distance, 5.0f, totalLanes * laneWidth));
+
+
+            objects.push_back(newObject);
         }
     }
 
     void TransitNetworkRenderer::render(GraphicsEngine &graphics) {
-        for (auto object : objects) graphics.draw(object);
+        for (auto object: objects) graphics.draw(object);
     }
 } // map

@@ -9,7 +9,7 @@ namespace graphics {
         glGenBuffers(1, &ID);
     }
 
-    bool Buffer::isDirty(){
-        return dirty;
+    GLuint Buffer::getID() const {
+        return ID;
     }
 } // graphics

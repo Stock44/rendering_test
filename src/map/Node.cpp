@@ -5,24 +5,24 @@
 #include "Node.h"
 
 namespace map {
-    const glm::vec3 &Node::getCoords() const {
-        return coords;
+    const glm::vec3 &Node::getPosition() const {
+        return position;
     }
 
-    Node::Node(int id, const glm::vec3 coords) : id(id), coords(coords){
+    Node::Node(int id, const glm::vec3 position) : position(position), id(id){
 
     }
 
-    void Node::setCoords(glm::vec3 &coords) {
-        Node::coords = coords;
+    void Node::setPosition(glm::vec3 newPosition) {
+        Node::position = newPosition;
     }
 
-    const std::vector<std::weak_ptr<Way>> &Node::getParentWays() const {
-        return parentWays;
+    const std::vector<std::weak_ptr<Road>> & Node::getParentRoads() const {
+        return parentRoads;
     }
 
-    void Node::addParentWay(std::weak_ptr<Way> parentWay) {
-        parentWays.push_back(parentWay);
+    void Node::addParentRoad(std::weak_ptr<Road> parentRoad) {
+        parentRoads.push_back(parentRoad);
     }
 
     int Node::getId() const {

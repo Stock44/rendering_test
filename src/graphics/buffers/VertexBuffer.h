@@ -7,23 +7,25 @@
 
 
 #include <vector>
-#include "../types.h"
 #include "Buffer.h"
+#include "../components/Vertex.h"
 
 namespace graphics {
     class VertexBuffer : public Buffer{
     public:
+        [[nodiscard]] long getSize() const override;
+
         void enableAttribs() override;
 
-        int getSize() override;
+        void addVertices(std::vector<Vertex> const & newVertices);
 
-        void addVertices(std::vector<Vertex> newVertices);
+        void setVertices(std::vector<Vertex> &&newVertices);
 
-        void setVertices(std::vector<Vertex> newVertices);
+        void setVertices(std::vector<Vertex> const &newVertices);
 
-        void modifyVertices(std::vector<Vertex> modifiedVertices, uint position);
+        void modifyVertices(std::vector<Vertex> modVertices, long modPosition);
 
-        void deleteVertex(int index);
+        void deleteVertex(long position);
 
         void upload() override;
     private:

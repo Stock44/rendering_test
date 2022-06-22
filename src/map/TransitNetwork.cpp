@@ -8,7 +8,7 @@
 #include <glm/geometric.hpp>
 
 namespace map {
-    void TransitNetwork::addHighway(HighwayPtr highway) {
+    void TransitNetwork::addRoad(HighwayPtr highway) {
     }
 
     TransitNetwork::TransitNetwork(NodeMap nodes, HighwayMap highways) : nodes(std::move(nodes)),
@@ -38,7 +38,7 @@ namespace map {
         NodePtr bestNode;
         float lowestDistance;
         for(const auto& nodeRecord: nodes) {
-            auto nodeCoords = nodeRecord.second->getCoords();
+            auto nodeCoords = nodeRecord.second->getPosition();
             auto distance = glm::distance(nodeCoords, coord);
             if(bestNode == nullptr || distance < lowestDistance) {
                 bestNode = nodeRecord.second;

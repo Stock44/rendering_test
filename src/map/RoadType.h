@@ -2,14 +2,14 @@
 // Created by hiram on 5/18/22.
 //
 
-#ifndef CITYY_HIGHWAYTYPE_H
-#define CITYY_HIGHWAYTYPE_H
+#ifndef CITYY_ROADTYPE_H
+#define CITYY_ROADTYPE_H
 
 #include <string>
 #include <unordered_map>
 
 namespace map{
-    enum HighwayType {
+    enum RoadType {
         UNKNOWN,
         MOTORWAY,
         TRUNK,
@@ -24,4 +24,4 @@ namespace map{
 
 }
 
-#endif //CITYY_HIGHWAYTYPE_H
+#endif //CITYY_ROADTYPE_H

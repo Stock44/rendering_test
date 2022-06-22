@@ -38,6 +38,7 @@ namespace rapidxml {
 
         processChildNodes<Ch>(wayNode, [&nodeIDs] (xml_node<Ch> *childNode) {
             if (std::string_view(childNode->name()) == "nd") {
+
                 nodeIDs.push_back(childNode->first_attribute()->value());
             }
         });

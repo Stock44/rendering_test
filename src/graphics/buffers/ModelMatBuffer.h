@@ -14,19 +14,23 @@ namespace graphics {
     class ModelMatBuffer : public Buffer {
     public:
 
+        [[nodiscard]] long getSize() const override;
+
         void enableAttribs() override;
 
-        int getSize() override;
+        void addModelMat(glm::mat4 const &newMat);
 
-        void addModelMats(std::vector<glm::mat4> newMats);
+        void addModelMats(std::vector<glm::mat4> const &newMats);
 
-        void addModelMat(glm::mat4 newMat);
+        void setModelMats(std::vector<glm::mat4> &&newMats);
 
-        void setModelMats(std::vector<glm::mat4> newMats);
+        void setModelMats(std::vector<glm::mat4> const &newMats);
 
-        void replaceModelMat(glm::mat4 newMat, int index);
+        void modifyModelMats(std::vector<glm::mat4> modMats, long modPosition);
 
-        void deleteModelMat(int index);
+        void setModelMat(glm::mat4 const &modMat, long modPosition);
+
+        void deleteModelMat(long position);
 
         void upload() override;
 

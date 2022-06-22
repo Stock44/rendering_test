@@ -5,7 +5,8 @@
 #ifndef CITYY_WINDOW_H
 #define CITYY_WINDOW_H
 
-
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 #include <utility>
 #include <functional>
 

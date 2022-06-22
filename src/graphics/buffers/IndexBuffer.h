@@ -13,22 +13,24 @@ namespace graphics {
 
     class IndexBuffer : public Buffer {
     public:
-        int getSize() override;
+        [[nodiscard]] long getSize() const override;
 
         void enableAttribs() override;
 
-        void addIndices(std::vector<uint> newIndices);
+        void addIndex(GLuint index);
 
-        void addIndex(uint index);
+        void addIndices(std::vector<GLuint> const &newIndices);
 
-        void setIndices(std::vector<uint> newIndices);
+        void setIndices(std::vector<GLuint> const &newIndices);
 
-        void modifyIndices(std::vector<uint> modifiedIndices, uint position);
+        void setIndices(std::vector<GLuint> &&newIndices);
+
+        void modifyIndices(std::vector<GLuint> modIndices, long modStart);
 
         void upload() override;
 
     private:
-        std::vector<uint> indices;
+        std::vector<GLuint> indices;
     };
 
 } // graphics

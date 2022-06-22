@@ -5,46 +5,61 @@
 #include "ColorVertexBuffer.h"
 
 #include <utility>
+#include <algorithm>
+#include <stdexcept>
 
 namespace graphics {
+    long ColorVertexBuffer::getSize() const {
+        return std::ssize(vertices);
+    }
+
     void ColorVertexBuffer::enableAttribs() {
-        glBindBuffer(GL_ARRAY_BUFFER, ID);
+        glBindBuffer(GL_ARRAY_BUFFER, getID());
         glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(Color), nullptr);
         glEnableVertexAttribArray(7);
         glVertexAttribDivisor(7, 1);
     }
 
-    int ColorVertexBuffer::getSize() {
-        return vertices.size();
+    void ColorVertexBuffer::addVertices(std::vector<Color> const &newVertices) {
+        vertices.insert(std::end(vertices), std::begin(newVertices), std::end(newVertices));
     }
 
-    void ColorVertexBuffer::addVertices(std::vector<Color> newVertices) {
-        vertices.insert(vertices.end(), newVertices.begin(), newVertices.end());
-        dirty = true;
+    void ColorVertexBuffer::setVertices(std::vector<Color> const &newVertices) {
+        vertices = newVertices;
     }
 
-    void ColorVertexBuffer::setVertices(std::vector<Color> newVertices) {
+    void ColorVertexBuffer::setVertices(std::vector<Color> &&newVertices) {
         vertices = std::move(newVertices);
-        dirty = true;
     }
 
-    void ColorVertexBuffer::modifyVertices(std::vector<Color> modifiedVertices, uint position) {
-        // TODO implement pls
+    void ColorVertexBuffer::modifyVertices(std::vector<Color> modVertices, long modPosition) {
+        if (modVertices.empty()) return;
+        if (modPosition > std::ssize(vertices)) throw std::invalid_argument("Position is out of bounds!");
+        if (std::ssize(modVertices) > std::ssize(vertices) - modPosition)
+            throw std::invalid_argument("Too many vertices to modify");
+
+        auto swapStart = std::next(std::begin(vertices), modPosition);
+
+        std::ranges::swap_ranges(swapStart, std::next(swapStart, std::ssize(modVertices)), std::begin(modVertices),
+                                 std::end(modVertices));
+
     }
 
     void ColorVertexBuffer::upload() {
-        glBindBuffer(GL_ARRAY_BUFFER, ID);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Color), &vertices[0], GL_STATIC_DRAW);
-        dirty = false;
+        glBindBuffer(GL_ARRAY_BUFFER, getID());
+        glBufferData(GL_ARRAY_BUFFER, std::ssize(vertices) * static_cast<long>(sizeof(Color)), &vertices[0],
+                     GL_STATIC_DRAW);
     }
 
     void ColorVertexBuffer::addVertex(Color newVertex) {
-        vertices.insert(vertices.end(), newVertex);
-        dirty = true;
+        vertices.insert(std::begin(vertices), newVertex);
     }
 
-    void ColorVertexBuffer::deleteVertex(int index) {
-        vertices.erase(vertices.begin() + index);
-        dirty = true;
+    void ColorVertexBuffer::deleteVertex(long index) {
+        vertices.erase(std::begin(vertices) + index);
+    }
+
+    void ColorVertexBuffer::setVertex(Color newColor, long modPosition) {
+        vertices.at(modPosition) = newColor;
     }
 } // graphics

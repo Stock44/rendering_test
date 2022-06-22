@@ -7,6 +7,8 @@
 
 #include <memory>
 #include <vector>
+#include <span>
+#include <map>
 #include "glad/glad.h"
 #include "buffers/Buffer.h"
 
@@ -14,11 +16,13 @@ namespace graphics {
 
     class VertexArray {
     public:
-        VertexArray(GLuint ID, std::vector<std::shared_ptr<Buffer>>);
-        void bind();
+        VertexArray();
+        ~VertexArray();
+        void bind() const;
+        void registerBuffer(Buffer *buffer);
+        void registerBuffer(Buffer &buffer);
     private:
-        GLuint ID = 0;
-        std::vector<std::shared_ptr<Buffer>> buffers;
+        GLuint ID;
     };
 
 } // graphics

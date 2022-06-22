@@ -10,6 +10,7 @@
 #include <queue>
 #include <iostream>
 #include <glm/vec4.hpp>
+#include <algorithm>
 #include "MapXMLTree.h"
 #include "rapidxml.hpp"
 #include "rapidxml_iterators.hpp"
@@ -22,7 +23,7 @@ namespace map {
 
     TransitNetwork MapXMLTree::generateNetwork() {
         using namespace rapidxml;
-        typedef xml_node<> node;
+        using node = xml_node<>;
 
         auto osmRoot = XMLTree.first_node();
 
@@ -34,9 +35,9 @@ namespace map {
         double lonMidpoint = 0;
         double lonRange = 0;
 
-        std::map<std::string_view, int> nodeIDMap;
-        map::HighwayMap highways;
+        map::HighwayMap roads;
         map::NodeMap nodes;
+        std::map<std::string_view, int> osmIDMap;
 
         // Process node block
         processChildNodes<char>(osmRoot, [&](xml_node<> *element) {
@@ -54,15 +55,15 @@ namespace map {
             } else if (elementName == "node") {
                 auto nodeAttributes = getAttributes<char>(element);
 
-                nodeIDMap[nodeAttributes["id"]] = nodes.size();
-
+                osmIDMap[nodeAttributes.at("id")] = nodes.size();
+                int id = nodes.size();
                 auto lat = std::strtod(&nodeAttributes.at("lat")[0], nullptr);
                 auto lon = std::strtod(&nodeAttributes.at("lon")[0], nullptr);
                 auto x = distanceLatLon({0, lon - lonMidpoint}, {0, 0});
                 auto y = distanceLatLon({lat - latMidpoint, 0}, {0, 0});
                 x = lon - lonMidpoint > 0 ? -x : x;
                 y = lat - latMidpoint > 0 ? y : -y;
-                nodes.insert({nodes.size(), std::make_shared<Node>(nodes.size(), glm::vec3(x, 0.0f, y))});
+                nodes.try_emplace(id, std::make_shared<Node>(nodes.size(), glm::vec3(x, 0.0f, y)));
             } else if (elementName == "way") {
                 auto wayTags = getTags<char>(element);
                 // If this way is a highway
@@ -99,28 +100,28 @@ namespace map {
                             }
                         }
 
-                        HighwayPtr newHighway;
-
-                        if (wayTags.contains("name")) {
-                            newHighway = std::make_shared<Highway>(std::string(wayTags.at("name")), type, std::make_pair(lanes, revLanes));
-                        } else {
-                            newHighway = std::make_shared<Highway>(type, std::make_pair(lanes, revLanes));
+                        for (auto it = memberNodesIDs.begin(); it < memberNodesIDs.end() - 1; it++) {
+                            std::shared_ptr<Road> newRoad;
+                            auto originNode = nodes.at(osmIDMap.at(*it));
+                            auto destinationNode = nodes.at(osmIDMap.at(*(it + 1)));
+                            if (wayTags.contains("name")) {
+                                newRoad = std::make_shared<Road>(std::string(wayTags.at("name")), originNode, destinationNode, type, std::make_pair(lanes, revLanes));
+                            } else {
+                                newRoad = std::make_shared<Road>(originNode, destinationNode, type, std::make_pair(lanes, revLanes));
+                            }
+                            originNode->addParentRoad(std::weak_ptr(newRoad));
+                            destinationNode->addParentRoad(std::weak_ptr(newRoad));
+                            roads.try_emplace(roads.size(), newRoad);
                         }
-                        for (const auto &nodeID: memberNodesIDs) {
-                            std::weak_ptr<map::Way> weakHighwayPtr = std::reinterpret_pointer_cast<Way>(newHighway);
-                            nodes.at(nodeIDMap.at(nodeID))->addParentWay(weakHighwayPtr);
-                            newHighway->addNode(nodes.at(nodeIDMap.at(nodeID)));
-                        }
-                        highways.insert({highways.size(), newHighway});
                     }
                 }
             }
         });
         NodeMap finalNodes;
-        std::for_each(nodes.begin(), nodes.end(), [&finalNodes] (std::pair<int, NodePtr> node) {
-            if(!node.second->getParentWays().empty()) finalNodes.insert(finalNodes.end(), node);
+        std::ranges::for_each(nodes, [&finalNodes] (std::pair<int, NodePtr> node) {
+            if(!node.second->getParentRoads().empty()) finalNodes.insert(finalNodes.end(), node);
         });
-        return {finalNodes, highways};
+        return {finalNodes, roads};
     }
 
 } // map

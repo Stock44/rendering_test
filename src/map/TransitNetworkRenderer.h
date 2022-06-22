@@ -6,9 +6,7 @@
 #define CITYY_TRANSITNETWORKRENDERER_H
 
 #include <span>
-#include "../graphics/GraphicsEngine.h"
 #include "TransitNetwork.h"
-#include "../graphics/Drawable.h"
 
 namespace map {
     using namespace graphics;

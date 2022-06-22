@@ -10,7 +10,7 @@
 #include "rapidxml_utils.hpp"
 
 namespace map {
-    static std::unordered_map<std::string, HighwayType> osmHighwayToType = {
+    static const std::unordered_map<std::string, RoadType> osmHighwayToType = {
             {"road",         UNKNOWN},
             {"motorway",     MOTORWAY},
             {"trunk",        TRUNK},
@@ -28,13 +28,13 @@ namespace map {
 
     class MapXMLTree {
     public:
-        enum XMLNodeType {
+        enum class XMLNodeType {
             NODE,
             WAY,
             RELATION,
         };
 
-        MapXMLTree(const std::string &filePath);
+        explicit MapXMLTree(const std::string &filePath);
 
         TransitNetwork generateNetwork();
 

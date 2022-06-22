@@ -5,6 +5,7 @@
 #ifndef CITYY_BUFFER_H
 #define CITYY_BUFFER_H
 
+#include <cstddef>
 #include "glad/glad.h"
 
 namespace graphics {
@@ -15,16 +16,16 @@ namespace graphics {
 
         virtual ~Buffer() = default;
 
-        virtual int getSize() = 0;
+        [[nodiscard]] virtual long getSize() const = 0;
 
         virtual void enableAttribs() = 0;
 
         virtual void upload() = 0;
 
-        bool isDirty();
-
     protected:
-        bool dirty = false;
+        [[nodiscard]] GLuint getID() const;
+
+    private:
         GLuint ID = 0;
     };
 

@@ -4,11 +4,16 @@
 
 #include <algorithm>
 #include <utility>
+#include <stdexcept>
 #include "ModelMatBuffer.h"
 
 namespace graphics {
+    long ModelMatBuffer::getSize() const {
+        return std::ssize(modelMats);
+    }
+
     void ModelMatBuffer::enableAttribs() {
-        glBindBuffer(GL_ARRAY_BUFFER, ID);
+        glBindBuffer(GL_ARRAY_BUFFER, getID());
         glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (const GLvoid *) nullptr);
         glEnableVertexAttribArray(3);
         glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (const GLvoid *) (sizeof(float) * 4));
@@ -24,36 +29,46 @@ namespace graphics {
         glVertexAttribDivisor(6, 1);
     }
 
-    int ModelMatBuffer::getSize() {
-        return modelMats.size();
-    }
-
-    void ModelMatBuffer::addModelMats(std::vector<glm::mat4> newMats) {
+    void ModelMatBuffer::addModelMats(std::vector<glm::mat4> const &newMats) {
         modelMats.insert(modelMats.end(), newMats.begin(), newMats.end());
-        dirty = true;
     }
 
-    void ModelMatBuffer::setModelMats(std::vector<glm::mat4> newMats) {
+    void ModelMatBuffer::setModelMats(std::vector<glm::mat4> &&newMats) {
         modelMats = std::move(newMats);
-        dirty = true;
+    }
+
+    void ModelMatBuffer::setModelMats(const std::vector<glm::mat4> &newMats) {
+        modelMats = newMats;
+    }
+
+    void ModelMatBuffer::addModelMat(glm::mat4 const &newMat) {
+        modelMats.emplace_back(newMat);
+    }
+
+    void ModelMatBuffer::modifyModelMats(std::vector<glm::mat4> modMats, long modPosition) {
+        if (modMats.empty()) return;
+        if (modPosition > std::ssize(modelMats)) throw std::invalid_argument("Position is out of bounds");
+        if (std::size(modMats) > std::ssize(modelMats) - modPosition)
+            throw std::invalid_argument("Too many vertices to modify");
+
+        auto swapStart = std::next(std::begin(modelMats), modPosition);
+
+        std::ranges::swap_ranges(swapStart, std::next(swapStart, std::ssize(modMats)), std::begin(modMats),
+                                 std::end(modMats));
     }
 
     void ModelMatBuffer::upload() {
-        glBindBuffer(GL_ARRAY_BUFFER, ID);
-        glBufferData(GL_ARRAY_BUFFER, modelMats.size() * sizeof(glm::mat4), &modelMats[0], GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, getID());
+        glBufferData(GL_ARRAY_BUFFER, std::ssize(modelMats) * static_cast<long>(sizeof(glm::mat4)), &modelMats[0],
+                     GL_STATIC_DRAW);
     }
 
-    void ModelMatBuffer::addModelMat(glm::mat4 newMat) {
-        modelMats.push_back(newMat);
-        dirty = true;
+
+    void ModelMatBuffer::deleteModelMat(long index) {
+        modelMats.erase(std::next(std::begin(modelMats), index));
     }
 
-    void ModelMatBuffer::replaceModelMat(glm::mat4 newMat, int index) {
-        modelMats.at(index) = newMat;
-    }
-
-    void ModelMatBuffer::deleteModelMat(int index) {
-        modelMats.erase(modelMats.begin() + index);
-        dirty = true;
+    void ModelMatBuffer::setModelMat(glm::mat4 const &modMat, long modPosition) {
+        modelMats.at(modPosition) = modMat;
     }
 } // graphics

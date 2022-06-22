@@ -9,31 +9,32 @@
 #include <glm/vec3.hpp>
 #include <memory>
 #include <vector>
-#include "Way.h"
-
 
 namespace map {
+    class Road;
 
     class Node {
     public:
-        Node(int id, glm::vec3 coords);
+        Node(int id, glm::vec3 position);
 
-        [[nodiscard]] const glm::vec3 &getCoords() const;
+        [[nodiscard]] const glm::vec3 &getPosition() const;
 
-        void setCoords(glm::vec3 &coords);
+        void setPosition(glm::vec3 newPosition);
 
-        [[nodiscard]] const std::vector<std::weak_ptr<Way>> &getParentWays() const;
+        [[nodiscard]] const std::vector<std::weak_ptr<Road>> & getParentRoads() const;
 
-        void addParentWay(std::weak_ptr<Way> parent);
+        void addParentRoad(std::weak_ptr<Road> parentRoad);
 
         int getId() const;
 
     private:
-        glm::vec3 coords;
+        glm::vec3 position;
         int id;
-        std::vector<std::weak_ptr<Way>> parentWays;
+        std::vector<std::weak_ptr<Road>> parentRoads;
 
     };
+
+    using NodePtr = std::shared_ptr<Node>;
 
 } // map
 

@@ -7,7 +7,7 @@
 
 #include <unordered_map>
 #include <map>
-#include "Highway.h"
+#include "Road.h"
 #include "types.h"
 
 namespace map {
@@ -15,7 +15,7 @@ namespace map {
     class TransitNetwork {
     public:
         TransitNetwork(NodeMap nodes, HighwayMap highways);
-        void addHighway(HighwayPtr highway);
+        void addRoad(RoadPtr road);
         void addNode();
         const NodeMap & getNodes();
         const HighwayMap &getHighways();

@@ -2,7 +2,6 @@
 // Created by hiram on 5/16/22.
 //
 
-#include <GLFW/glfw3.h>
 #include <stdexcept>
 #include "Window.h"
 
