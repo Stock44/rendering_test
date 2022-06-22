@@ -6,6 +6,7 @@
 #include <utility>
 #include <stdexcept>
 #include "ModelMatBuffer.h"
+#include "../OpenGlError.h"
 
 namespace graphics {
     long ModelMatBuffer::getSize() const {
@@ -13,7 +14,7 @@ namespace graphics {
     }
 
     void ModelMatBuffer::enableAttribs() {
-        glBindBuffer(GL_ARRAY_BUFFER, getID());
+        glBindBuffer(GL_ARRAY_BUFFER, getID().value());
         glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (const GLvoid *) nullptr);
         glEnableVertexAttribArray(3);
         glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (const GLvoid *) (sizeof(float) * 4));
@@ -27,6 +28,8 @@ namespace graphics {
         glVertexAttribDivisor(4, 1);
         glVertexAttribDivisor(5, 1);
         glVertexAttribDivisor(6, 1);
+        auto error = glad_glGetError();
+        if (error) throw OpenGLError(error);
     }
 
     void ModelMatBuffer::addModelMats(std::vector<glm::mat4> const &newMats) {
@@ -58,9 +61,11 @@ namespace graphics {
     }
 
     void ModelMatBuffer::upload() {
-        glBindBuffer(GL_ARRAY_BUFFER, getID());
+        glBindBuffer(GL_ARRAY_BUFFER, getID().value());
         glBufferData(GL_ARRAY_BUFFER, std::ssize(modelMats) * static_cast<long>(sizeof(glm::mat4)), &modelMats[0],
                      GL_STATIC_DRAW);
+        auto error = glad_glGetError();
+        if (error) throw OpenGLError(error);
     }
 
 

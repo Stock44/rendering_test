@@ -4,6 +4,7 @@
 
 #include "Shader.h"
 #include "glad/glad.h"
+#include "OpenGlError.h"
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -11,29 +12,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 graphics::Shader::Shader(const char *vertexPath, const char *fragmentPath) : vertexPath(vertexPath),
-                                                                             fragmentPath(fragmentPath) {}
-
-void graphics::Shader::use() const {
-    glUseProgram(ID);
-}
-
-void graphics::Shader::setBool(const std::string &name, bool value) const {
-    glUniform1i(glGetUniformLocation(ID, name.c_str()), (int) value);
-}
-
-void graphics::Shader::setInt(const std::string &name, int value) const {
-    glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
-}
-
-void graphics::Shader::setFloat(const std::string &name, float value) const {
-    glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
-}
-
-void graphics::Shader::setMatrix(const std::string &name, glm::mat4 value) const {
-    glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
-}
-
-void graphics::Shader::init() {
+                                                                             fragmentPath(fragmentPath) {
     std::string vertexCode, fragmentCode;
     std::ifstream vShaderFile, fShaderFile;
 
@@ -96,16 +75,52 @@ void graphics::Shader::init() {
     glDeleteShader(fragment);
 }
 
+void graphics::Shader::use() const {
+    glUseProgram(ID);
+    auto error = glad_glGetError();
+    if (error) throw OpenGLError(error);
+}
+
+void graphics::Shader::setBool(const std::string &name, bool value) const {
+    glUniform1i(glGetUniformLocation(ID, name.c_str()), (int) value);
+    auto error = glad_glGetError();
+    if (error) throw OpenGLError(error);
+}
+
+void graphics::Shader::setInt(const std::string &name, int value) const {
+    glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
+    auto error = glad_glGetError();
+    if (error) throw OpenGLError(error);
+}
+
+void graphics::Shader::setFloat(const std::string &name, float value) const {
+    glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
+    auto error = glad_glGetError();
+    if (error) throw OpenGLError(error);
+}
+
+void graphics::Shader::setMatrix(const std::string &name, glm::mat4 value) const {
+    glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+    auto error = glad_glGetError();
+    if (error) throw OpenGLError(error);
+}
+
 void graphics::Shader::setVec3(const std::string &name, glm::vec3 value) const {
     glUniform3f(ID, value.x, value.y, value.z);
+    auto error = glad_glGetError();
+    if (error) throw OpenGLError(error);
 }
 
 void graphics::Shader::setVec4(const std::string &name, glm::vec4 value) const {
     glUniform4f(ID, value.x, value.y, value.z, value.w);
+    auto error = glad_glGetError();
+    if (error) throw OpenGLError(error);
 }
 
 void graphics::Shader::setVec2(const std::string &name, glm::vec2 value) const {
     glUniform2f(ID, value.x, value.y);
+    auto error = glad_glGetError();
+    if (error) throw OpenGLError(error);
 }
 
 

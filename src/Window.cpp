@@ -24,20 +24,20 @@ Window::Window(std::pair<int, int> size) : size(size) {
     // Activate all callbacks
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow *windowPtr, int width, int height) {
         auto window = (Window *) glfwGetWindowUserPointer(windowPtr);
-        auto callback = window->getViewSizeCallback();
-        if (callback) callback(std::make_pair(width, height));
+        auto const &callback = window->getViewSizeCallback();
+        if (callback.has_value()) callback.value()(std::make_pair(width, height));
     });
 
     glfwSetCursorPosCallback(window, [](GLFWwindow *windowPtr, double xPos, double yPos) {
         auto window = (Window *) glfwGetWindowUserPointer(windowPtr);
-        auto callback = window->getMouseMoveCallback();
-        if (callback) callback(std::make_pair(static_cast<float>(xPos), static_cast<float>(yPos)));
+        auto const &callback = window->getMouseMoveCallback();
+        if (callback.has_value()) callback.value()(std::make_pair(static_cast<float>(xPos), static_cast<float>(yPos)));
     });
 
     glfwSetScrollCallback(window, [](GLFWwindow *windowPtr, double xOffset, double yOffset) {
         auto window = (Window *) glfwGetWindowUserPointer(windowPtr);
-        auto callback = window->getMouseScrollCallback();
-        if (callback) callback(std::make_pair(static_cast<float>(xOffset), static_cast<float>(yOffset)));
+        auto const &callback = window->getMouseScrollCallback();
+        if (callback.has_value()) callback.value()(std::make_pair(static_cast<float>(xOffset), static_cast<float>(yOffset)));
     });
 }
 
@@ -65,7 +65,7 @@ void Window::close() {
     glfwSetWindowShouldClose(window, true);
 }
 
-const std::function<void(std::pair<int, int>)> &Window::getViewSizeCallback() const {
+const std::optional<std::function<void(std::pair<int, int>)>> &Window::getViewSizeCallback() const {
     return viewSizeCallback;
 }
 
@@ -73,7 +73,7 @@ void Window::setViewSizeCallback(const std::function<void(std::pair<int, int>)> 
     viewSizeCallback = newCallback;
 }
 
-const std::function<void(std::pair<float, float>)> &Window::getMouseMoveCallback() const {
+const std::optional<std::function<void(std::pair<float, float>)>> &Window::getMouseMoveCallback() const {
     return mouseMoveCallback;
 }
 
@@ -81,7 +81,7 @@ void Window::setMouseMoveCallback(const std::function<void(std::pair<float, floa
     mouseMoveCallback = newCallback;
 }
 
-const std::function<void(std::pair<float, float>)> &Window::getMouseScrollCallback() const {
+const std::optional<std::function<void(std::pair<float, float>)>> &Window::getMouseScrollCallback() const {
     return mouseScrollCallback;
 }
 

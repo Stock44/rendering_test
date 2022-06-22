@@ -11,7 +11,13 @@ namespace engine {
 
     class EntityManager {
     public:
+        EntityManager() = default;
+
         Entity createEntity();
+
+        EntityManager(EntityManager const& other) = delete;
+
+        EntityManager &operator=(EntityManager const &other) = delete;
     private:
         Entity nextEntity = 0;
     };

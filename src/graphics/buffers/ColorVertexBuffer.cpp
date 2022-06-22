@@ -3,6 +3,7 @@
 //
 
 #include "ColorVertexBuffer.h"
+#include "../OpenGlError.h"
 
 #include <utility>
 #include <algorithm>
@@ -14,10 +15,12 @@ namespace graphics {
     }
 
     void ColorVertexBuffer::enableAttribs() {
-        glBindBuffer(GL_ARRAY_BUFFER, getID());
+        glBindBuffer(GL_ARRAY_BUFFER, getID().value());
         glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(Color), nullptr);
         glEnableVertexAttribArray(7);
         glVertexAttribDivisor(7, 1);
+        auto error = glad_glGetError();
+        if (error) throw OpenGLError(error);
     }
 
     void ColorVertexBuffer::addVertices(std::vector<Color> const &newVertices) {
@@ -46,9 +49,11 @@ namespace graphics {
     }
 
     void ColorVertexBuffer::upload() {
-        glBindBuffer(GL_ARRAY_BUFFER, getID());
+        glBindBuffer(GL_ARRAY_BUFFER, getID().value());
         glBufferData(GL_ARRAY_BUFFER, std::ssize(vertices) * static_cast<long>(sizeof(Color)), &vertices[0],
                      GL_STATIC_DRAW);
+        auto error = glad_glGetError();
+        if (error) throw OpenGLError(error);
     }
 
     void ColorVertexBuffer::addVertex(Color newVertex) {

@@ -9,6 +9,7 @@
 #include <GLFW/glfw3.h>
 #include <utility>
 #include <functional>
+#include <optional>
 
 class Window {
 public:
@@ -28,24 +29,24 @@ public:
 
     void close();
 
-    [[nodiscard]] const std::function<void(std::pair<int, int>)> &getViewSizeCallback() const;
+    [[nodiscard]] const std::optional<std::function<void(std::pair<int, int>)>> &getViewSizeCallback() const;
 
     void setViewSizeCallback(const std::function<void(std::pair<int, int>)> &newCallback);
 
-    [[nodiscard]] const std::function<void(std::pair<float, float>)> &getMouseMoveCallback() const;
+    [[nodiscard]] const std::optional<std::function<void(std::pair<float, float>)>> &getMouseMoveCallback() const;
 
     void setMouseMoveCallback(const std::function<void(std::pair<float, float>)> &newCallback);
 
-    [[nodiscard]] const std::function<void(std::pair<float, float>)> &getMouseScrollCallback() const;
+    [[nodiscard]] const std::optional<std::function<void(std::pair<float, float>)>> &getMouseScrollCallback() const;
 
     void setMouseScrollCallback(const std::function<void(std::pair<float, float>)> &newCallback);
 
 private:
     std::pair<int, int> size;
 
-    std::function<void(std::pair<int, int>)> viewSizeCallback;
-    std::function<void(std::pair<float, float>)> mouseMoveCallback;
-    std::function<void(std::pair<float, float>)> mouseScrollCallback;
+    std::optional<std::function<void(std::pair<int, int>)>> viewSizeCallback;
+    std::optional<std::function<void(std::pair<float, float>)>> mouseMoveCallback;
+    std::optional<std::function<void(std::pair<float, float>)>> mouseScrollCallback;
 
     GLFWwindow *window;
 };

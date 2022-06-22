@@ -3,13 +3,34 @@
 //
 
 #include "Buffer.h"
+#include "../OpenGlError.h"
 
 namespace graphics {
     Buffer::Buffer() {
-        glGenBuffers(1, &ID);
+        GLuint newID;
+        glGenBuffers(1, &newID);
+        ID = newID;
+        auto error = glad_glGetError();
+        if (error) throw OpenGLError(error);
     }
 
-    GLuint Buffer::getID() const {
+    std::optional<GLuint> Buffer::getID() const {
         return ID;
+    }
+
+    Buffer::~Buffer() {
+        if (ID.has_value()) {
+            glDeleteBuffers(1, &ID.value());
+        }
+    }
+
+    Buffer::Buffer(Buffer &&other) noexcept : ID(other.ID.value()) {
+        other.ID.reset();
+    }
+
+    Buffer &Buffer::operator=(Buffer &&other) noexcept {
+        ID = other.ID.value();
+        other.ID.reset();
+        return *this;
     }
 } // graphics

@@ -12,6 +12,8 @@ namespace engine {
 
     class Engine {
     public:
+        Engine() = default;
+
         void registerSystem(std::unique_ptr<System> system);
 
         EntityManager &getEntityManager();
@@ -20,8 +22,12 @@ namespace engine {
 
         void update();
 
+        Engine(Engine const &other) = delete;
+
+        Engine &operator=(Engine const &other) = delete;
+
     private:
-        EntityManager elementManager;
+        EntityManager entityManager;
         ComponentManager componentManager;
         std::vector<std::unique_ptr<System>> systems;
     };

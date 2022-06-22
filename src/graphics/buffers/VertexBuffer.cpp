@@ -3,6 +3,7 @@
 //
 
 #include "VertexBuffer.h"
+#include "../OpenGlError.h"
 #include <stdexcept>
 #include <algorithm>
 
@@ -11,14 +12,15 @@ long graphics::VertexBuffer::getSize() const {
 }
 
 void graphics::VertexBuffer::enableAttribs() {
-    glBindBuffer(GL_ARRAY_BUFFER, getID());
+    glBindBuffer(GL_ARRAY_BUFFER, getID().value());
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid *) offsetof(Vertex, position));
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid *) offsetof(Vertex, normal));
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid *) offsetof(Vertex, texCoords));
     glEnableVertexAttribArray(3);
-
+    auto error = glad_glGetError();
+    if (error) throw OpenGLError(error);
 }
 
 void graphics::VertexBuffer::addVertices(std::vector<Vertex> const &newVertices) {
@@ -48,9 +50,11 @@ void graphics::VertexBuffer::modifyVertices(std::vector<Vertex> modVertices, lon
 }
 
 void graphics::VertexBuffer::upload() {
-    glBindBuffer(GL_ARRAY_BUFFER, getID());
+    glBindBuffer(GL_ARRAY_BUFFER, getID().value());
     glBufferData(GL_ARRAY_BUFFER, std::ssize(vertices) * static_cast<long>(sizeof(Vertex)), &vertices[0],
                  GL_STATIC_DRAW);
+    auto error = glad_glGetError();
+    if (error) throw OpenGLError(error);
 }
 
 void graphics::VertexBuffer::deleteVertex(long index) {

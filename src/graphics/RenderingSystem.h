@@ -82,8 +82,8 @@ namespace graphics {
 
     private:
         Window &window;
-        Shader shader = {"/home/hiram/Projects/citty/shaders/vertex.vsh",
-                         "/home/hiram/Projects/citty/shaders/fragment.fsh"};
+        std::unique_ptr<Shader> shader;
+
 
         std::optional<Entity> cameraEntity;
 
@@ -92,7 +92,7 @@ namespace graphics {
         std::unique_ptr<VertexBuffer> vertexBuffer;
         std::unique_ptr<IndexBuffer> indexBuffer;
 
-        std::multiset<RenderCommand> renderCommands;
+        std::multiset<std::unique_ptr<RenderCommand>> renderCommands;
         std::unordered_map<Entity, RenderCommand *> entityRenderMap;
         std::unordered_map<long, MeshRecord> loadedMeshes;
 

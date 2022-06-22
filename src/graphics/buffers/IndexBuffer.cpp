@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include "IndexBuffer.h"
+#include "../OpenGlError.h"
 
 namespace graphics {
     long IndexBuffer::getSize() const {
@@ -12,7 +13,7 @@ namespace graphics {
     }
 
     void IndexBuffer::enableAttribs() {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getID());
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getID().value());
     }
 
     void IndexBuffer::addIndex(uint index) {
@@ -44,8 +45,10 @@ namespace graphics {
     }
 
     void IndexBuffer::upload() {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getID());
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getID().value());
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, std::ssize(indices) * static_cast<long>(sizeof(uint)), &indices[0],
                      GL_STATIC_DRAW);
+        auto error = glad_glGetError();
+        if (error) throw OpenGLError(error);
     }
 } // graphics

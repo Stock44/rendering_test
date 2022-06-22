@@ -19,7 +19,7 @@ struct Transform {
     [[nodiscard]] glm::mat4 calculateMatrix() const {
         auto modelMatrix = glm::mat4(1.0f);
         modelMatrix = glm::translate(modelMatrix, position);
-        modelMatrix = glm::rotate(modelMatrix, rotationAngle, rotationAxis);
+        modelMatrix = glm::rotate(modelMatrix, glm::radians(rotationAngle), rotationAxis);
         modelMatrix = glm::scale(modelMatrix, scale);
         return modelMatrix;
     }

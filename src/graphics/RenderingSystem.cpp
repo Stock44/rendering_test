@@ -7,13 +7,14 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <algorithm>
-#include <ranges>
+#include <iterator>
+#include <iostream>
 #include "RenderingSystem.h"
 #include "components/Camera.h"
 
 namespace graphics {
     RenderingSystem::RenderingSystem(Window &window) : window(window) {
-        RenderingSystem::window.useWindowContext();
+        window.useWindowContext();
 
         if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
             throw GLADInitError();
@@ -22,12 +23,15 @@ namespace graphics {
         indexBuffer = std::make_unique<IndexBuffer>();
         vertexBuffer = std::make_unique<VertexBuffer>();
 
+        shader = std::make_unique<Shader>("/home/hiram/Projects/citty/shaders/vertex.vsh",
+                                          "/home/hiram/Projects/citty/shaders/fragment.fsh");
+
         glViewport(0, 0, window.getSize().first, window.getSize().second);
 
         glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
-        glFrontFace(GL_CCW);
-        glCullFace(GL_FRONT);
+//        glEnable(GL_CULL_FACE);
+//        glFrontFace(GL_CCW);
+//        glCullFace(GL_FRONT);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
 
@@ -43,6 +47,7 @@ namespace graphics {
         colorStore->onComponentCreation([this](EntityVectorRef entities) { onColorCreate(entities); });
         transformStore->onComponentCreation([this](EntityVectorRef entities) { onTransformCreate(entities); });
         transformStore->onComponentUpdate([this](EntityVectorRef entities) { onTransformUpdate(entities); });
+        cameraStore->onComponentCreation([this](EntityVectorRef entities) { onCameraCreate(entities); });
     }
 
     void RenderingSystem::update(engine::EntityManager &elementManager) {
@@ -50,6 +55,7 @@ namespace graphics {
             if (meshRecord.dirty) {
                 meshRecord.colorBuffer.upload();
                 meshRecord.matBuffer.upload();
+                meshRecord.dirty = false;
             }
         }
 
@@ -57,18 +63,19 @@ namespace graphics {
 
         // Only try to render if there is a camera
         if (cameraEntity.has_value()) {
-            shader.use();
             auto currentBucketStart = renderCommands.begin();
 
             while (currentBucketStart != renderCommands.end()) {
                 auto upperBucketBound = renderCommands.upper_bound(*currentBucketStart);
 
-                long meshID = currentBucketStart->meshID;
+                long meshID = (*currentBucketStart)->meshID;
                 MeshRecord const &meshRecord = loadedMeshes.at(meshID);
+                shader->use();
                 meshRecord.arrayObject.bind();
                 glDrawElementsInstanced(GL_TRIANGLES, meshRecord.meshSize, GL_UNSIGNED_INT,
                                         (const GLvoid *) (meshRecord.indicesIndex * sizeof(uint)),
                                         std::distance(currentBucketStart, upperBucketBound));
+                currentBucketStart = upperBucketBound;
             }
         }
 
@@ -78,11 +85,11 @@ namespace graphics {
 
     void RenderingSystem::stageMeshIntoBuffers(Mesh const &mesh) {
         MeshRecord meshRecord;
-        auto &arrayObject = meshRecord.arrayObject;
-        arrayObject.registerBuffer(vertexBuffer.get());
-        arrayObject.registerBuffer(indexBuffer.get());
-        arrayObject.registerBuffer(meshRecord.colorBuffer);
-        arrayObject.registerBuffer(meshRecord.matBuffer);
+        meshRecord.arrayObject.bind();
+        vertexBuffer->enableAttribs();
+        indexBuffer->enableAttribs();
+        meshRecord.colorBuffer.enableAttribs();
+        meshRecord.matBuffer.enableAttribs();
 
         meshRecord.verticesIndex = vertexBuffer->getSize();
         meshRecord.indicesIndex = indexBuffer->getSize();
@@ -91,7 +98,7 @@ namespace graphics {
         // Shift indices to their actual positions on the buffer
         auto const &indices = mesh.indices;
 
-        std::vector<GLuint> adjustedIndices(std::ssize(indices));
+        std::vector<GLuint> adjustedIndices;
 
         std::ranges::transform(indices, std::back_inserter(adjustedIndices), [&meshRecord](GLuint index) {
             return index + meshRecord.verticesIndex;
@@ -123,8 +130,8 @@ namespace graphics {
             stageMeshIntoBuffers(mesh);
         }
 
-        // Don't queue the render if the entity doesn't have a transform and color
-        if (!transformStore->hasComponent(entity) && !colorStore->hasComponent(entity)) return;
+        // Don't queue the render if the entity doesn't have a transform or color
+        if (!transformStore->hasComponent(entity) || !colorStore->hasComponent(entity)) return;
 
         auto color = colorStore->getComponent(entity);
         auto transform = transformStore->getComponent(entity);
@@ -138,9 +145,11 @@ namespace graphics {
         auto &colorBuffer = meshRecord.colorBuffer;
 
         // Create render command and queue it
-        RenderCommand command{mesh.ID, matBuffer.getSize()};
-        renderCommands.insert(command);
-        entityRenderMap.insert({entity, &command});
+        auto command = std::make_unique<RenderCommand>();
+        command->meshID = mesh.ID;
+        command->bufferPosition = matBuffer.getSize();
+        entityRenderMap.try_emplace(entity, command.get());
+        renderCommands.emplace(std::move(command));
 
         // Add matrix and color to buffers
         matBuffer.addModelMat(modelMatrix);
@@ -163,7 +172,7 @@ namespace graphics {
 
     void RenderingSystem::onTransformCreate(EntityVectorRef entities) {
         for (auto entity: entities) {
-            if (cameraStore->hasComponent(entity))
+            if (cameraStore->hasComponent(entity) && cameraEntity.has_value() && entity == cameraEntity.value())
                 updateViewMatrix(transformStore->getComponent(entity));
 
             tryRegisterEntity(entity);
@@ -174,7 +183,7 @@ namespace graphics {
     void RenderingSystem::onTransformUpdate(EntityVectorRef entities) {
         for (auto entity: entities) {
             // If this transform is associated with a camera, update the view matrix
-            if (cameraEntity.has_value() && entity == cameraEntity.value())
+            if (cameraStore->hasComponent(entity) && cameraEntity.has_value() && entity == cameraEntity.value())
                 updateViewMatrix(transformStore->getComponent(entity));
 
             // If this entity is not rendered, ignore
@@ -228,24 +237,30 @@ namespace graphics {
     }
 
     void RenderingSystem::updateViewMatrix(Transform const &transform) const {
-        glm::mat4 rotationMat(1.0f);
-        rotationMat = glm::rotate(rotationMat, glm::radians(transform.rotationAngle),
-                                  transform.rotationAxis);
+        auto cameraTransformMat = glm::translate(glm::mat4(1.0f), transform.position);
+        cameraTransformMat = glm::rotate(cameraTransformMat, glm::radians(transform.rotationAngle),
+                                         transform.rotationAxis);
+
+        auto cameraRotateMat = glm::rotate(glm::mat4(1.0f), glm::radians(transform.rotationAngle),
+                                           transform.rotationAxis);
 
         // Generate camera front and up vectors
-        glm::vec4 cameraFront = {0.0f, 1.0f, 0.0f, 1.0f};
-        glm::vec4 cameraUp = {0.0f, 0.0f, 1.0f, 1.0f};
+        glm::vec3 cameraDirection = {1.0f, 0.0f, 0.0f};
+        glm::vec3 cameraUp = {0.0f, 0.0f, 1.0f};
 
         // Rotate front and up vectors according to camera's transform
-        cameraFront = rotationMat * cameraFront;
-        cameraUp = rotationMat * cameraUp;
-        glm::mat4 view = glm::lookAt(transform.position, 1.0f + glm::vec3(cameraFront), glm::vec3(cameraUp));
-        shader.setMatrix("view", view);
+        cameraDirection = glm::vec3(
+                cameraTransformMat * glm::vec4(cameraDirection.x, cameraDirection.y, cameraDirection.z, 1.0f));
+        cameraUp = glm::vec3(cameraRotateMat * glm::vec4(cameraUp.x, cameraUp.y, cameraUp.z, 1.0f));
+        glm::mat4 view = glm::lookAt(transform.position, cameraDirection, cameraUp);
+        shader->use();
+        shader->setMatrix("view", view);
     }
 
     void RenderingSystem::updateProjectionMatrix(Camera camera) const {
         glm::mat4 proj = glm::perspective(glm::radians(camera.fov), camera.aspectRatio, 0.1f, 10000.0f);
-        shader.setMatrix("projection", proj);
+        shader->use();
+        shader->setMatrix("projection", proj);
     }
 
 } // graphics

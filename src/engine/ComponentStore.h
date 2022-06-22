@@ -43,7 +43,7 @@ namespace engine {
         template<std::common_with<ComponentType> T>
         void setComponent(Entity entityID, T &&newComponent) {
             bool created;
-            std::tie(std::ignore, created) = components.insert_or_assign(entityID, std::forward(newComponent));
+            std::tie(std::ignore, created) = components.insert_or_assign(entityID, std::forward<T>(newComponent));
 
             if (created) createdComponents.emplace_back(entityID);
             else updatedComponents.emplace_back(entityID);

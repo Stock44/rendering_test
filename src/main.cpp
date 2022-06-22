@@ -1,7 +1,38 @@
+#include <chrono>
+#include <iostream>
+#include <thread>
 #include "engine/ComponentManager.h"
 #include "Window.h"
 #include "engine/Engine.h"
 #include "graphics/RenderingSystem.h"
+
+const graphics::Mesh cubeMesh = {
+        0,
+        {
+                graphics::Vertex(0.5f, 0.5f, 0.5f),
+                graphics::Vertex(-0.5f, 0.5f, 0.5f),
+                graphics::Vertex(0.5f, 0.5f, -0.5f),
+                graphics::Vertex(-0.5f, 0.5f, -0.5f),
+                graphics::Vertex(0.5f, -0.5f, 0.5f),
+                graphics::Vertex(-0.5f, -0.5f, 0.5f),
+                graphics::Vertex(0.5f, -0.5f, -0.5f),
+                graphics::Vertex(-0.5f, -0.5f, -0.5f),
+        },
+        {
+                1, 0, 2,
+                2, 3, 1,
+                4, 6, 2,
+                2, 0, 4,
+                5, 4, 0,
+                0, 1, 5,
+                7, 5, 1,
+                1, 3, 7,
+                7, 6, 4,
+                4, 5, 7,
+                6, 7, 2,
+                2, 3, 7,
+        },
+};
 
 int main() {
     Window window({500, 500});
@@ -10,8 +41,8 @@ int main() {
 
     engine.registerSystem(std::make_unique<graphics::RenderingSystem>(window));
 
-    auto entityManager = engine.getEntityManager();
-    auto componentManager = engine.getComponentManager();
+    auto &entityManager = engine.getEntityManager();
+    auto &componentManager = engine.getComponentManager();
 
     auto transformStore = componentManager.getComponentStore<Transform>();
     auto colorStore = componentManager.getComponentStore<graphics::Color>();
@@ -19,12 +50,34 @@ int main() {
     auto cameraStore = componentManager.getComponentStore<graphics::Camera>();
 
     auto entity = entityManager.createEntity();
+    auto cameraEntity = entityManager.createEntity();
 
-    auto transform = Transform();
-    transformStore->setComponent(entity, transform);
+    auto entityTransform = Transform();
+    entityTransform.position = {20.0f, 0.0f, 0.0f};
+    entityTransform.scale = {10.0f, 10.0f, 10.0f};
 
-    while(!window.shouldWindowClose()) {
+    transformStore->setComponent(entity, entityTransform);
+    colorStore->setComponent(entity, graphics::Color{1.0f, 1.0f, 1.0f, 1.0f});
+    meshStore->setComponent(entity, graphics::MeshRef{cubeMesh});
+
+    auto cameraTransform = Transform();
+    cameraTransform.rotationAngle = 0.0f;
+    transformStore->setComponent(cameraEntity, cameraTransform);
+    auto cameraComponent = graphics::Camera();
+    cameraStore->setComponent(cameraEntity, cameraComponent);
+
+    auto last = std::chrono::steady_clock::time_point();
+    while (!window.shouldWindowClose()) {
+        auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last);
+        last = std::chrono::steady_clock::now();
+
+        entityTransform.rotationAngle += 25.0f * delta.count() / 1000.0f;
+        entityTransform.rotationAngle = entityTransform.rotationAngle > 180 ? -180 : entityTransform.rotationAngle;
+        transformStore->setComponent(entity, entityTransform);
+
         engine.update();
+
+        std::this_thread::sleep_for(std::chrono::duration<int, std::milli>(10));
     }
 }
 

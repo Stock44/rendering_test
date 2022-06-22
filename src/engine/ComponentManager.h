@@ -16,6 +16,8 @@ namespace engine {
 
     class ComponentManager {
     public:
+        ComponentManager() = default;
+
         template<std::copyable ComponentType>
         ComponentStore<ComponentType> *getComponentStore() {
             auto type = std::type_index(typeid(ComponentType));
@@ -29,6 +31,10 @@ namespace engine {
         }
 
         void handleEvents() const;
+
+        ComponentManager(ComponentManager const &other) = delete;
+
+        ComponentManager &operator=(ComponentManager const &other) = delete;
 
     private:
         std::unordered_map<std::type_index, std::unique_ptr<AbstractComponentStore>> componentStoreMap;

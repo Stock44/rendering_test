@@ -12,13 +12,14 @@ namespace engine {
     }
 
     void Engine::update() {
+        componentManager.handleEvents();
         for (auto const &system : systems) {
-            system->update(elementManager);
+            system->update(entityManager);
         }
     }
 
     EntityManager &Engine::getEntityManager() {
-        return elementManager;
+        return entityManager;
     }
 
     ComponentManager &Engine::getComponentManager() {

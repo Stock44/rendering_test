@@ -6,6 +6,7 @@
 #define CITYY_BUFFER_H
 
 #include <cstddef>
+#include <optional>
 #include "glad/glad.h"
 
 namespace graphics {
@@ -14,7 +15,7 @@ namespace graphics {
     public:
         Buffer();
 
-        virtual ~Buffer() = default;
+        virtual ~Buffer();
 
         [[nodiscard]] virtual long getSize() const = 0;
 
@@ -22,11 +23,17 @@ namespace graphics {
 
         virtual void upload() = 0;
 
+        Buffer(Buffer const &other) = delete;
+        Buffer(Buffer &&other) noexcept;
+
+        Buffer &operator=(Buffer const &other) = delete;
+        Buffer &operator=(Buffer &&other) noexcept;
+
     protected:
-        [[nodiscard]] GLuint getID() const;
+        [[nodiscard]] std::optional<GLuint> getID() const;
 
     private:
-        GLuint ID = 0;
+        std::optional<GLuint> ID = 0;
     };
 
 } // graphics
