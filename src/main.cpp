@@ -5,6 +5,7 @@
 #include "Window.h"
 #include "engine/Engine.h"
 #include "graphics/RenderingSystem.h"
+#include "input/InputSystem.h"
 
 const graphics::Mesh cubeMesh = {
         0,
@@ -40,6 +41,7 @@ int main() {
     engine::Engine engine;
 
     engine.registerSystem(std::make_unique<graphics::RenderingSystem>(window));
+    engine.registerSystem(std::make_unique<input::InputSystem>(window));
 
     auto &entityManager = engine.getEntityManager();
     auto &componentManager = engine.getComponentManager();
@@ -71,9 +73,9 @@ int main() {
         auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last);
         last = std::chrono::steady_clock::now();
 
-        entityTransform.rotationAngle += 25.0f * delta.count() / 1000.0f;
-        entityTransform.rotationAngle = entityTransform.rotationAngle > 180 ? -180 : entityTransform.rotationAngle;
-        transformStore->setComponent(entity, entityTransform);
+//        entityTransform.rotationAngle += 25.0f * delta.count() / 1000.0f;
+//        entityTransform.rotationAngle = entityTransform.rotationAngle > 180 ? -180 : entityTransform.rotationAngle;
+//        transformStore->setComponent(entity, entityTransform);
 
         engine.update();
 
