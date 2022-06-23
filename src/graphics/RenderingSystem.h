@@ -29,7 +29,7 @@ namespace graphics {
     };
 
     using engine::Entity;
-    using engine::EntityVectorRef;
+    using engine::EntitySet;
 
     struct RenderCommand {
         long meshID;
@@ -64,17 +64,17 @@ namespace graphics {
 
         void tryRegisterEntity(Entity entity);
 
-        void onMeshCreate(EntityVectorRef entities);
+        void onMeshCreate(EntitySet entities);
 
-        void onTransformCreate(EntityVectorRef entities);
+        void onTransformCreate(EntitySet entities);
 
-        void onColorCreate(EntityVectorRef entities);
+        void onColorCreate(EntitySet entities);
 
-        void onTransformUpdate(EntityVectorRef entities);
+        void onTransformUpdate(EntitySet entities);
 
-        void onColorUpdate(EntityVectorRef entities);
+        void onColorUpdate(EntitySet entities);
 
-        void onCameraCreate(EntityVectorRef entities);
+        void onCameraCreate(EntitySet entities);
 
         void updateViewMatrix(Transform const &transform) const;
 

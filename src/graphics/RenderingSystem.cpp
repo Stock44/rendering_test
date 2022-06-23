@@ -43,11 +43,11 @@ namespace graphics {
         transformStore = componentManager.getComponentStore<Transform>();
         cameraStore = componentManager.getComponentStore<Camera>();
 
-        meshStore->onComponentCreation([this](EntityVectorRef entities) { onMeshCreate(entities); });
-        colorStore->onComponentCreation([this](EntityVectorRef entities) { onColorCreate(entities); });
-        transformStore->onComponentCreation([this](EntityVectorRef entities) { onTransformCreate(entities); });
-        transformStore->onComponentUpdate([this](EntityVectorRef entities) { onTransformUpdate(entities); });
-        cameraStore->onComponentCreation([this](EntityVectorRef entities) { onCameraCreate(entities); });
+        meshStore->onComponentCreation([this](EntitySet entities) { onMeshCreate(entities); });
+        colorStore->onComponentCreation([this](EntitySet entities) { onColorCreate(entities); });
+        transformStore->onComponentCreation([this](EntitySet entities) { onTransformCreate(entities); });
+        transformStore->onComponentUpdate([this](EntitySet entities) { onTransformUpdate(entities); });
+        cameraStore->onComponentCreation([this](EntitySet entities) { onCameraCreate(entities); });
     }
 
     void RenderingSystem::update(engine::EntityManager &elementManager) {
@@ -158,19 +158,19 @@ namespace graphics {
     }
 
     // TODO implement onMeshUpdate
-    void RenderingSystem::onMeshCreate(EntityVectorRef entities) {
+    void RenderingSystem::onMeshCreate(EntitySet entities) {
         for (auto entity: entities) {
             tryRegisterEntity(entity);
         }
     }
 
-    void RenderingSystem::onColorCreate(const std::vector<Entity> &entities) {
+    void RenderingSystem::onColorCreate(EntitySet entities) {
         for (auto entity: entities) {
             tryRegisterEntity(entity);
         }
     }
 
-    void RenderingSystem::onTransformCreate(EntityVectorRef entities) {
+    void RenderingSystem::onTransformCreate(EntitySet entities) {
         for (auto entity: entities) {
             if (cameraStore->hasComponent(entity) && cameraEntity.has_value() && entity == cameraEntity.value())
                 updateViewMatrix(transformStore->getComponent(entity));
@@ -180,7 +180,7 @@ namespace graphics {
     }
 
 
-    void RenderingSystem::onTransformUpdate(EntityVectorRef entities) {
+    void RenderingSystem::onTransformUpdate(EntitySet entities) {
         for (auto entity: entities) {
             // If this transform is associated with a camera, update the view matrix
             if (cameraStore->hasComponent(entity) && cameraEntity.has_value() && entity == cameraEntity.value())
@@ -202,7 +202,7 @@ namespace graphics {
         }
     }
 
-    void RenderingSystem::onColorUpdate(const std::vector<Entity> &entities) {
+    void RenderingSystem::onColorUpdate(EntitySet entities) {
         for (auto entity: entities) {
             // If this entity is not rendered, ignore
             if (!entityRenderMap.contains(entity)) return;
@@ -220,8 +220,8 @@ namespace graphics {
         }
     }
 
-    void RenderingSystem::onCameraCreate(EntityVectorRef entities) {
-        cameraEntity = entities[0];
+    void RenderingSystem::onCameraCreate(EntitySet entities) {
+        cameraEntity = *entities.begin();
 
         Transform cameraTransform;
         // If this camera entity has a transform, use it.
