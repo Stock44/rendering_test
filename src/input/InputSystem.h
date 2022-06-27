@@ -15,7 +15,7 @@ namespace input {
 
     class InputSystem : public engine::System {
     public:
-        InputSystem(Window &window);
+        explicit InputSystem(Window &window);
 
         void setup(engine::ComponentManager &componentManager) override;
 
@@ -26,7 +26,7 @@ namespace input {
     private:
         Window &window;
 
-        engine::Entity controlableEntity;
+        engine::Entity controlableEntity{};
 
         float mouseSensitivity = 50.0f;
         float movementSpeed = 10.0f;
@@ -39,8 +39,8 @@ namespace input {
 
         std::pair<float, float> lastMousePosition;
         std::chrono::time_point<std::chrono::steady_clock> lastPoll;
-        engine::ComponentStore<Transform> *transformStore;
-        engine::ComponentStore<graphics::Camera> *cameraStore;
+        engine::ComponentStore<Transform> *transformStore{};
+        engine::ComponentStore<graphics::Camera> *cameraStore{};
     };
 
 } // input

@@ -75,6 +75,7 @@ namespace input {
     void InputSystem::onCameraCreate(engine::Entity entity) {
         controlableEntity = entity;
 
+        // TODO disable callback when no camera present
         window.setMouseMoveCallback([this](std::pair<float, float> mousePosition) {
             if (!transformStore->hasComponent(controlableEntity)) return;
             if (window.getMouseButtonState(GLFW_MOUSE_BUTTON_1) == GLFW_PRESS) {

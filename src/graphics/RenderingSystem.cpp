@@ -26,7 +26,7 @@ namespace graphics {
         shader = std::make_unique<Shader>("/home/hiram/Projects/citty/shaders/vertex.vsh",
                                           "/home/hiram/Projects/citty/shaders/fragment.fsh");
 
-        glViewport(0, 0, window.getSize().first, window.getSize().second);
+        setViewportSize(window.getSize());
 
         glEnable(GL_DEPTH_TEST);
 //        glEnable(GL_CULL_FACE);
@@ -45,9 +45,17 @@ namespace graphics {
 
         meshStore->onComponentCreation([this](EntitySet entities) { onMeshCreate(entities); });
         colorStore->onComponentCreation([this](EntitySet entities) { onColorCreate(entities); });
+        colorStore->onComponentUpdate([this](EntitySet entities) { onColorUpdate(entities); });
         transformStore->onComponentCreation([this](EntitySet entities) { onTransformCreate(entities); });
         transformStore->onComponentUpdate([this](EntitySet entities) { onTransformUpdate(entities); });
         cameraStore->onComponentCreation([this](EntitySet entities) { onCameraCreate(entities); });
+
+        window.setViewSizeCallback([this](auto newSize) {
+            setViewportSize(newSize);
+            if (cameraEntity.has_value()) {
+                updateProjectionMatrix(cameraStore->getComponent(cameraEntity.value()));
+            }
+        });
     }
 
     void RenderingSystem::update(engine::EntityManager &elementManager) {
@@ -231,7 +239,7 @@ namespace graphics {
     void RenderingSystem::onCameraCreate(EntitySet entities) {
         cameraEntity = *entities.begin();
 
-        Transform cameraTransform;
+        Transform cameraTransform{};
         // If this camera entity has a transform, use it.
         // Else just use a default transform
         if (transformStore->hasComponent(cameraEntity.value()))
@@ -244,6 +252,11 @@ namespace graphics {
         updateProjectionMatrix(cameraComponent);
     }
 
+    void RenderingSystem::setViewportSize(const std::pair<int, int> &newViewportSize) {
+        RenderingSystem::viewportSize = newViewportSize;
+        glViewport(0, 0, newViewportSize.first, newViewportSize.second);
+    }
+
     void RenderingSystem::updateViewMatrix(Transform const &transform) {
         // Rotate front and up vectors according to camera's transform
         auto cameraDirection = transform.rotation * glm::vec3(1.0f, 0.0f, 0.0f);
@@ -254,7 +267,8 @@ namespace graphics {
     }
 
     void RenderingSystem::updateProjectionMatrix(Camera camera) {
-        glm::mat4 proj = glm::perspective(glm::radians(camera.fov), camera.aspectRatio, 0.1f, 10000.0f);
+        glm::mat4 proj = glm::perspective(glm::radians(camera.fov),
+                                          static_cast<float>(viewportSize.first / viewportSize.second), 0.1f, 10000.0f);
         shader->use();
         shader->setMatrix("projection", proj);
     }

@@ -55,7 +55,7 @@ namespace graphics {
 
     class RenderingSystem : public engine::System {
     public:
-        explicit RenderingSystem(Window &window);
+        explicit RenderingSystem(Window &newSize);
 
         void setup(engine::ComponentManager &componentManager) override;
 
@@ -76,6 +76,8 @@ namespace graphics {
         void onColorUpdate(EntitySet entities);
 
         void onCameraCreate(EntitySet entities);
+
+        void setViewportSize(const std::pair<int, int> &newViewportSize);
 
         void updateViewMatrix(Transform const &transform);
 
