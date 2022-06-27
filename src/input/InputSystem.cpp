@@ -20,35 +20,55 @@ namespace input {
 
 
     void InputSystem::update(engine::EntityManager &elementManager) {
-        auto delta = std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(std::chrono::steady_clock::now() - lastPoll);
+        auto delta = std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(
+                std::chrono::steady_clock::now() - lastPoll);
         lastPoll = std::chrono::steady_clock::now();
-        // Only do camera movement if an offset is detected
-        if (xOffset != 0 || yOffset != 0) {
-            // Camera's current transform
-            auto transform = transformStore->getComponent(controlableEntity);
 
+        auto transform = transformStore->getComponent(controlableEntity);
+
+        if (window.getKeyState(GLFW_KEY_W) == GLFW_PRESS) {
+            transform.position.x += glm::cos(glm::radians(yaw)) * movementSpeed * delta.count() / 1000.0f;
+            transform.position.y -= glm::sin(glm::radians(yaw)) * movementSpeed * delta.count() / 1000.0f;
+        } else if (window.getKeyState(GLFW_KEY_S) == GLFW_PRESS) {
+            transform.position.x -= glm::cos(glm::radians(yaw)) * movementSpeed * delta.count() / 1000.0f;
+            transform.position.y += glm::sin(glm::radians(yaw)) * movementSpeed * delta.count() / 1000.0f;
+        }
+
+        if (window.getKeyState(GLFW_KEY_A) == GLFW_PRESS) {
+            transform.position.x += glm::sin(glm::radians(yaw)) * movementSpeed * delta.count() / 1000.0f;
+            transform.position.y += glm::cos(glm::radians(yaw)) * movementSpeed * delta.count() / 1000.0f;
+        } else if (window.getKeyState(GLFW_KEY_D) == GLFW_PRESS) {
+            transform.position.x -= glm::sin(glm::radians(yaw)) * movementSpeed * delta.count() / 1000.0f;
+            transform.position.y -= glm::cos(glm::radians(yaw)) * movementSpeed * delta.count() / 1000.0f;
+        }
+
+        if (window.getKeyState(GLFW_KEY_Q) == GLFW_PRESS) {
+            transform.position.z -= movementSpeed * delta.count() / 1000.0f;
+        } else if (window.getKeyState(GLFW_KEY_E) == GLFW_PRESS) {
+            transform.position.z += movementSpeed * delta.count() / 1000.0f;
+        }
+
+        // Camera rotation input handler
+        // Only do camera rotation if an offset is detected
+        if (xOffset != 0 || yOffset != 0) {
             // Add and clamp to yaw and pitch
             yaw += xOffset * mouseSensitivity * delta.count() / 1000.0f;
-            yaw = yaw > 180.0f ? yaw - 360 : yaw;
-            yaw = yaw < -180.0f ? yaw + 360 : yaw;
+            yaw = yaw > 180.0f ? yaw - 360.0f : yaw;
+            yaw = yaw < -180.0f ? yaw + 360.0f : yaw;
 
             pitch -= yOffset * mouseSensitivity * delta.count() / 1000.0f;
-            pitch = pitch > 90.0f ? pitch - 180 : pitch;
-            pitch = pitch < -90.0f ? pitch + 180 : pitch;
+            pitch = pitch > 90.0f ? 90.0f : pitch;
+            pitch = pitch < -90.0f ? -90.0f : pitch;
 
-            auto rotateMat = glm::mat4(1.0f);
+            std::cout << "yaw: " << yaw << " pitch: " << pitch << std::endl;
+            transform.rotation = glm::angleAxis(glm::radians(-yaw), glm::vec3(0.0f, 0.0f, 1.0f)) * glm::angleAxis(glm::radians(-pitch), glm::vec3(0.0f, 1.0f, 0.0f));
 
-            rotateMat = glm::rotate(rotateMat, glm::radians(pitch), {0.0f, 1.0f, 0.0f});
-            rotateMat = glm::rotate(rotateMat, glm::radians(yaw), {0.0f, 0.0f, 1.0f});
-            auto target = glm::vec3(rotateMat * glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-
-            transform.rotationAxis = glm::normalize(glm::cross(target, glm::vec3(1.0f ,0.0f, 0.0f)));
-            transform.rotationAngle = glm::degrees(glm::acos(glm::dot(glm::vec3(1.0f, 0.0f, 0.0f), target)));
-
-            transformStore->setComponent(controlableEntity, transform);
             xOffset = 0;
             yOffset = 0;
         }
+
+        transformStore->setComponent(controlableEntity, transform);
+
         glfwPollEvents();
     }
 

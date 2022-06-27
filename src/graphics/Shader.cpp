@@ -75,49 +75,49 @@ graphics::Shader::Shader(const char *vertexPath, const char *fragmentPath) : ver
     glDeleteShader(fragment);
 }
 
-void graphics::Shader::use() const {
+void graphics::Shader::use() {
     glUseProgram(ID);
     auto error = glad_glGetError();
     if (error) throw OpenGLError(error);
 }
 
-void graphics::Shader::setBool(const std::string &name, bool value) const {
+void graphics::Shader::setBool(const std::string &name, bool value) {
     glUniform1i(glGetUniformLocation(ID, name.c_str()), (int) value);
     auto error = glad_glGetError();
     if (error) throw OpenGLError(error);
 }
 
-void graphics::Shader::setInt(const std::string &name, int value) const {
+void graphics::Shader::setInt(const std::string &name, int value) {
     glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
     auto error = glad_glGetError();
     if (error) throw OpenGLError(error);
 }
 
-void graphics::Shader::setFloat(const std::string &name, float value) const {
+void graphics::Shader::setFloat(const std::string &name, float value) {
     glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
     auto error = glad_glGetError();
     if (error) throw OpenGLError(error);
 }
 
-void graphics::Shader::setMatrix(const std::string &name, glm::mat4 value) const {
+void graphics::Shader::setMatrix(const std::string &name, glm::mat4 value) {
     glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
     auto error = glad_glGetError();
     if (error) throw OpenGLError(error);
 }
 
-void graphics::Shader::setVec3(const std::string &name, glm::vec3 value) const {
+void graphics::Shader::setVec3(const std::string &name, glm::vec3 value) {
     glUniform3f(ID, value.x, value.y, value.z);
     auto error = glad_glGetError();
     if (error) throw OpenGLError(error);
 }
 
-void graphics::Shader::setVec4(const std::string &name, glm::vec4 value) const {
+void graphics::Shader::setVec4(const std::string &name, glm::vec4 value) {
     glUniform4f(ID, value.x, value.y, value.z, value.w);
     auto error = glad_glGetError();
     if (error) throw OpenGLError(error);
 }
 
-void graphics::Shader::setVec2(const std::string &name, glm::vec2 value) const {
+void graphics::Shader::setVec2(const std::string &name, glm::vec2 value) {
     glUniform2f(ID, value.x, value.y);
     auto error = glad_glGetError();
     if (error) throw OpenGLError(error);

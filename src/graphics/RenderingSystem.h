@@ -38,7 +38,8 @@ namespace graphics {
         bool operator==(RenderCommand const &rhs) const = default;
 
         std::weak_ordering operator<=>(RenderCommand const &rhs) const {
-            return std::tie(meshID) <=> std::tie(rhs.meshID);
+            // Lexicographical comparison, first meshID then bufferPosition
+            return std::tie(meshID, bufferPosition) <=> std::tie(rhs.meshID, bufferPosition);
         }
     };
 
@@ -76,9 +77,9 @@ namespace graphics {
 
         void onCameraCreate(EntitySet entities);
 
-        void updateViewMatrix(Transform const &transform) const;
+        void updateViewMatrix(Transform const &transform);
 
-        void updateProjectionMatrix(Camera camera) const;
+        void updateProjectionMatrix(Camera camera);
 
     private:
         Window &window;
@@ -92,7 +93,7 @@ namespace graphics {
         std::unique_ptr<VertexBuffer> vertexBuffer;
         std::unique_ptr<IndexBuffer> indexBuffer;
 
-        std::multiset<std::unique_ptr<RenderCommand>> renderCommands;
+        std::set<std::unique_ptr<RenderCommand>> renderCommands;
         std::unordered_map<Entity, RenderCommand *> entityRenderMap;
         std::unordered_map<long, MeshRecord> loadedMeshes;
 

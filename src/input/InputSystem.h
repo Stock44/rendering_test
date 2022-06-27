@@ -29,6 +29,7 @@ namespace input {
         engine::Entity controlableEntity;
 
         float mouseSensitivity = 50.0f;
+        float movementSpeed = 10.0f;
 
         float xOffset = 0;
         float yOffset = 0;

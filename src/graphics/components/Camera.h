@@ -9,7 +9,7 @@ namespace graphics {
 
     struct Camera {
         float aspectRatio = 1.0f;
-        float fov = 120.0f;
+        float fov = 90.0f;
     };
 
 } // graphics

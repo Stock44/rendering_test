@@ -63,19 +63,27 @@ namespace graphics {
 
         // Only try to render if there is a camera
         if (cameraEntity.has_value()) {
-            auto currentBucketStart = renderCommands.begin();
+            shader->use();
+            long currentMeshID = (*renderCommands.begin())->meshID;
+            long bucketSize = 0;
+            long currentIndex = 0;
+            for (auto const &command: renderCommands) {
+                // Lexicographical comparison
+                bool inBucket = std::tie(currentMeshID) == std::tie(command->meshID);
 
-            while (currentBucketStart != renderCommands.end()) {
-                auto upperBucketBound = renderCommands.upper_bound(*currentBucketStart);
+                if (inBucket) {
+                    bucketSize++;
+                    currentIndex++;
+                }
+                if (!inBucket || currentIndex == renderCommands.size()) {
+                    auto const &meshRecord = loadedMeshes.at(currentMeshID);
+                    meshRecord.arrayObject.bind();
+                    glDrawElementsInstanced(GL_TRIANGLES, meshRecord.meshSize, GL_UNSIGNED_INT,
+                                            (const GLvoid *) (meshRecord.indicesIndex * sizeof(uint)),
+                                            bucketSize);
 
-                long meshID = (*currentBucketStart)->meshID;
-                MeshRecord const &meshRecord = loadedMeshes.at(meshID);
-                shader->use();
-                meshRecord.arrayObject.bind();
-                glDrawElementsInstanced(GL_TRIANGLES, meshRecord.meshSize, GL_UNSIGNED_INT,
-                                        (const GLvoid *) (meshRecord.indicesIndex * sizeof(uint)),
-                                        std::distance(currentBucketStart, upperBucketBound));
-                currentBucketStart = upperBucketBound;
+                    currentMeshID = command->meshID;
+                }
             }
         }
 
@@ -236,28 +244,16 @@ namespace graphics {
         updateProjectionMatrix(cameraComponent);
     }
 
-    void RenderingSystem::updateViewMatrix(Transform const &transform) const {
-        auto cameraTransformMat = glm::translate(glm::mat4(1.0f), transform.position);
-        cameraTransformMat = glm::rotate(cameraTransformMat, glm::radians(transform.rotationAngle),
-                                         transform.rotationAxis);
-
-        auto cameraRotateMat = glm::rotate(glm::mat4(1.0f), glm::radians(transform.rotationAngle),
-                                           transform.rotationAxis);
-
-        // Generate camera front and up vectors
-        glm::vec3 cameraDirection = {1.0f, 0.0f, 0.0f};
-        glm::vec3 cameraUp = {0.0f, 0.0f, 1.0f};
-
+    void RenderingSystem::updateViewMatrix(Transform const &transform) {
         // Rotate front and up vectors according to camera's transform
-        cameraDirection = glm::vec3(
-                cameraTransformMat * glm::vec4(cameraDirection.x, cameraDirection.y, cameraDirection.z, 1.0f));
-        cameraUp = glm::vec3(cameraRotateMat * glm::vec4(cameraUp.x, cameraUp.y, cameraUp.z, 1.0f));
-        glm::mat4 view = glm::lookAt(transform.position, cameraDirection, cameraUp);
+        auto cameraDirection = transform.rotation * glm::vec3(1.0f, 0.0f, 0.0f);
+        auto cameraUp = transform.rotation * glm::vec3(0.0f, 0.0f, 1.0f);
+        glm::mat4 view = glm::lookAt(transform.position, transform.position + cameraDirection, cameraUp);
         shader->use();
         shader->setMatrix("view", view);
     }
 
-    void RenderingSystem::updateProjectionMatrix(Camera camera) const {
+    void RenderingSystem::updateProjectionMatrix(Camera camera) {
         glm::mat4 proj = glm::perspective(glm::radians(camera.fov), camera.aspectRatio, 0.1f, 10000.0f);
         shader->use();
         shader->setMatrix("projection", proj);

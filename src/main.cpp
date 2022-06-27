@@ -52,18 +52,36 @@ int main() {
     auto cameraStore = componentManager.getComponentStore<graphics::Camera>();
 
     auto entity = entityManager.createEntity();
+    auto entity2 = entityManager.createEntity();
+    auto entity3 = entityManager.createEntity();
     auto cameraEntity = entityManager.createEntity();
 
     auto entityTransform = Transform();
     entityTransform.position = {20.0f, 0.0f, 0.0f};
     entityTransform.scale = {10.0f, 10.0f, 10.0f};
 
+
+    auto entity2Transform = entityTransform;
+    entity2Transform.position = {-20.0f, 0.0f, 0.0f};
+    entity2Transform.scale = {10.0f, 10.0f, 10.0f};
+
+    auto entity3Transform = entityTransform;
+    entity3Transform.position = {0.0f, 20.0f, 0.0f};
+    entity3Transform.scale = {10.0f, 10.0f, 10.0f};
+
     transformStore->setComponent(entity, entityTransform);
     colorStore->setComponent(entity, graphics::Color{1.0f, 1.0f, 1.0f, 1.0f});
     meshStore->setComponent(entity, graphics::MeshRef{cubeMesh});
 
+    transformStore->setComponent(entity2, entity2Transform);
+    colorStore->setComponent(entity2, graphics::Color{1.0f, 1.0f, 1.0f, 1.0f});
+    meshStore->setComponent(entity2, graphics::MeshRef{cubeMesh});
+
+    transformStore->setComponent(entity3, entity3Transform);
+    colorStore->setComponent(entity3, graphics::Color{1.0f, 1.0f, 1.0f, 1.0f});
+    meshStore->setComponent(entity3, graphics::MeshRef{cubeMesh});
+
     auto cameraTransform = Transform();
-    cameraTransform.rotationAngle = 0.0f;
     transformStore->setComponent(cameraEntity, cameraTransform);
     auto cameraComponent = graphics::Camera();
     cameraStore->setComponent(cameraEntity, cameraComponent);
