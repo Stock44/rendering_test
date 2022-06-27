@@ -19,7 +19,7 @@ namespace input {
 
         void setup(engine::ComponentManager &componentManager) override;
 
-        void update(engine::EntityManager &elementManager) override;
+        void update(engine::EntityManager &entityManager) override;
 
         void onCameraCreate(engine::Entity camera);
 

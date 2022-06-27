@@ -268,7 +268,7 @@ namespace graphics {
 
     void RenderingSystem::updateProjectionMatrix(Camera camera) {
         glm::mat4 proj = glm::perspective(glm::radians(camera.fov),
-                                          static_cast<float>(viewportSize.first / viewportSize.second), 0.1f, 10000.0f);
+                                          static_cast<float>(viewportSize.second / viewportSize.first), 0.1f, 10000.0f);
         shader->use();
         shader->setMatrix("projection", proj);
     }

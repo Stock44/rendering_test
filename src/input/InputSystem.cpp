@@ -19,12 +19,16 @@ namespace input {
     }
 
 
-    void InputSystem::update(engine::EntityManager &elementManager) {
+    void InputSystem::update(engine::EntityManager &entityManager) {
         auto delta = std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(
                 std::chrono::steady_clock::now() - lastPoll);
         lastPoll = std::chrono::steady_clock::now();
 
         auto transform = transformStore->getComponent(controlableEntity);
+
+        if (window.getKeyState(GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+            window.close();
+        }
 
         if (window.getKeyState(GLFW_KEY_W) == GLFW_PRESS) {
             transform.position.x += glm::cos(glm::radians(yaw)) * movementSpeed * delta.count() / 1000.0f;
