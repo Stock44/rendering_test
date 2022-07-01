@@ -6,6 +6,7 @@
 #include "engine/Engine.h"
 #include "graphics/RenderingSystem.h"
 #include "input/InputSystem.h"
+#include "map/loadXMLMap.h"
 
 const graphics::Mesh cubeMesh = {
         0,
@@ -85,6 +86,9 @@ int main() {
     transformStore->setComponent(cameraEntity, cameraTransform);
     auto cameraComponent = graphics::Camera();
     cameraStore->setComponent(cameraEntity, cameraComponent);
+
+    map::loadXMLMap("/home/hiram/Projects/citty/samples/sample_map.osm", componentManager, entityManager);
+    std::cout << "Number of entities in the system: " << entityManager.createEntity() << std::endl;
 
     auto last = std::chrono::steady_clock::time_point();
     while (!window.shouldWindowClose()) {
