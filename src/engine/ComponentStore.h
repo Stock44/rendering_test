@@ -33,28 +33,34 @@ namespace engine {
             return components;
         }
 
-        [[nodiscard]] ComponentType const &getComponent(Entity entityID) const {
-            return components.at(entityID);
+        [[nodiscard]] ComponentType const &getComponent(Entity entity) const {
+            return components.at(entity);
         }
 
-        [[nodiscard]] bool hasComponent(Entity entityID) const {
-            return components.contains(entityID);
+        [[nodiscard]] bool hasComponent(Entity entity) const {
+            return components.contains(entity);
         }
 
         template<std::common_with<ComponentType> T>
-        void setComponent(Entity entityID, T &&newComponent) {
+        void setComponent(Entity entity, T &&newComponent) {
             bool created;
-            std::tie(std::ignore, created) = components.insert_or_assign(entityID, std::forward<T>(newComponent));
+            std::tie(std::ignore, created) = components.insert_or_assign(entity, std::forward<T>(newComponent));
 
-            if (created) createdComponents.emplace(entityID);
-            else updatedComponents.emplace(entityID);
+            // Only set the component as updated if it's creation has been processed before.
+            if (created) createdComponents.emplace(entity);
+            else if(!createdComponents.contains(entity)){
+                updatedComponents.emplace(entity);
+            }
         }
 
-        void deleteComponent(Entity element) {
-            if (!components.contains(element))
-                [[unlikely]] throw std::invalid_argument("Component doesn't exist for this element.");
-            components.erase(element);
-            deletedComponents.emplace(element);
+        void deleteComponent(Entity entity) {
+            if (!components.contains(entity))
+                throw std::invalid_argument("Component doesn't exist for this entity.");
+            components.erase(entity);
+
+            createdComponents.erase(entity);
+            updatedComponents.erase(entity);
+            deletedComponents.emplace(entity);
         }
 
         void onComponentCreation(ComponentEventCallback const &callback) {
