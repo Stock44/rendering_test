@@ -162,7 +162,7 @@ namespace map {
             auto &y = transform.position.y;
             x = distanceLatLon({0, lon - lonMidpoint}, {0, 0});
             y = distanceLatLon({lat - latMidpoint, 0}, {0, 0});
-            x = lon - lonMidpoint > 0 ? -x : x;
+            x = lon - lonMidpoint > 0 ? x : -x;
             y = lat - latMidpoint > 0 ? y : -y;
 
             // Assign the transform for the node's entity
@@ -188,7 +188,10 @@ namespace map {
             RoadType roadType;
 
             try {
-                roadType = convertHighwayStringToRoadType(highwayTag.value());
+                roadType = convertHighwayStringToRoadType(highwayTag.attribute("v").value());
+                if (roadType != RoadType::RESIDENTIAL) {
+                    std::cout << highwayTag.attribute("v").value() << std::endl;
+                }
             } catch (std::out_of_range const &) {
                 continue;
             }
@@ -231,17 +234,16 @@ namespace map {
                     revLanes = 1;
                 }
             }
-            auto subnode = node.first_child();
-            auto nextSubnode = node.next_sibling();
 
             // Create a road for each node of type nd within the Way node
-            while (std::strcmp(subnode.name(), "nd") == 0 && std::strcmp(nextSubnode.name(), "nd") == 0) {
+            for(auto subnode = node.first_child(); subnode.next_sibling(); subnode = subnode.next_sibling()) {
+                auto nextSubnode = subnode.next_sibling();
+                if (std::strcmp(subnode.name(), "nd") != 0 && std::strcmp(nextSubnode.name(), "nd") != 0) continue;
                 auto originNodeIDAttr = subnode.attribute("ref");
                 auto destinationNodeIDAttr = nextSubnode.attribute("ref");
+                // If this subnode or the next subnode lack a ref attribute, skip this pair.
                 if (!originNodeIDAttr || !destinationNodeIDAttr) {
-                    std::cout << "Malformed road nd pair, skipping..." << std::endl;
                     subnode = nextSubnode;
-                    nextSubnode = nextSubnode.next_sibling();
                     continue;
                 }
 
@@ -253,6 +255,7 @@ namespace map {
                 road.destination = destinationNodeEntity;
                 road.lanes = lanes;
                 road.revLanes = revLanes;
+                road.type = roadType;
 
                 auto roadEntity = entityManager.createEntity();
                 roadStore->setComponent(roadEntity, road);
@@ -265,10 +268,15 @@ namespace map {
                 destinationNodeComponent.parentRoads.push_back(roadEntity);
                 nodeStore->setComponent(destinationNodeEntity, std::move(destinationNodeComponent));
 
-                subnode = nextSubnode;
-                nextSubnode = nextSubnode.next_sibling();
             }
         }
+
+        std::map addedNodes = nodeStore->getComponents();
+
+        for (auto const &[entity, node] : addedNodes) {
+            if (node.parentRoads.empty()) nodeStore->deleteComponent(entity);
+        }
+
     }
 
 

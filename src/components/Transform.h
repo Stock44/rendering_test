@@ -20,7 +20,7 @@ struct Transform {
     [[nodiscard]] glm::mat4 calculateMatrix() const {
         auto modelMatrix = glm::mat4(1.0f);
         modelMatrix = glm::translate(modelMatrix, position);
-        modelMatrix = glm::toMat4(rotation) * modelMatrix;
+        modelMatrix = modelMatrix * glm::toMat4(rotation);
         modelMatrix = glm::scale(modelMatrix, scale);
         return modelMatrix;
     }

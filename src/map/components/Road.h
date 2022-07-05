@@ -17,7 +17,7 @@ namespace map {
         engine::Entity destination;
         int lanes = 1;
         int revLanes = 0;
-        RoadType type;
+        RoadType type = RoadType::RESIDENTIAL;
     };
 
 } // map

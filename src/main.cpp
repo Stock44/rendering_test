@@ -1,12 +1,12 @@
 #include <chrono>
 #include <iostream>
 #include <thread>
-#include "engine/ComponentManager.h"
 #include "Window.h"
 #include "engine/Engine.h"
 #include "graphics/RenderingSystem.h"
 #include "input/InputSystem.h"
 #include "map/loadXMLMap.h"
+#include "map/MapRenderingSystem.h"
 
 const graphics::Mesh cubeMesh = {
         0,
@@ -43,6 +43,7 @@ int main() {
 
     engine.registerSystem(std::make_unique<graphics::RenderingSystem>(window));
     engine.registerSystem(std::make_unique<input::InputSystem>(window));
+    engine.registerSystem(std::make_unique<map::MapRenderingSystem>());
 
     auto &entityManager = engine.getEntityManager();
     auto &componentManager = engine.getComponentManager();
@@ -59,7 +60,7 @@ int main() {
 
     auto entityTransform = Transform();
     entityTransform.position = {20.0f, 0.0f, 0.0f};
-    entityTransform.scale = {10.0f, 10.0f, 10.0f};
+    entityTransform.scale = {5.0f, 5.0f, 5.0f};
 
 
     auto entity2Transform = entityTransform;
@@ -68,18 +69,18 @@ int main() {
 
     auto entity3Transform = entityTransform;
     entity3Transform.position = {0.0f, 20.0f, 0.0f};
-    entity3Transform.scale = {10.0f, 10.0f, 10.0f};
+    entity3Transform.scale = {20.0f, 20.0f, 20.0f};
 
     transformStore->setComponent(entity, entityTransform);
-    colorStore->setComponent(entity, graphics::Color{1.0f, 1.0f, 1.0f, 1.0f});
+    colorStore->setComponent(entity, graphics::Color{1.0f, 0.0f, 0.0f, 1.0f});
     meshStore->setComponent(entity, graphics::MeshRef{cubeMesh});
 
     transformStore->setComponent(entity2, entity2Transform);
-    colorStore->setComponent(entity2, graphics::Color{1.0f, 1.0f, 1.0f, 1.0f});
+    colorStore->setComponent(entity2, graphics::Color{0.0f, 1.0f, 0.0f, 1.0f});
     meshStore->setComponent(entity2, graphics::MeshRef{cubeMesh});
 
     transformStore->setComponent(entity3, entity3Transform);
-    colorStore->setComponent(entity3, graphics::Color{1.0f, 1.0f, 1.0f, 1.0f});
+    colorStore->setComponent(entity3, graphics::Color{0.0f, 0.0f, 1.0f, 1.0f});
     meshStore->setComponent(entity3, graphics::MeshRef{cubeMesh});
 
     auto cameraTransform = Transform();
@@ -95,9 +96,6 @@ int main() {
         auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last);
         last = std::chrono::steady_clock::now();
 
-//        entityTransform.rotationAngle += 25.0f * delta.count() / 1000.0f;
-//        entityTransform.rotationAngle = entityTransform.rotationAngle > 180 ? -180 : entityTransform.rotationAngle;
-//        transformStore->setComponent(entity, entityTransform);
 
         engine.update();
 
