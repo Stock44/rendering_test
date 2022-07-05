@@ -49,28 +49,26 @@ namespace map {
 
             // Switch for selecting way color
             switch (road.type) {
-                case map::UNKNOWN:
-                    color = glm::vec4(1.0f);
+                case MOTORWAY:
+                    color = graphics::Color(232.0 / 255.0, 146.0 / 255.0, 162.0 / 255.0, 1.0f);
                     break;
-                case map::MOTORWAY:
-                    color = glm::vec4(233.0 / 255.0, 144.0 / 255.0, 160.0 / 255.0, 1.0f);
+                case TRUNK:
+                    color = graphics::Color(249.0 / 255.0, 178.0 / 255.0, 156.0 / 255.0, 1.0f);
                     break;
-                case map::TRUNK:
-                    color = glm::vec4(251.0 / 255.0, 192.0 / 255.0, 172.0 / 255.0, 1.0f);
+                case PRIMARY:
+                    color = graphics::Color(252.0 / 255.0, 214.0 / 255.0, 164.0 / 255.0, 1.0f);
                     break;
-                case map::PRIMARY:
-                    color = glm::vec4(253.0 / 255.0, 215.0 / 255.0, 161.0 / 255.0, 1.0f);
+                case SECONDARY:
+                    color = graphics::Color(247.0 / 255.0, 250.0 / 255.0, 191.0 / 255.0, 1.0f);
                     break;
-                case map::SECONDARY:
-                    color = glm::vec4(246.0 / 255.0, 250.0 / 255.0, 187.0 / 255.0, 1.0f);
+                case LINK:
+                    color = graphics::Color(0.6f);
                     break;
-                case map::RESIDENTIAL:
-                    color = glm::vec4(1.0f);
-                    break;
-                case map::LINK:
-                    color = glm::vec4(0.5f);
-                    break;
-                default:
+                case UNKNOWN:
+                case RESIDENTIAL:
+                case TERTIARY:
+                case QUATERNARY:
+                    color = graphics::Color(1.0f);
                     break;
             }
 
