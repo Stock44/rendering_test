@@ -35,7 +35,7 @@ namespace graphics {
         long meshID;
         long bufferPosition;
 
-        bool bucketWith(RenderCommand const &other) {
+        bool bucketWith(RenderCommand const &other) const {
             return meshID == other.meshID;
         }
 
@@ -74,6 +74,8 @@ namespace graphics {
 
         void stageMeshIntoBuffers(Mesh const &mesh);
 
+        void regenerateBuckets();
+
         void tryRegisterEntity(Entity entity);
 
         void onMeshCreate(EntitySet entities);
@@ -106,9 +108,12 @@ namespace graphics {
         std::unique_ptr<VertexBuffer> vertexBuffer;
         std::unique_ptr<IndexBuffer> indexBuffer;
 
-        std::set<std::unique_ptr<RenderCommand>, DerefLess<RenderCommand>> renderCommands;
+        std::vector<std::unique_ptr<RenderCommand>> renderCommands;
         std::unordered_map<Entity, RenderCommand*> entityRenderMap;
         std::unordered_map<long, MeshRecord> loadedMeshes;
+
+        // Bucket ranges, start position and size
+        std::vector<std::pair<int, int>> buckets;
 
         engine::ComponentStore<MeshRef> *meshStore = nullptr;
         engine::ComponentStore<Color> *colorStore = nullptr;

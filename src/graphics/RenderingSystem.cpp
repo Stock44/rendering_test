@@ -8,7 +8,6 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <algorithm>
 #include <iterator>
-#include <iostream>
 #include "RenderingSystem.h"
 #include "components/Camera.h"
 
@@ -60,10 +59,14 @@ namespace graphics {
 
     void RenderingSystem::update(engine::EntityManager &elementManager) {
         for (auto &[id, meshRecord]: loadedMeshes) {
+            // Upload mesh records if they are dirty.
+            // Also regenerate buckets
+            // TODO better implementation of bucket regeneration
             if (meshRecord.dirty) {
                 meshRecord.colorBuffer.upload();
                 meshRecord.matBuffer.upload();
                 meshRecord.dirty = false;
+                regenerateBuckets();
             }
         }
 
@@ -72,32 +75,47 @@ namespace graphics {
         // Only try to render if there is a camera
         if (cameraEntity.has_value()) {
             shader->use();
-            auto currentCommand = **renderCommands.begin();
-            long bucketSize = 0;
-            long currentIndex = 1;
-            for (auto const &command: renderCommands) {
-                // Lexicographical comparison
-                bool inBucket = currentCommand.bucketWith(*command);
 
-                if (inBucket) {
-                    bucketSize++;
-                    currentIndex++;
-                }
-                if (!inBucket || currentIndex >= renderCommands.size()) {
-                    auto const &meshRecord = loadedMeshes.at(currentCommand.meshID);
-                    meshRecord.arrayObject.bind();
-                    glDrawElementsInstanced(GL_TRIANGLES, meshRecord.meshSize, GL_UNSIGNED_INT,
-                                            (const GLvoid *) (meshRecord.indicesIndex * sizeof(uint)),
-                                            bucketSize);
-
-                    currentCommand = *command;
-                    bucketSize = 0;
-                }
+            // For each bucket, render its contents
+            for (auto const &[bucketIndex, bucketSize]: buckets) {
+                // Leading command for this bucket
+                auto command = *renderCommands.at(bucketIndex);
+                auto const &meshRecord = loadedMeshes.at(command.meshID);
+                meshRecord.arrayObject.bind();
+                glDrawElementsInstanced(GL_TRIANGLES, meshRecord.meshSize, GL_UNSIGNED_INT,
+                                        (const GLvoid *) (meshRecord.indicesIndex * sizeof(uint)),
+                                        bucketSize);
             }
         }
 
-
         window.swapBuffers();
+    }
+
+    void RenderingSystem::regenerateBuckets() {
+        buckets.clear();
+        auto currentCommand = **renderCommands.begin();
+        long bucketSize = 0;
+        long currentIndex = 0;
+
+        // Sort the render commands before regenerating the buckets
+        std::sort(renderCommands.begin(), renderCommands.end(), DerefLess<RenderCommand>());
+
+        for (auto const &command: renderCommands) {
+            // Lexicographical comparison
+            bool inBucket = currentCommand.bucketWith(*command);
+
+            if (inBucket) {
+                bucketSize++;
+            }
+            if (!inBucket || currentIndex >= renderCommands.size() - 1) {
+
+                buckets.emplace_back(currentIndex, bucketSize);
+
+                currentCommand = *command;
+                bucketSize = 0;
+            }
+            currentIndex++;
+        }
     }
 
     void RenderingSystem::stageMeshIntoBuffers(Mesh const &mesh) {
@@ -110,7 +128,7 @@ namespace graphics {
 
         meshRecord.verticesIndex = vertexBuffer->getSize();
         meshRecord.indicesIndex = indexBuffer->getSize();
-        meshRecord.meshSize = std::size(mesh.indices);
+        meshRecord.meshSize = std::ssize(mesh.indices);
 
         // Shift indices to their actual positions on the buffer
         auto const &indices = mesh.indices;
@@ -166,7 +184,7 @@ namespace graphics {
         command->meshID = mesh.ID;
         command->bufferPosition = matBuffer.getSize();
         entityRenderMap.try_emplace(entity, command.get());
-        renderCommands.emplace(std::move(command));
+        renderCommands.push_back(std::move(command));
 
         // Add matrix and color to buffers
         matBuffer.addModelMat(modelMatrix);
@@ -187,6 +205,7 @@ namespace graphics {
         }
     }
 
+
     void RenderingSystem::onTransformCreate(EntitySet entities) {
         for (auto entity: entities) {
             if (cameraStore->hasComponent(entity) && cameraEntity.has_value() && entity == cameraEntity.value())
@@ -195,7 +214,6 @@ namespace graphics {
             tryRegisterEntity(entity);
         }
     }
-
 
     void RenderingSystem::onTransformUpdate(EntitySet entities) {
         for (auto entity: entities) {
@@ -269,7 +287,8 @@ namespace graphics {
 
     void RenderingSystem::updateProjectionMatrix(Camera camera) {
         glm::mat4 proj = glm::perspective(glm::radians(camera.fov),
-                                          static_cast<float>(viewportSize.first) / static_cast<float>(viewportSize.second), 0.1f, 10000.0f);
+                                          static_cast<float>(viewportSize.first) /
+                                          static_cast<float>(viewportSize.second), 0.1f, 10000.0f);
         shader->use();
         shader->setMatrix("projection", proj);
     }
