@@ -189,9 +189,6 @@ namespace map {
 
             try {
                 roadType = convertHighwayStringToRoadType(highwayTag.attribute("v").value());
-                if (roadType != RoadType::RESIDENTIAL) {
-                    std::cout << highwayTag.attribute("v").value() << std::endl;
-                }
             } catch (std::out_of_range const &) {
                 continue;
             }
@@ -247,8 +244,18 @@ namespace map {
                     continue;
                 }
 
-                auto originNodeEntity = nodes.at(originNodeIDAttr.value());
-                auto destinationNodeEntity = nodes.at(destinationNodeIDAttr.value());
+                engine::Entity originNodeEntity;
+                engine::Entity destinationNodeEntity;
+
+                // If this road's nodes are not on the map, skip creating this road
+                try {
+                    originNodeEntity = nodes.at(originNodeIDAttr.value());
+                    destinationNodeEntity = nodes.at(destinationNodeIDAttr.value());
+                } catch (std::out_of_range const &) {
+                    continue;
+                }
+
+
 
                 Road road;
                 road.origin = originNodeEntity;
