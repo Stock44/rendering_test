@@ -35,11 +35,22 @@ namespace graphics {
         long meshID;
         long bufferPosition;
 
+        bool bucketWith(RenderCommand const &other) {
+            return meshID == other.meshID;
+        }
+
         bool operator==(RenderCommand const &rhs) const = default;
 
         std::weak_ordering operator<=>(RenderCommand const &rhs) const {
             // Lexicographical comparison, first meshID then bufferPosition
-            return std::tie(meshID, bufferPosition) <=> std::tie(rhs.meshID, bufferPosition);
+            return std::tie(meshID, bufferPosition) <=> std::tie(rhs.meshID, rhs.bufferPosition);
+        }
+    };
+
+    template<typename T>
+    struct DerefLess {
+        bool operator()(std::unique_ptr<T> const &lhs, std::unique_ptr<T> const &rhs) const {
+            return *lhs < *rhs;
         }
     };
 
@@ -95,8 +106,8 @@ namespace graphics {
         std::unique_ptr<VertexBuffer> vertexBuffer;
         std::unique_ptr<IndexBuffer> indexBuffer;
 
-        std::set<std::unique_ptr<RenderCommand>> renderCommands;
-        std::unordered_map<Entity, RenderCommand *> entityRenderMap;
+        std::set<std::unique_ptr<RenderCommand>, DerefLess<RenderCommand>> renderCommands;
+        std::unordered_map<Entity, RenderCommand*> entityRenderMap;
         std::unordered_map<long, MeshRecord> loadedMeshes;
 
         engine::ComponentStore<MeshRef> *meshStore = nullptr;

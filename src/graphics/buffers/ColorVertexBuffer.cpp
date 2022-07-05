@@ -57,7 +57,7 @@ namespace graphics {
     }
 
     void ColorVertexBuffer::addVertex(Color newVertex) {
-        vertices.insert(std::begin(vertices), newVertex);
+        vertices.push_back(newVertex);
     }
 
     void ColorVertexBuffer::deleteVertex(long index) {

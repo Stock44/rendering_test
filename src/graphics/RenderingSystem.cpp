@@ -72,25 +72,26 @@ namespace graphics {
         // Only try to render if there is a camera
         if (cameraEntity.has_value()) {
             shader->use();
-            long currentMeshID = (*renderCommands.begin())->meshID;
+            auto currentCommand = **renderCommands.begin();
             long bucketSize = 0;
-            long currentIndex = 0;
+            long currentIndex = 1;
             for (auto const &command: renderCommands) {
                 // Lexicographical comparison
-                bool inBucket = std::tie(currentMeshID) == std::tie(command->meshID);
+                bool inBucket = currentCommand.bucketWith(*command);
 
                 if (inBucket) {
                     bucketSize++;
                     currentIndex++;
                 }
-                if (!inBucket || currentIndex == renderCommands.size()) {
-                    auto const &meshRecord = loadedMeshes.at(currentMeshID);
+                if (!inBucket || currentIndex >= renderCommands.size()) {
+                    auto const &meshRecord = loadedMeshes.at(currentCommand.meshID);
                     meshRecord.arrayObject.bind();
                     glDrawElementsInstanced(GL_TRIANGLES, meshRecord.meshSize, GL_UNSIGNED_INT,
                                             (const GLvoid *) (meshRecord.indicesIndex * sizeof(uint)),
                                             bucketSize);
 
-                    currentMeshID = command->meshID;
+                    currentCommand = *command;
+                    bucketSize = 0;
                 }
             }
         }
@@ -203,7 +204,7 @@ namespace graphics {
                 updateViewMatrix(transformStore->getComponent(entity));
 
             // If this entity is not rendered, ignore
-            if (!entityRenderMap.contains(entity)) return;
+            if (!entityRenderMap.contains(entity)) continue;
 
             auto meshID = entityRenderMap.at(entity)->meshID;
             auto bufferPosition = entityRenderMap.at(entity)->bufferPosition;
@@ -221,7 +222,7 @@ namespace graphics {
     void RenderingSystem::onColorUpdate(EntitySet entities) {
         for (auto entity: entities) {
             // If this entity is not rendered, ignore
-            if (!entityRenderMap.contains(entity)) return;
+            if (!entityRenderMap.contains(entity)) continue;
 
             auto meshID = entityRenderMap.at(entity)->meshID;
             auto bufferPosition = entityRenderMap.at(entity)->bufferPosition;
