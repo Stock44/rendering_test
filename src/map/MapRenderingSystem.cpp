@@ -7,6 +7,7 @@
 #include <iostream>
 #include "MapRenderingSystem.h"
 #include "../graphics/components/MeshRef.h"
+#include "../graphics/components/Color.h"
 
 namespace map {
     void MapRenderingSystem::setup(engine::ComponentManager &componentManager) {
@@ -17,7 +18,6 @@ namespace map {
         meshStore = componentManager.getComponentStore<graphics::MeshRef>();
 
         roadStore->onComponentCreation([this](engine::EntitySet entities) { onRoadCreate(entities); });
-        nodeStore->onComponentCreation([this](engine::EntitySet entities) { onNodeCreate(entities); });
         transformStore->onComponentCreation([this](engine::EntitySet entities) { onTransformCreate(entities); });
     }
 
@@ -42,9 +42,10 @@ namespace map {
             auto transform = Transform();
             transform.position = glm::vec3(originPosition.x + xDelta / 2.0f, originPosition.y + yDelta / 2.0f, 0.0f);
             transform.rotation = glm::angleAxis(std::atan2(yDelta, xDelta), glm::vec3{0.0f, 0.0f, 1.0f});
-            transform.scale = {std::sqrt(std::pow(xDelta, 2) + std::pow(yDelta, 2)), 1.0f, 1.0f};
+            transform.scale = {std::sqrt(std::pow(xDelta, 2) + std::pow(yDelta, 2)),
+                               road.roadWidth * (road.lanes + road.revLanes), 1.0f};
 
-            auto color = glm::vec4(1.0f);
+            graphics::Color color;
 
             // Switch for selecting way color
             switch (road.type) {
@@ -75,16 +76,6 @@ namespace map {
 
             transformStore->setComponent(entity, transform);
             colorStore->setComponent(entity, color);
-            meshStore->setComponent(entity, std::reference_wrapper(cubeMesh));
-        }
-    }
-
-    void MapRenderingSystem::onNodeCreate(engine::EntitySet entities) {
-        for (auto entity: entities) {
-            auto transform = transformStore->getComponent(entity);
-            transform.scale = {2.0f, 2.0f, 2.0f};
-            transformStore->setComponent(entity, transform);
-            colorStore->setComponent(entity, graphics::Color{0.9f, 0.4f, 0.4f, 1.0f});
             meshStore->setComponent(entity, std::reference_wrapper(cubeMesh));
         }
     }

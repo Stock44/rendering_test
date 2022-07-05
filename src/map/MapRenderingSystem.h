@@ -23,7 +23,6 @@ namespace map {
 
         void onRoadCreate(engine::EntitySet entities);
 
-        void onNodeCreate(engine::EntitySet entities);
 
         void onTransformCreate(engine::EntitySet entities);
 
