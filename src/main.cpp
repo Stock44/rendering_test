@@ -91,171 +91,21 @@ int main() {
     map::loadXMLMap("/home/hiram/Projects/citty/samples/sample_map.osm", componentManager, entityManager);
     std::cout << "Number of entities in the system: " << entityManager.createEntity() << std::endl;
 
-    auto last = std::chrono::steady_clock::time_point();
     while (!window.shouldWindowClose()) {
-        auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last);
-        last = std::chrono::steady_clock::now();
+        auto last = std::chrono::steady_clock::now();
 
 
         engine.update();
 
-        std::this_thread::sleep_for(std::chrono::duration<int, std::milli>(10));
+        auto delta = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - last);
+        std::cout << "FPS: " << 1000000000.f / delta.count() << std::endl;
+//        if (delta.count() > 1.0f / 120.0f) {
+//            std::this_thread::sleep_for(std::chrono::duration<float, std::milli>(delta.count() - 1000.0f / 120.0f));
+//        }
     }
 }
 
-//int main2() {
-//    // Initialize window, camera and graphics engine.
-//    graphics::Camera camera(glm::dvec3(0.0f, 1.0f, 0.0f), 35.0f,
-//                            1.0f, 0.0f, 0.0f);
-//    auto graphics = graphics::GraphicsEngine(window, camera);
-//
-//    // Keep track of frame duration
-//    auto lastFrame = std::chrono::steady_clock::now(); // Start time of last frame
-//    std::chrono::duration<float, std::milli> deltaTime{}; // Duration of last frame in seconds
-//    const int FPSLimit = 120;
-//    const auto frameDuration = std::chrono::duration<float, std::milli>(1000.0f / static_cast<float>(FPSLimit));
-//
-//    // Keep track of last known mouse position
-//    auto lastMousePos = std::make_pair(0.0f, 0.0f);
-//
-//    // Input handlers
-//    auto handleInput = [&deltaTime, &window, &camera] {
-//        const float cameraSpeed = 200.0f * deltaTime.count() / 1000.0f;
-//        auto cameraPos = camera.getCameraPos();
-//        auto cameraFront = camera.getCameraFront();
-//        auto cameraUp = camera.getCameraUp();
-//        if (window.getKeyState(GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-//            window.close();
-//        }
-//        if (window.getKeyState(GLFW_KEY_1) == GLFW_PRESS) {
-//            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-//        }
-//        if (window.getKeyState(GLFW_KEY_2) == GLFW_PRESS) {
-//            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-//        }
-//        if (window.getKeyState(GLFW_KEY_W) == GLFW_PRESS) {
-//            cameraPos += cameraSpeed * cameraFront;
-//        }
-//        if (window.getKeyState(GLFW_KEY_A) == GLFW_PRESS) {
-//            cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-//        }
-//        if (window.getKeyState(GLFW_KEY_S) == GLFW_PRESS) {
-//            cameraPos -= cameraSpeed * cameraFront;
-//        }
-//        if (window.getKeyState(GLFW_KEY_D) == GLFW_PRESS) {
-//            cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-//        }
-//        if (window.getKeyState(GLFW_KEY_Q) == GLFW_PRESS) {
-//            cameraPos += glm::normalize(-cameraUp) * cameraSpeed;
-//        }
-//        if (window.getKeyState(GLFW_KEY_E) == GLFW_PRESS) {
-//            cameraPos += glm::normalize(cameraUp) * cameraSpeed;
-//        }
-//        camera.setCameraPos(cameraPos);
-//    };
-//
-//    const float mouseSensitivity = 0.2f;
-//
-//    auto onMouseMove = [&lastMousePos, &mouseSensitivity, &camera, &window](std::pair<float, float> position) {
-//        float xOffset = position.first - lastMousePos.first;
-//        float yOffset = lastMousePos.second - position.second;
-//
-//        xOffset *= mouseSensitivity;
-//        yOffset *= mouseSensitivity;
-//
-//        if (window.getMouseButtonState(GLFW_MOUSE_BUTTON_1) == GLFW_PRESS) {
-//            camera.setYaw(camera.getYaw() + xOffset);
-//            camera.setPitch(camera.getPitch() + yOffset);
-//        }
-//
-//        lastMousePos = position;
-//    };
-//
-//    auto onViewSizeChange = [&camera, &graphics](std::pair<int, int> newSize) {
-//        camera.setAspectRatio(static_cast<float>(newSize.first) / static_cast<float>(newSize.second));
-//        graphics.setViewportSize(newSize);
-//    };
-//
-//    auto onMouseScroll = [&camera](std::pair<float, float> offset) {
-//        static const float minFov = 1.0f;
-//        static const float maxFov = 35.0f;
-//
-//        camera.setFov(camera.getFov() - offset.second);
-//
-//        const double fov = camera.getFov();
-//
-//        if (fov > maxFov) {
-//            camera.setFov(maxFov);
-//        } else if (fov < minFov) {
-//            camera.setFov(minFov);
-//        }
-//    };
-//
-//    // Register callbacks
-//    window.setMouseMoveCallback(onMouseMove);
-//    window.setViewSizeCallback(onViewSizeChange);
-//    window.setMouseScrollCallback(onMouseScroll);
-//
-//    std::vector<graphics::Vertex> cubeVertices({
-//                                                       graphics::Vertex(0.5f, 0.5f, 0.5f),
-//                                                       graphics::Vertex(-0.5f, 0.5f, 0.5f),
-//                                                       graphics::Vertex(-0.5f, -0.5f, 0.5f),
-//                                                       graphics::Vertex(0.5f, -0.5f, 0.5f),
-//                                                       graphics::Vertex(0.5f, 0.5f, -0.5f),
-//                                                       graphics::Vertex(-0.5f, 0.5f, -0.5f),
-//                                                       graphics::Vertex(-0.5f, -0.5f, -0.5f),
-//                                                       graphics::Vertex(0.5f, -0.5f, -0.5f),
-//                                               });
-//
-//    std::vector<uint> cubeIndices({
-//                                          3, 2, 1,
-//                                          3, 1, 0,
-//                                          7, 3, 0,
-//                                          7, 0, 4,
-//                                          6, 7, 4,
-//                                          6, 4, 5,
-//                                          2, 6, 5,
-//                                          2, 5, 1,
-//                                          5, 4, 0,
-//                                          5, 0, 1,
-//                                          2, 3, 7,
-//                                          2, 7, 6,
-//                                  });
-//
-//    auto cube = std::make_shared<graphics::Mesh>(cubeVertices, cubeIndices);
-//
-//    auto destinationMarker = std::make_shared<graphics::Drawable>(cube);
-//    destinationMarker->setColor(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-//    destinationMarker->setScale(glm::vec3(10.0f));
-//    auto car = std::make_shared<graphics::Drawable>(cube);
-//    car->setScale(glm::vec3(1.9f, 1.5f, 4.7f));
-//    car->setColor(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-//    graphics.draw(car);
-//    graphics.draw(destinationMarker);
-//
-//    // Initialize basic models and objects
-//
-//    auto tree = map::MapXMLTree("/home/hiram/Projects/citty/samples/sample_map.osm");
-//    auto network = tree.generateNetwork();
-//    map::TransitNetworkRenderer networkRenderer(network);
-//
-//    int currentNodeIndex = 0;
-//    auto currentWay = network.getHighways().at(10);
-//
-//    auto initialNode = network.getClosestNodeToCoord(glm::vec3(200.0f, 0.0f, -300.0f));
-//    auto targetNode = network.getClosestNodeToCoord(glm::vec3(-1500.0f, 0.0f, 800.0f));
-//
-//
-//    car->setPosition(initialNode->getPosition());
-//    destinationMarker->setPosition(targetNode->getPosition());
-//
-//    camera.setCameraPos(car->getPosition());
-//
-//    std::cout << network.getHighwayCount() << std::endl;
-//    std::cout << network.getNodeCount() << std::endl;
-//
-//    std::cout << "Initial node: " << initialNode->getId() << std::endl;
-//
+
 //    // A* algorithm implementation
 //    std::unordered_map<int, float> nodeDistances = {{initialNode->getId(), 0}};
 //    std::unordered_map<int, float> nodeCosts = {
@@ -310,27 +160,3 @@ int main() {
 //        }
 //    }
 //
-//    networkRenderer.render(graphics);
-//    // Render loop
-//    while (!window.shouldWindowClose()) {
-//        lastFrame = std::chrono::steady_clock::now(); // Store starting time-point of current frame;
-//
-//        std::cout << "FPS: " << 1000.0f / deltaTime.count() << std::endl;
-//        // expansion begin, add anything in here
-//
-//        // expansion end
-//        handleInput();
-//        graphics.update();
-//        glfwPollEvents();
-//        deltaTime = std::chrono::steady_clock::now() - lastFrame;
-//        auto extraTime = frameDuration - deltaTime;
-//        if (extraTime.count() > 0) {
-//            std::this_thread::sleep_for(extraTime);
-//        }
-//
-//        deltaTime = std::chrono::steady_clock::now() - lastFrame;
-//    }
-//
-////    pathfindingThread.join();
-//    return 0;
-//}
