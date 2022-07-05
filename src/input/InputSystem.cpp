@@ -64,7 +64,6 @@ namespace input {
             pitch = pitch > 90.0f ? 90.0f : pitch;
             pitch = pitch < -90.0f ? -90.0f : pitch;
 
-            std::cout << "yaw: " << yaw << " pitch: " << pitch << std::endl;
             transform.rotation = glm::angleAxis(glm::radians(-yaw), glm::vec3(0.0f, 0.0f, 1.0f)) * glm::angleAxis(glm::radians(-pitch), glm::vec3(0.0f, 1.0f, 0.0f));
 
             xOffset = 0;
