@@ -40,24 +40,24 @@ namespace map {
                         graphics::Vertex(-0.5f, -0.5f, -0.5f),
                 },
                 {
-                        1, 0, 2,
-                        2, 3, 1,
-                        4, 6, 2,
-                        2, 0, 4,
+                        3, 2, 1,
+                        3, 1, 0,
+                        7, 3, 0,
+                        7, 0, 4,
+                        6, 7, 4,
+                        6, 4, 5,
+                        2, 6, 5,
+                        2, 5, 1,
                         5, 4, 0,
-                        0, 1, 5,
-                        7, 5, 1,
-                        1, 3, 7,
-                        7, 6, 4,
-                        4, 5, 7,
-                        6, 7, 2,
+                        5, 0, 1,
                         2, 3, 7,
+                        2, 7, 6,
                 },
         };
         engine::ComponentStore<Node> *nodeStore;
         engine::ComponentStore<Road> *roadStore;
         engine::ComponentStore<Transform> *transformStore;
-        engine::ComponentStore<graphics::MeshRef> * meshStore;
+        engine::ComponentStore<graphics::MeshRef> *meshStore;
         engine::ComponentStore<graphics::Color> *colorStore;
     };
 
