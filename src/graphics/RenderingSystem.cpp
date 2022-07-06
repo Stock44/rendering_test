@@ -28,9 +28,9 @@ namespace graphics {
         setViewportSize(window.getSize());
 
         glEnable(GL_DEPTH_TEST);
-//        glEnable(GL_CULL_FACE);
-//        glFrontFace(GL_CCW);
-//        glCullFace(GL_FRONT);
+        glEnable(GL_CULL_FACE);
+        glFrontFace(GL_CCW);
+        glCullFace(GL_FRONT);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
 
@@ -288,7 +288,7 @@ namespace graphics {
     void RenderingSystem::updateProjectionMatrix(Camera camera) {
         glm::mat4 proj = glm::perspective(glm::radians(camera.fov),
                                           static_cast<float>(viewportSize.first) /
-                                          static_cast<float>(viewportSize.second), 0.1f, 10000.0f);
+                                          static_cast<float>(viewportSize.second), 10.0f, 100000.0f);
         shader->use();
         shader->setMatrix("projection", proj);
     }
