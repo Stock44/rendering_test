@@ -7,36 +7,11 @@
 #include "input/InputSystem.h"
 #include "map/loadXMLMap.h"
 #include "map/MapRenderingSystem.h"
-
-const graphics::Mesh cubeMesh = {
-        0,
-        {
-                graphics::Vertex(0.5f, 0.5f, 0.5f),
-                graphics::Vertex(-0.5f, 0.5f, 0.5f),
-                graphics::Vertex(0.5f, 0.5f, -0.5f),
-                graphics::Vertex(-0.5f, 0.5f, -0.5f),
-                graphics::Vertex(0.5f, -0.5f, 0.5f),
-                graphics::Vertex(-0.5f, -0.5f, 0.5f),
-                graphics::Vertex(0.5f, -0.5f, -0.5f),
-                graphics::Vertex(-0.5f, -0.5f, -0.5f),
-        },
-        {
-                1, 0, 2,
-                2, 3, 1,
-                4, 6, 2,
-                2, 0, 4,
-                5, 4, 0,
-                0, 1, 5,
-                7, 5, 1,
-                1, 3, 7,
-                7, 6, 4,
-                4, 5, 7,
-                6, 7, 2,
-                2, 3, 7,
-        },
-};
+#include "traffic/components/Target.h"
+#include "traffic/PathfindingSystem.h"
 
 int main() {
+    using namespace std::chrono;
     Window window({500, 500});
 
     engine::Engine engine;
@@ -44,44 +19,16 @@ int main() {
     engine.registerSystem(std::make_unique<graphics::RenderingSystem>(window));
     engine.registerSystem(std::make_unique<input::InputSystem>(window));
     engine.registerSystem(std::make_unique<map::MapRenderingSystem>());
+    engine.registerSystem(std::make_unique<traffic::PathfindingSystem>());
 
     auto &entityManager = engine.getEntityManager();
     auto &componentManager = engine.getComponentManager();
 
     auto transformStore = componentManager.getComponentStore<Transform>();
-    auto colorStore = componentManager.getComponentStore<graphics::Color>();
-    auto meshStore = componentManager.getComponentStore<graphics::MeshRef>();
     auto cameraStore = componentManager.getComponentStore<graphics::Camera>();
+    auto targetStore = componentManager.getComponentStore<traffic::PathfindTarget>();
 
-    auto entity = entityManager.createEntity();
-    auto entity2 = entityManager.createEntity();
-    auto entity3 = entityManager.createEntity();
     auto cameraEntity = entityManager.createEntity();
-
-    auto entityTransform = Transform();
-    entityTransform.position = {20.0f, 0.0f, 0.0f};
-    entityTransform.scale = {5.0f, 5.0f, 5.0f};
-
-
-    auto entity2Transform = entityTransform;
-    entity2Transform.position = {-20.0f, 0.0f, 0.0f};
-    entity2Transform.scale = {10.0f, 10.0f, 10.0f};
-
-    auto entity3Transform = entityTransform;
-    entity3Transform.position = {0.0f, 20.0f, 0.0f};
-    entity3Transform.scale = {20.0f, 20.0f, 20.0f};
-
-    transformStore->setComponent(entity, entityTransform);
-    colorStore->setComponent(entity, graphics::Color{1.0f, 0.0f, 0.0f, 1.0f});
-    meshStore->setComponent(entity, graphics::MeshRef{cubeMesh});
-
-    transformStore->setComponent(entity2, entity2Transform);
-    colorStore->setComponent(entity2, graphics::Color{0.0f, 1.0f, 0.0f, 1.0f});
-    meshStore->setComponent(entity2, graphics::MeshRef{cubeMesh});
-
-    transformStore->setComponent(entity3, entity3Transform);
-    colorStore->setComponent(entity3, graphics::Color{0.0f, 0.0f, 1.0f, 1.0f});
-    meshStore->setComponent(entity3, graphics::MeshRef{cubeMesh});
 
     auto cameraTransform = Transform();
     transformStore->setComponent(cameraEntity, cameraTransform);
@@ -97,11 +44,12 @@ int main() {
 
         engine.update();
 
-        auto delta = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - last);
-        std::cout << "FPS: " << 1000000000.f / delta.count() << std::endl;
-//        if (delta.count() > 1.0f / 120.0f) {
-//            std::this_thread::sleep_for(std::chrono::duration<float, std::milli>(delta.count() - 1000.0f / 120.0f));
-//        }
+
+        auto delta = steady_clock::now() - last;
+        std::cout << "Frame duration : " << delta << " FPS: " << 1000000000.0 / delta.count()  << std::endl;
+        if (delta.count() < 1.0 / 120000000000.0) {
+            std::this_thread::sleep_for(nanoseconds(1000000000 / 120) - delta);
+        }
     }
 }
 
