@@ -2,17 +2,12 @@
 // Created by hiram on 5/17/22.
 //
 
+#include "utils.h"
 #include <cmath>
 #include <map>
 #include <functional>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sstream>
-#include <fstream>
 #include <cstring>
-#include <queue>
 #include <iostream>
-#include <glm/vec4.hpp>
 #include <algorithm>
 #include <pugixml.hpp>
 #include "../engine/ComponentManager.h"
@@ -20,7 +15,6 @@
 #include "../components/Transform.h"
 #include "components/Road.h"
 #include "components/Node.h"
-#include "utils.h"
 
 namespace map {
     void handlePugiStatus(pugi::xml_parse_status status) {

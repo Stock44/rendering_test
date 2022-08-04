@@ -10,7 +10,7 @@
 namespace traffic {
 
     struct PathfindTarget {
-        glm::vec3 target;
+        glm::vec3 position;
     };
 
 } // traffic

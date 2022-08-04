@@ -11,6 +11,8 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/quaternion_float.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/register/point.hpp>
 
 struct Transform {
     glm::quat rotation;
@@ -25,6 +27,5 @@ struct Transform {
         return modelMatrix;
     }
 };
-
 
 #endif //CITYY_TRANSFORM_H
