@@ -10,7 +10,7 @@
 #include <set>
 #include <citty/engine/System.hpp>
 #include <citty/graphics/components/Mesh.hpp>
-#include <citty/components/Transform.hpp>
+#include <citty/engine/components/Transform.hpp>
 #include <citty/graphics/components/Camera.hpp>
 #include <citty/graphics/components/Color.hpp>
 #include <citty/Window.hpp>

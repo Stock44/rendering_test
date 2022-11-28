@@ -6,7 +6,7 @@
 #define CITYY_PATHFINDINGSYSTEM_H
 
 #include <citty/engine/System.hpp>
-#include <citty/components/Transform.hpp>
+#include <citty/engine/components/Transform.hpp>
 #include <citty/map/components/Road.hpp>
 #include <citty/map/components/Node.hpp>
 #include <citty/traffic/components/Path.h>

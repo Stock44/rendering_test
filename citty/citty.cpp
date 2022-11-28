@@ -50,6 +50,7 @@ int main() {
         engine.update();
 
 
+
         auto delta = steady_clock::now() - last;
 //        std::cout << "Frame duration : " << delta << " FPS: " << 1000000000.0 / delta.count()  << std::endl;
         if (delta.count() < 1.0 / 120000000000.0) {

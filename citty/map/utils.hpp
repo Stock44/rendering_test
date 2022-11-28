@@ -19,7 +19,7 @@
 #include <pugixml.hpp>
 #include <citty/engine/ComponentManager.hpp>
 #include <citty/engine/EntityManager.hpp>
-#include <citty/components/Transform.hpp>
+#include <citty/engine/components/Transform.hpp>
 #include <citty/map/components/Road.hpp>
 #include <citty/map/components/Node.hpp>
 
