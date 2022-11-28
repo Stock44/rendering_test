@@ -1,0 +1,1 @@
+./: {*/ -build/ -samples/ -shaders/ -resources/} doc{README.md} manifest

@@ -1,0 +1,8 @@
+: 1
+name: citty
+version: 0.1.0
+summary: citty
+license: other: TODO
+
+depends: pugixml ^1.12.1
+depends: glfw ^3.3.8

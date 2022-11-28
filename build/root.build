@@ -1,0 +1,14 @@
+cxx.std = latest
+
+using cxx
+
+hxx{*}: extension = hpp
+cxx{*}: extension = cpp
+
+hxx{*}: cxx.importable = true
+
+using c
+h{*}: extension = h
+c{*}: extension = c
+
+h{*}: c.importable = true

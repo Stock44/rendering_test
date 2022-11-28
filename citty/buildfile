@@ -1,0 +1,7 @@
+libs = \
+    pugixml%lib{pugixml} \
+    glfw%lib{glfw}
+
+exe{citty}: {hxx h cxx c}{**} $libs
+
+cc.poptions =+ "-I$out_root" "-I$src_root"
