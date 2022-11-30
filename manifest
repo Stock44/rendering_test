@@ -4,5 +4,8 @@ version: 0.1.0
 summary: citty
 license: other: TODO
 
+requires: c++20
+requires: gtkmm-4.0 ^4.8.0
+
 depends: pugixml ^1.12.1
 depends: glfw ^3.3.8
