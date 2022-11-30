@@ -2,8 +2,7 @@
 // Created by hiram on 7/1/22.
 //
 
-#ifndef CITYY_MAPRENDERINGSYSTEM_HPP
-#define CITYY_MAPRENDERINGSYSTEM_HPP
+#pragma once
 
 #include <citty/engine/System.hpp>
 #include <citty/engine/components/Transform.hpp>
@@ -62,5 +61,3 @@ namespace map {
     };
 
 } // map
-
-#endif //CITYY_MAPRENDERINGSYSTEM_HPP

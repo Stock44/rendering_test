@@ -2,8 +2,7 @@
 // Created by hiram on 5/26/22.
 //
 
-#ifndef CITYY_VEHICLE_H
-#define CITYY_VEHICLE_H
+#pragma once
 
 #include <glm/vec3.hpp>
 
@@ -31,5 +30,3 @@ namespace traffic {
     };
 
 } // traffic
-
-#endif //CITYY_VEHICLE_H

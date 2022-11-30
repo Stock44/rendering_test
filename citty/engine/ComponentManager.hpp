@@ -2,8 +2,7 @@
 // Created by hiram on 5/30/22.
 //
 
-#ifndef CITYY_COMPONENTMANAGER_HPP
-#define CITYY_COMPONENTMANAGER_HPP
+#pragma once
 
 #include <typeinfo>
 #include <concepts>
@@ -41,5 +40,3 @@ namespace engine {
     };
 
 } // engine
-
-#endif //CITYY_COMPONENTMANAGER_HPP

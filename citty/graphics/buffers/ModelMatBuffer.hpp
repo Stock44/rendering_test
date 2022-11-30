@@ -2,8 +2,7 @@
 // Created by hiram on 5/5/22.
 //
 
-#ifndef CITYY_MODELMATBUFFER_HPP
-#define CITYY_MODELMATBUFFER_HPP
+#pragma once
 
 #include <vector>
 #include <glm/ext/matrix_float4x4.hpp>
@@ -40,5 +39,3 @@ namespace graphics {
     };
 
 } // graphics
-
-#endif //CITYY_MODELMATBUFFER_HPP

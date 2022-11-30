@@ -2,8 +2,7 @@
 // Created by hiram on 7/6/22.
 //
 
-#ifndef CITYY_PATHFINDINGSYSTEM_H
-#define CITYY_PATHFINDINGSYSTEM_H
+#pragma once
 
 #include <citty/engine/System.hpp>
 #include <citty/engine/components/Transform.hpp>
@@ -71,5 +70,3 @@ namespace traffic {
     };
 
 } // traffic
-
-#endif //CITYY_PATHFINDINGSYSTEM_H

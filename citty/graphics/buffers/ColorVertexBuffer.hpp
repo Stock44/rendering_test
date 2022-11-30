@@ -2,8 +2,7 @@
 // Created by hiram on 5/18/22.
 //
 
-#ifndef CITYY_COLORVERTEXBUFFER_HPP
-#define CITYY_COLORVERTEXBUFFER_HPP
+#pragma once
 
 #include <vector>
 #include <glm/detail/type_vec3.hpp>
@@ -39,5 +38,3 @@ namespace graphics {
     };
 
 } // graphics
-
-#endif //CITYY_COLORVERTEXBUFFER_HPP

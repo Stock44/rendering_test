@@ -2,8 +2,7 @@
 // Created by hiram on 5/30/22.
 //
 
-#ifndef CITYY_COMPONENTSTORE_HPP
-#define CITYY_COMPONENTSTORE_HPP
+#pragma once
 
 #include <concepts>
 #include <map>
@@ -112,5 +111,3 @@ namespace engine {
     };
 
 } // engine
-
-#endif //CITYY_COMPONENTSTORE_HPP

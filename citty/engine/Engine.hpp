@@ -2,8 +2,7 @@
 // Created by hiram on 6/6/22.
 //
 
-#ifndef CITYY_ENGINE_HPP
-#define CITYY_ENGINE_HPP
+#pragma once
 
 #include <citty/engine/System.hpp>
 #include <citty/engine/EntityManager.hpp>
@@ -33,5 +32,3 @@ namespace engine {
     };
 
 } // engine
-
-#endif //CITYY_ENGINE_HPP

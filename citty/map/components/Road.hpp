@@ -2,8 +2,7 @@
 // Created by hiram on 6/27/22.
 //
 
-#ifndef CITYY_ROAD_HPP
-#define CITYY_ROAD_HPP
+#pragma once
 
 #include <optional>
 #include <citty/map/RoadType.hpp>
@@ -21,5 +20,3 @@ namespace map {
     };
 
 } // map
-
-#endif //CITYY_ROAD_HPP

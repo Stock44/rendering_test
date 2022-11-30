@@ -2,8 +2,7 @@
 // Created by hiram on 6/6/22.
 //
 
-#ifndef CITYY_CAMERA_HPP
-#define CITYY_CAMERA_HPP
+#pragma once
 
 namespace graphics {
 
@@ -12,5 +11,3 @@ namespace graphics {
     };
 
 } // graphics
-
-#endif //CITYY_CAMERA_HPP

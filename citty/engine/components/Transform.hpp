@@ -2,9 +2,7 @@
 // Created by hiram on 6/6/22.
 //
 
-#ifndef CITYY_TRANSFORM_HPP
-#define CITYY_TRANSFORM_HPP
-
+#pragma once
 
 #include <glm/vec3.hpp>
 #include <glm/ext/matrix_float4x4.hpp>
@@ -27,5 +25,3 @@ struct Transform {
         return modelMatrix;
     }
 };
-
-#endif //CITYY_TRANSFORM_HPP

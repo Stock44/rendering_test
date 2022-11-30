@@ -2,8 +2,7 @@
 // Created by hiram on 6/22/22.
 //
 
-#ifndef CITYY_OPENGLERROR_HPP
-#define CITYY_OPENGLERROR_HPP
+#pragma once
 
 #include <stdexcept>
 
@@ -19,5 +18,3 @@ namespace graphics {
     };
 
 } // graphics
-
-#endif //CITYY_OPENGLERROR_HPP

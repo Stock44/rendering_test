@@ -2,8 +2,7 @@
 // Created by hiram on 5/6/22.
 //
 
-#ifndef CITYY_INDEXBUFFER_HPP
-#define CITYY_INDEXBUFFER_HPP
+#pragma once
 
 #include <vector>
 #include <cstdlib>
@@ -34,5 +33,3 @@ namespace graphics {
     };
 
 } // graphics
-
-#endif //CITYY_INDEXBUFFER_HPP

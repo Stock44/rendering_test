@@ -2,13 +2,12 @@
 // Created by hiram on 5/18/22.
 //
 
-#ifndef CITYY_ROADTYPE_HPP
-#define CITYY_ROADTYPE_HPP
+#pragma once
 
 #include <string>
 #include <unordered_map>
 
-namespace map{
+namespace map {
     enum RoadType {
         UNKNOWN,
         MOTORWAY,
@@ -23,5 +22,3 @@ namespace map{
 
 
 }
-
-#endif //CITYY_ROADTYPE_HPP

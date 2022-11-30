@@ -2,8 +2,7 @@
 // Created by hiram on 6/6/22.
 //
 
-#ifndef CITYY_RENDERINGSYSTEM_HPP
-#define CITYY_RENDERINGSYSTEM_HPP
+#pragma once
 
 #include <queue>
 #include <optional>
@@ -122,5 +121,3 @@ namespace graphics {
     };
 
 } // graphics
-
-#endif //CITYY_RENDERINGSYSTEM_HPP

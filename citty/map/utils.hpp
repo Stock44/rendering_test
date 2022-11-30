@@ -1,8 +1,8 @@
 //
 // Created by hiram on 5/17/22.
 //
-#ifndef XML_UTILS
-#define XML_UTILS
+
+#pragma once
 
 #include <cmath>
 #include <map>
@@ -34,5 +34,3 @@ namespace map {
     void loadXMLMap(const std::string &filePath, engine::ComponentManager &componentManager,
                     engine::EntityManager &entityManager);
 }
-
-#endif

@@ -2,8 +2,7 @@
 // Created by hiram on 5/5/22.
 //
 
-#ifndef CITYY_BUFFER_HPP
-#define CITYY_BUFFER_HPP
+#pragma once
 
 #include <cstddef>
 #include <optional>
@@ -24,9 +23,11 @@ namespace graphics {
         virtual void upload() = 0;
 
         Buffer(Buffer const &other) = delete;
+
         Buffer(Buffer &&other) noexcept;
 
         Buffer &operator=(Buffer const &other) = delete;
+
         Buffer &operator=(Buffer &&other) noexcept;
 
     protected:
@@ -37,5 +38,3 @@ namespace graphics {
     };
 
 } // graphics
-
-#endif //CITYY_BUFFER_HPP

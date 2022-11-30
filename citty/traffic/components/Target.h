@@ -2,8 +2,7 @@
 // Created by hiram on 7/6/22.
 //
 
-#ifndef CITYY_TARGET_H
-#define CITYY_TARGET_H
+#pragma once
 
 #include <glm/vec3.hpp>
 
@@ -14,5 +13,3 @@ namespace traffic {
     };
 
 } // traffic
-
-#endif //CITYY_TARGET_H

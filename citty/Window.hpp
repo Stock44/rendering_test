@@ -2,8 +2,7 @@
 // Created by hiram on 5/16/22.
 //
 
-#ifndef CITYY_WINDOW_H
-#define CITYY_WINDOW_H
+#pragma once
 
 #include <citty/glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -52,4 +51,3 @@ private:
 };
 
 
-#endif //CITYY_WINDOW_H

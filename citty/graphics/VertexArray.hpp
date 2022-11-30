@@ -2,8 +2,7 @@
 // Created by hiram on 5/4/22.
 //
 
-#ifndef CITYY_VERTEXARRAY_HPP
-#define CITYY_VERTEXARRAY_HPP
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -36,5 +35,3 @@ namespace graphics {
     };
 
 } // graphics
-
-#endif //CITYY_VERTEXARRAY_HPP

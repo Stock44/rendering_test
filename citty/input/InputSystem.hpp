@@ -2,8 +2,7 @@
 // Created by hiram on 6/22/22.
 //
 
-#ifndef CITYY_INPUTSYSTEM_HPP
-#define CITYY_INPUTSYSTEM_HPP
+#pragma once
 
 #include <chrono>
 #include <citty/engine/System.hpp>
@@ -44,5 +43,3 @@ namespace input {
     };
 
 } // input
-
-#endif //CITYY_INPUTSYSTEM_HPP

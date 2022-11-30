@@ -2,8 +2,7 @@
 // Created by hiram on 4/21/22.
 //
 
-#ifndef CITYY_SHADER_HPP
-#define CITYY_SHADER_HPP
+#pragma once
 
 #include <citty/glad/glad.h>
 #include <glm/glm.hpp>
@@ -36,5 +35,3 @@ namespace graphics {
     };
 }
 
-
-#endif //CITYY_SHADER_HPP
