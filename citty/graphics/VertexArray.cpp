@@ -2,15 +2,15 @@
 // Created by hiram on 5/4/22.
 //
 
-#include <iostream>
 #include <citty/graphics/VertexArray.hpp>
 #include <citty/graphics/OpenGlError.hpp>
+#include <epoxy/gl.h>
 
 namespace graphics {
 
     void VertexArray::bind() const {
         glBindVertexArray(ID.value());
-        auto error = glad_glGetError();
+        auto error = glGetError();
         if (error) throw OpenGLError(error);
     }
 
@@ -18,7 +18,7 @@ namespace graphics {
         GLuint newID;
         glGenVertexArrays(1, &newID);
         ID = newID;
-        auto error = glad_glGetError();
+        auto error = glGetError();
         if (error) throw OpenGLError(error);
     }
 

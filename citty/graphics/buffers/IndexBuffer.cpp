@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <epoxy/gl.h>
 #include <citty/graphics/buffers/IndexBuffer.hpp>
 #include <citty/graphics/OpenGlError.hpp>
 
@@ -48,7 +49,7 @@ namespace graphics {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getID().value());
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, std::ssize(indices) * static_cast<long>(sizeof(uint)), &indices[0],
                      GL_STATIC_DRAW);
-        auto error = glad_glGetError();
+        auto error = glGetError();
         if (error) throw OpenGLError(error);
     }
 } // graphics

@@ -6,14 +6,26 @@
 
 namespace engine {
 
-    void Engine::registerSystem(std::unique_ptr<System> system) {
+    void Engine::registerSystem(std::shared_ptr<System> system) {
         system->setup(componentManager);
         systems.push_back(std::move(system));
     }
 
+    void Engine::run() {
+        shouldStop = false;
+
+        while (!shouldStop) {
+            update();
+        }
+    }
+
+    void Engine::stop() {
+        shouldStop = true;
+    }
+
     void Engine::update() {
         componentManager.handleEvents();
-        for (auto const &system : systems) {
+        for (auto const &system: systems) {
             system->update(entityManager);
         }
     }
@@ -25,4 +37,6 @@ namespace engine {
     ComponentManager &Engine::getComponentManager() {
         return componentManager;
     }
+
+
 } // engine

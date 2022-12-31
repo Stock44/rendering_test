@@ -6,7 +6,6 @@
 
 #include <cstddef>
 #include <optional>
-#include <citty/glad/glad.h>
 
 namespace graphics {
 
@@ -31,10 +30,10 @@ namespace graphics {
         Buffer &operator=(Buffer &&other) noexcept;
 
     protected:
-        [[nodiscard]] std::optional<GLuint> getID() const;
+        [[nodiscard]] std::optional<unsigned int> getID() const;
 
     private:
-        std::optional<GLuint> ID = 0;
+        std::optional<unsigned int> ID = 0;
     };
 
 } // graphics

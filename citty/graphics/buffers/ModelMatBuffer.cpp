@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <citty/graphics/buffers/ModelMatBuffer.hpp>
 #include <citty/graphics/OpenGlError.hpp>
+#include <epoxy/gl.h>
 
 namespace graphics {
     long ModelMatBuffer::getSize() const {
@@ -15,20 +16,20 @@ namespace graphics {
 
     void ModelMatBuffer::enableAttribs() {
         glBindBuffer(GL_ARRAY_BUFFER, getID().value());
-        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (const GLvoid *) nullptr);
+        glVertexAttribPointer(3, 4, GL_FLOAT, false, sizeof(glm::mat4), (const GLvoid *) nullptr);
         glEnableVertexAttribArray(3);
-        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (const GLvoid *) (sizeof(float) * 4));
+        glVertexAttribPointer(4, 4, GL_FLOAT, false, sizeof(glm::mat4), (const GLvoid *) (sizeof(float) * 4));
         glEnableVertexAttribArray(4);
-        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (const GLvoid *) (sizeof(float) * 8));
+        glVertexAttribPointer(5, 4, GL_FLOAT, false, sizeof(glm::mat4), (const GLvoid *) (sizeof(float) * 8));
         glEnableVertexAttribArray(5);
-        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (const GLvoid *) (sizeof(float) * 12));
+        glVertexAttribPointer(6, 4, GL_FLOAT, false, sizeof(glm::mat4), (const void *) (sizeof(float) * 12));
         glEnableVertexAttribArray(6);
 
         glVertexAttribDivisor(3, 1);
         glVertexAttribDivisor(4, 1);
         glVertexAttribDivisor(5, 1);
         glVertexAttribDivisor(6, 1);
-        auto error = glad_glGetError();
+        auto error = glGetError();
         if (error) throw OpenGLError(error);
     }
 
@@ -64,7 +65,7 @@ namespace graphics {
         glBindBuffer(GL_ARRAY_BUFFER, getID().value());
         glBufferData(GL_ARRAY_BUFFER, std::ssize(modelMats) * static_cast<long>(sizeof(glm::mat4)), &modelMats[0],
                      GL_STATIC_DRAW);
-        auto error = glad_glGetError();
+        auto error = glGetError();
         if (error) throw OpenGLError(error);
     }
 

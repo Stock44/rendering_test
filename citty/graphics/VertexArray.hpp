@@ -9,7 +9,6 @@
 #include <span>
 #include <map>
 #include <optional>
-#include <citty/glad/glad.h>
 #include <citty/graphics/buffers/Buffer.hpp>
 
 namespace graphics {
@@ -31,7 +30,7 @@ namespace graphics {
         void bind() const;
 
     private:
-        std::optional<GLuint> ID;
+        std::optional<unsigned int> ID;
     };
 
 } // graphics

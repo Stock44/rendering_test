@@ -4,14 +4,13 @@
 
 #pragma once
 
-#include <citty/glad/glad.h>
 #include <glm/glm.hpp>
 #include <string>
 
 namespace graphics {
     class Shader {
     public:
-        GLint ID;
+        int ID;
         std::string vertexPath;
         std::string fragmentPath;
 

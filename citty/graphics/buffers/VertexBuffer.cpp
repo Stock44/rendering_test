@@ -6,6 +6,7 @@
 #include <citty/graphics/OpenGlError.hpp>
 #include <stdexcept>
 #include <algorithm>
+#include <epoxy/gl.h>
 
 long graphics::VertexBuffer::getSize() const {
     return std::ssize(vertices);
@@ -19,7 +20,7 @@ void graphics::VertexBuffer::enableAttribs() {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid *) offsetof(Vertex, texCoords));
     glEnableVertexAttribArray(3);
-    auto error = glad_glGetError();
+    auto error = glGetError();
     if (error) throw OpenGLError(error);
 }
 
@@ -53,7 +54,7 @@ void graphics::VertexBuffer::upload() {
     glBindBuffer(GL_ARRAY_BUFFER, getID().value());
     glBufferData(GL_ARRAY_BUFFER, std::ssize(vertices) * static_cast<long>(sizeof(Vertex)), &vertices[0],
                  GL_STATIC_DRAW);
-    auto error = glad_glGetError();
+    auto error = glGetError();
     if (error) throw OpenGLError(error);
 }
 

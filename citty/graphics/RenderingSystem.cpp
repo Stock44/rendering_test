@@ -2,8 +2,7 @@
 // Created by hiram on 6/6/22.
 //
 
-#include <citty/glad/glad.h>
-#include <GLFW/glfw3.h>
+#include <epoxy/gl.h>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <algorithm>
@@ -12,27 +11,44 @@
 #include <citty/graphics/components/Camera.hpp>
 
 namespace graphics {
-    RenderingSystem::RenderingSystem(Window &window) : window(window) {
-        window.useWindowContext();
+    RenderingSystem::RenderingSystem(Gtk::GLArea *gl_area) {
+        gl_area->signal_realize().connect([this, gl_area]() {
+            gl_area->make_current();
 
-        if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
-            throw GLADInitError();
-        }
+            indexBuffer = std::make_unique<IndexBuffer>();
+            vertexBuffer = std::make_unique<VertexBuffer>();
 
-        indexBuffer = std::make_unique<IndexBuffer>();
-        vertexBuffer = std::make_unique<VertexBuffer>();
+            shader = std::make_unique<Shader>("/home/hiram/Projects/citty/shaders/vertex.vsh",
+                                              "/home/hiram/Projects/citty/shaders/fragment.fsh");
+            glEnable(GL_DEPTH_TEST);
+            glEnable(GL_CULL_FACE);
+            glFrontFace(GL_CCW);
+            glCullFace(GL_FRONT);
+            glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        });
 
-        shader = std::make_unique<Shader>("/home/hiram/Projects/citty/shaders/vertex.vsh",
-                                          "/home/hiram/Projects/citty/shaders/fragment.fsh");
+//        gl_area->signal_resize().connect([this, gl_area](int width, int height) {
+//            gl_area->make_current();
+//            setViewportSize(width, height);
+//            if (cameraEntity.has_value()) {
+//                updateProjectionMatrix(cameraStore->getComponent(cameraEntity.value()));
+//            }
+//        });
 
-        setViewportSize(window.getSize());
+        gl_area->signal_unrealize().connect([this, gl_area]() {
 
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
-        glFrontFace(GL_CCW);
-        glCullFace(GL_FRONT);
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        });
 
+        gl_area->signal_render().connect([this, gl_area](auto context) {
+            gl_area->make_current();
+            render();
+            return true;
+        }, false);
+
+        gl_area->add_tick_callback([gl_area](auto clock) {
+            gl_area->queue_draw();
+            return G_SOURCE_CONTINUE;
+        });
 
     }
 
@@ -48,29 +64,23 @@ namespace graphics {
         transformStore->onComponentCreation([this](EntitySet entities) { onTransformCreate(entities); });
         transformStore->onComponentUpdate([this](EntitySet entities) { onTransformUpdate(entities); });
         cameraStore->onComponentCreation([this](EntitySet entities) { onCameraCreate(entities); });
-
-        window.setViewSizeCallback([this](auto newSize) {
-            setViewportSize(newSize);
-            if (cameraEntity.has_value()) {
-                updateProjectionMatrix(cameraStore->getComponent(cameraEntity.value()));
-            }
-        });
     }
 
-    void RenderingSystem::update(engine::EntityManager &elementManager) {
+    void RenderingSystem::render() {
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         for (auto &[id, meshRecord]: loadedMeshes) {
             // Upload mesh records if they are dirty.
             // Also regenerate buckets
+            if (!meshRecord.dirty) continue;
             // TODO better implementation of bucket regeneration
-            if (meshRecord.dirty) {
-                meshRecord.colorBuffer.upload();
-                meshRecord.matBuffer.upload();
-                meshRecord.dirty = false;
-                regenerateBuckets();
-            }
+            meshRecord.colorBuffer.upload();
+            meshRecord.matBuffer.upload();
+            meshRecord.dirty = false;
+            regenerateBuckets();
         }
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Only try to render if there is a camera
         if (cameraEntity.has_value()) {
@@ -87,8 +97,9 @@ namespace graphics {
                                         bucketSize);
             }
         }
+    }
 
-        window.swapBuffers();
+    void RenderingSystem::update(engine::EntityManager &elementManager) {
     }
 
     void RenderingSystem::regenerateBuckets() {
@@ -271,9 +282,9 @@ namespace graphics {
         updateProjectionMatrix(cameraComponent);
     }
 
-    void RenderingSystem::setViewportSize(const std::pair<int, int> &newViewportSize) {
-        RenderingSystem::viewportSize = newViewportSize;
-        glViewport(0, 0, newViewportSize.first, newViewportSize.second);
+    void RenderingSystem::setViewportSize(int width, int height) {
+        RenderingSystem::viewportSize = {width, height};
+//        glViewport(0, 0, width, height);
     }
 
     void RenderingSystem::updateViewMatrix(Transform const &transform) {

@@ -16,20 +16,20 @@ namespace graphics {
 
         void enableAttribs() override;
 
-        void addIndex(GLuint index);
+        void addIndex(unsigned int index);
 
-        void addIndices(std::vector<GLuint> const &newIndices);
+        void addIndices(std::vector<unsigned int> const &newIndices);
 
-        void setIndices(std::vector<GLuint> const &newIndices);
+        void setIndices(std::vector<unsigned int> const &newIndices);
 
-        void setIndices(std::vector<GLuint> &&newIndices);
+        void setIndices(std::vector<unsigned int> &&newIndices);
 
-        void modifyIndices(std::vector<GLuint> modIndices, long modStart);
+        void modifyIndices(std::vector<unsigned int> modIndices, long modStart);
 
         void upload() override;
 
     private:
-        std::vector<GLuint> indices;
+        std::vector<unsigned int> indices;
     };
 
 } // graphics

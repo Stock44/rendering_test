@@ -6,6 +6,6 @@ license: other: TODO
 
 requires: c++20
 requires: gtkmm-4.0 ^4.8.0
+requires: libepoxy ^1.5.10
 
 depends: pugixml ^1.12.1
-depends: glfw ^3.3.8

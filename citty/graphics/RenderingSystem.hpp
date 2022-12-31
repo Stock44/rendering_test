@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <gtkmm/glarea.h>
 #include <queue>
 #include <optional>
 #include <set>
@@ -65,7 +66,9 @@ namespace graphics {
 
     class RenderingSystem : public engine::System {
     public:
-        explicit RenderingSystem(Window &newSize);
+        RenderingSystem(Gtk::GLArea *gl_area);
+
+        void render();
 
         void setup(engine::ComponentManager &componentManager) override;
 
@@ -89,16 +92,14 @@ namespace graphics {
 
         void onCameraCreate(EntitySet entities);
 
-        void setViewportSize(const std::pair<int, int> &newViewportSize);
+        void setViewportSize(int width, int height);
 
         void updateViewMatrix(Transform const &transform);
 
         void updateProjectionMatrix(Camera camera);
 
     private:
-        Window &window;
         std::unique_ptr<Shader> shader;
-
 
         std::optional<Entity> cameraEntity;
 
@@ -108,7 +109,7 @@ namespace graphics {
         std::unique_ptr<IndexBuffer> indexBuffer;
 
         std::vector<std::unique_ptr<RenderCommand>> renderCommands;
-        std::unordered_map<Entity, RenderCommand*> entityRenderMap;
+        std::unordered_map<Entity, RenderCommand *> entityRenderMap;
         std::unordered_map<long, MeshRecord> loadedMeshes;
 
         // Bucket ranges, start position and size

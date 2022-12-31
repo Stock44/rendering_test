@@ -1,6 +1,6 @@
 libs = \
     pugixml%lib{pugixml} \
-    glfw%lib{glfw} \
+    epoxy%lib{epoxy} \
     gtkmm-4.0%lib{gtkmm}
 
 exe{citty}: {hxx h cxx c}{**} $libs

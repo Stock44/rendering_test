@@ -4,7 +4,7 @@
 
 #include <citty/graphics/buffers/ColorVertexBuffer.hpp>
 #include <citty/graphics/OpenGlError.hpp>
-
+#include <epoxy/gl.h>
 #include <utility>
 #include <algorithm>
 #include <stdexcept>
@@ -16,10 +16,10 @@ namespace graphics {
 
     void ColorVertexBuffer::enableAttribs() {
         glBindBuffer(GL_ARRAY_BUFFER, getID().value());
-        glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(Color), nullptr);
+        glVertexAttribPointer(7, 4, GL_FLOAT, false, sizeof(Color), nullptr);
         glEnableVertexAttribArray(7);
         glVertexAttribDivisor(7, 1);
-        auto error = glad_glGetError();
+        auto error = glGetError();
         if (error) throw OpenGLError(error);
     }
 
@@ -52,7 +52,7 @@ namespace graphics {
         glBindBuffer(GL_ARRAY_BUFFER, getID().value());
         glBufferData(GL_ARRAY_BUFFER, std::ssize(vertices) * static_cast<long>(sizeof(Color)), &vertices[0],
                      GL_STATIC_DRAW);
-        auto error = glad_glGetError();
+        auto error = glGetError();
         if (error) throw OpenGLError(error);
     }
 

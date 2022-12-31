@@ -12,20 +12,44 @@
 
 #include <gtkmm.h>
 
-class MainWindow : public Gtk::Window {
-
-};
-
 int main(int argc, char *argv[]) {
+    Glib::init();
 
     auto app = Gtk::Application::create("org.gtkmm.examples.base");
-    return app->make_window_and_run<MainWindow>(argc, argv);
+
+    auto builder = Gtk::Builder::create_from_file("citty.ui");
+
+    engine::Engine engine;
+
+    std::thread engine_loop([&engine]() {
+        engine.run();
+    });
+
+    app->signal_activate().connect([&app, &builder, &engine]() {
+        auto mainWindow = builder->get_widget<Gtk::Window>("main_window");
+
+        app->add_window(*mainWindow);
+
+        mainWindow->show();
+
+        auto gl_area = builder->get_widget<Gtk::GLArea>("gl_area");
+
+        auto rendering_system = std::make_shared<graphics::RenderingSystem>(gl_area);
+
+        engine.registerSystem(rendering_system);
+    });
+
+    app->signal_shutdown().connect([&engine, &engine_loop]() {
+        engine.stop();
+
+        engine_loop.join();
+    });
+
+    return app->run(argc, argv);
 //    using namespace std::chrono;
 //    Window window({500, 500});
 //
-//    engine::Engine engine;
 //
-//    engine.registerSystem(std::make_unique<graphics::RenderingSystem>(window));
 //    engine.registerSystem(std::make_unique<input::InputSystem>(window));
 //    engine.registerSystem(std::make_unique<map::MapRenderingSystem>());
 //    engine.registerSystem(std::make_unique<traffic::PathfindingSystem>());
