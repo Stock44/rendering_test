@@ -34,6 +34,7 @@ namespace engine {
     }
 
     void ArchetypeRecord::add(Entity entity) {
+        if (!componentContainers.empty()) throw std::runtime_error("can not add entity to non-empty archetype record");
         entityIndices.emplace(entity, entities.size());
         entities.push_back(entity);
         size_v++;

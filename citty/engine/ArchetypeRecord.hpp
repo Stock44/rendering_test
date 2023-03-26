@@ -24,20 +24,27 @@ namespace engine {
     public:
         template<Component T>
         ArchetypeRecord constructDerivedRecord() const {
+            if (componentContainers.contains(typeid(T)))
+                throw std::runtime_error("record already contains component type");
+
             ArchetypeRecord derivedRecord;
             // Add all the current component containers to the derived containers
             for (auto &[componentType, componentContainer]: componentContainers) {
-                derivedRecord.componentContainers.try_emplace(componentType, componentContainer.constructEmpty());
+                auto [containerIt, inserted] = derivedRecord.componentContainers.try_emplace(componentType,
+                                                                                             componentContainer.constructEmpty());
+                if (!inserted) throw std::runtime_error("could not copy component containers");
             }
             // Add the extra component container
-            derivedRecord.componentContainers.try_emplace(typeid(T),
-                                                          ComponentContainer(ComponentContainer::Container<T>()));
+            auto [newTypeContainerIt, inserted] = derivedRecord.componentContainers.try_emplace(typeid(T),
+                                                                                                ComponentContainer(
+                                                                                                        ComponentContainer::Container<T>()));
+            if (!inserted) throw std::runtime_error("could not add new component type container");
             return derivedRecord;
         }
 
         /**
          * Attempts to add an entity to this archetype, assuming this is the record for the empty archetype
-         * Undefined behaviour if the archetype is not empty.
+         * Throws if the archetype is not empty.
          * @param entity
          */
         void add(Entity entity);
@@ -74,8 +81,9 @@ namespace engine {
         template<Component T>
         void moveToPrevArchetype(Entity entity, ArchetypeRecord &other) {
             // move each of the entity's components to the end of the previous archetype's containers
-            for (auto &[componentType, otherContainer]: other.componentContainers) {
-                auto &componentContainer = componentContainers.at(componentType);
+            for (auto &[componentType, componentContainer]: componentContainers) {
+                if (componentType == typeid(T)) continue;
+                auto &otherContainer = other.componentContainers.at(componentType);
                 componentContainer.moveComponent(entityIndices.at(entity), otherContainer);
             }
 

@@ -1,31 +1,8 @@
-//
-// Created by hiram on 3/26/23.
-//
-
 #include <catch2/catch_test_macros.hpp>
 #include <citty/engine/ArchetypeGraph.hpp>
 #include <citty/engine/components/Transform.hpp>
+#include <citty/engine/components/TestComponents.hpp>
 
-struct EmptyComponent {
-};
-
-struct SimpleComponent {
-    float floatNumber;
-    int number;
-    bool boolean;
-};
-
-struct CompoundComponent {
-    SimpleComponent embedded;
-    int test;
-};
-
-template<typename T>
-struct ComplexComponent {
-    std::vector<T> container;
-    std::shared_ptr<T> copyablePtr;
-    T value;
-};
 
 TEST_CASE ("archetype graph can be traversed both forwards and backwards", "[ArchetypeGraph]") {
     using namespace engine;
