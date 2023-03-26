@@ -31,6 +31,6 @@ namespace map {
     // Calculate distance between latitude, longitude pairs
     float distanceLatLon(std::pair<float, float> c1, std::pair<float, float> c2);
 
-    void loadXMLMap(const std::string &filePath, engine::ComponentManager &componentManager,
-                    engine::EntityManager &entityManager);
+    void loadXMLMap(const std::string &filePath, citty::ComponentManager &componentManager,
+                    citty::EntityManager &entityManager);
 }

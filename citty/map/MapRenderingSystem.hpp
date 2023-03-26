@@ -14,16 +14,16 @@
 
 namespace map {
 
-    class MapRenderingSystem : public engine::System {
+    class MapRenderingSystem : public citty::System {
     public:
-        void setup(engine::ComponentManager &componentManager) override;
+        void setup(citty::ComponentManager &componentManager) override;
 
-        void update(engine::EntityManager &elementManager) override;
+        void update(citty::EntityManager &elementManager) override;
 
-        void onRoadCreate(engine::EntitySet entities);
+        void onRoadCreate(citty::EntitySet entities);
 
 
-        void onTransformCreate(engine::EntitySet entities);
+        void onTransformCreate(citty::EntitySet entities);
 
     private:
         const graphics::Mesh cubeMesh = {
@@ -53,11 +53,11 @@ namespace map {
                         2, 7, 6,
                 },
         };
-        engine::ComponentStore<Node> *nodeStore;
-        engine::ComponentStore<Road> *roadStore;
-        engine::ComponentStore<Transform> *transformStore;
-        engine::ComponentStore<graphics::MeshRef> *meshStore;
-        engine::ComponentStore<graphics::Color> *colorStore;
+        citty::ComponentStore<Node> *nodeStore;
+        citty::ComponentStore<Road> *roadStore;
+        citty::ComponentStore<Transform> *transformStore;
+        citty::ComponentStore<graphics::MeshRef> *meshStore;
+        citty::ComponentStore<graphics::Color> *colorStore;
     };
 
 } // map

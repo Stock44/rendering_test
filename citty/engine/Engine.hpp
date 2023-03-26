@@ -13,29 +13,23 @@ namespace engine {
     public:
         Engine() = default;
 
-        void registerSystem(std::shared_ptr<System> system);
+//        void registerSystem(std::shared_ptr<System> system);
 
-        void run();
+//        EntityManager &getEntityManager();
 
-        void stop();
-
-        EntityManager &getEntityManager();
-
-        ComponentManager &getComponentManager();
+//        ComponentManager &getComponentManager();
 
         Engine(Engine const &other) = delete;
 
         Engine &operator=(Engine const &other) = delete;
 
-    private:
         void update();
 
-        bool shouldStop;
+    private:
+//        EntityManager entityManager;
+//        ComponentManager componentManager;
 
-        EntityManager entityManager;
-        ComponentManager componentManager;
-
-        std::vector<std::shared_ptr<System>> systems;
+//        std::vector<std::shared_ptr<System>> systems;
     };
 
 } // engine

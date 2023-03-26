@@ -14,7 +14,7 @@ namespace engine {
     public:
         virtual ~System() = default;
 
-        virtual void setup(ComponentManager &componentManager) = 0;
+//        virtual void setup(ComponentManager &componentManager) = 0;
 
         virtual void update(EntityManager &elementManager) = 0;
     };

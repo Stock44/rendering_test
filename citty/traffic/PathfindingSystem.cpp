@@ -6,19 +6,19 @@
 #include <typeinfo>
 
 namespace traffic {
-    void PathfindingSystem::setup(engine::ComponentManager &componentManager) {
+    void PathfindingSystem::setup(citty::ComponentManager &componentManager) {
         transformStore = componentManager.getComponentStore<Transform>();
         roadStore = componentManager.getComponentStore<map::Road>();
         nodeStore = componentManager.getComponentStore<map::Node>();
         targetStore = componentManager.getComponentStore<PathfindTarget>();
         pathStore = componentManager.getComponentStore<Path>();
 
-        roadStore->onComponentCreation([this](engine::EntitySet entities) { onRoadCreate(entities); });
-        targetStore->onComponentCreation([this](engine::EntitySet entities) { onTargetCreate(entities); });
-        transformStore->onComponentCreation([this](engine::EntitySet entities) { onTransformCreate(entities); });
+        roadStore->onComponentCreation([this](citty::EntitySet entities) { onRoadCreate(entities); });
+        targetStore->onComponentCreation([this](citty::EntitySet entities) { onTargetCreate(entities); });
+        transformStore->onComponentCreation([this](citty::EntitySet entities) { onTransformCreate(entities); });
     }
 
-    void PathfindingSystem::tryRegisterRoad(engine::Entity entity) {
+    void PathfindingSystem::tryRegisterRoad(citty::Entity entity) {
         // If an entity doesn't have either a road or a transform, don't add it
         if (!roadStore->hasComponent(entity)) return;
         if (!transformStore->hasComponent(entity)) return;
@@ -67,23 +67,23 @@ namespace traffic {
         loadedRoads.emplace(entity);
     }
 
-    void PathfindingSystem::update(engine::EntityManager &elementManager) {
+    void PathfindingSystem::update(citty::EntityManager &elementManager) {
 
     }
 
-    void PathfindingSystem::onRoadCreate(engine::EntitySet entities) {
+    void PathfindingSystem::onRoadCreate(citty::EntitySet entities) {
         for (auto entity: entities) {
             tryRegisterRoad(entity);
         }
     }
 
-    void PathfindingSystem::onTransformCreate(engine::EntitySet entities) {
+    void PathfindingSystem::onTransformCreate(citty::EntitySet entities) {
         for (auto entity: entities) {
             tryRegisterRoad(entity);
         }
     }
 
-    void PathfindingSystem::onTargetCreate(engine::EntitySet entities) {
+    void PathfindingSystem::onTargetCreate(citty::EntitySet entities) {
         using boost::geometry::index::nearest;
         using boost::geometry::distance;
 
@@ -135,7 +135,7 @@ namespace traffic {
     }
 
     std::optional<Path>
-    PathfindingSystem::findPath(engine::Entity originRoadEntity, engine::Entity destinationRoadEntity) {
+    PathfindingSystem::findPath(citty::Entity originRoadEntity, citty::Entity destinationRoadEntity) {
         return {};
     }
 

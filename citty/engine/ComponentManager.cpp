@@ -6,8 +6,8 @@
 
 namespace engine {
     void ComponentManager::handleEvents() const {
-        for (const auto &[type, store]: componentStoreMap) {
-            store->executeEventCallbacks();
-        }
+//        for (const auto &[type, store]: componentStoreMap) {
+//            store->executeEventCallbacks();
+//        }
     }
 } // engine

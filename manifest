@@ -9,3 +9,6 @@ requires: gtkmm-4.0 ^4.8.0
 requires: libepoxy ^1.5.10
 
 depends: pugixml ^1.12.1
+depends: libboost-graph ~1.78.0
+depends: libboost-flyweight ~1.78.0
+depends: libboost-hana ~1.78.0

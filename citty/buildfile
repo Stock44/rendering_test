@@ -1,8 +1,11 @@
-libs = \
+import libs = \
     pugixml%lib{pugixml} \
+    libboost-graph%lib{boost_graph} \
+    libboost-flyweight%lib{boost_flyweight} \
+    libboost-hana%lib{boost_hana} \
     epoxy%lib{epoxy} \
     gtkmm-4.0%lib{gtkmm}
 
-exe{citty}: {hxx h cxx c}{**} $libs
+exe{citty}: {hxx h cxx c}{* engine/**} $libs
 
 cc.poptions =+ "-I$out_root" "-I$src_root"

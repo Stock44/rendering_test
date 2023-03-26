@@ -12,7 +12,7 @@
 
 namespace input {
 
-    class InputSystem : public engine::System {
+    class InputSystem : public citty::System {
 //    public:
 //        explicit InputSystem(Window &window);
 //

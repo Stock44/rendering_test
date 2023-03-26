@@ -58,8 +58,8 @@ namespace map {
         return radius * c; // in meters
     }
 
-    void loadXMLMap(const std::string &filePath, engine::ComponentManager &componentManager,
-                    engine::EntityManager &entityManager) {
+    void loadXMLMap(const std::string &filePath, citty::ComponentManager &componentManager,
+                    citty::EntityManager &entityManager) {
 
 
         pugi::xml_document doc;
@@ -72,7 +72,7 @@ namespace map {
         auto roadStore = componentManager.getComponentStore<Road>();
 
         // Maps OSM id's to specific components.
-        std::unordered_map<std::string_view, engine::Entity> nodes;
+        std::unordered_map<std::string_view, citty::Entity> nodes;
 
         std::pair<double, double> latBounds;
         std::pair<double, double> lonBounds;
@@ -238,8 +238,8 @@ namespace map {
                     continue;
                 }
 
-                engine::Entity originNodeEntity;
-                engine::Entity destinationNodeEntity;
+                citty::Entity originNodeEntity;
+                citty::Entity destinationNodeEntity;
 
                 // If this road's nodes are not on the map, skip creating this road
                 try {

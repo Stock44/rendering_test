@@ -10,7 +10,7 @@
 namespace map {
 
     struct Node {
-        std::vector<engine::Entity> parentRoads;
+        std::vector<citty::Entity> parentRoads;
     };
 
 } // map

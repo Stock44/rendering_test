@@ -23,46 +23,46 @@ BOOST_GEOMETRY_REGISTER_POINT_3D(glm::vec3, float, boost::geometry::cs::cartesia
 
 namespace traffic {
     struct PathProperties {
-        engine::Entity entity;
+        citty::Entity entity;
         float cost;
     };
 
-    class PathfindingSystem : public engine::System {
+    class PathfindingSystem : public citty::System {
     public:
-        void setup(engine::ComponentManager &componentManager) override;
+        void setup(citty::ComponentManager &componentManager) override;
 
-        void update(engine::EntityManager &elementManager) override;
+        void update(citty::EntityManager &elementManager) override;
 
-        void tryRegisterRoad(engine::Entity entity);
+        void tryRegisterRoad(citty::Entity entity);
 
-        void onRoadCreate(engine::EntitySet entities);
+        void onRoadCreate(citty::EntitySet entities);
 
-        void onTransformCreate(engine::EntitySet entities);
+        void onTransformCreate(citty::EntitySet entities);
 
-        void onTargetCreate(engine::EntitySet entities);
+        void onTargetCreate(citty::EntitySet entities);
 
-        std::optional<Path> findPath(engine::Entity originRoadEntity, engine::Entity destinationRoadEntity);
+        std::optional<Path> findPath(citty::Entity originRoadEntity, citty::Entity destinationRoadEntity);
 
         float calculateRoadCost(map::Road const &road) const;
 
     private:
-        engine::ComponentStore<Transform> *transformStore;
-        engine::ComponentStore<map::Road> *roadStore;
-        engine::ComponentStore<map::Node> *nodeStore;
-        engine::ComponentStore<PathfindTarget> *targetStore;
-        engine::ComponentStore<Path> *pathStore;
+        citty::ComponentStore<Transform> *transformStore;
+        citty::ComponentStore<map::Road> *roadStore;
+        citty::ComponentStore<map::Node> *nodeStore;
+        citty::ComponentStore<PathfindTarget> *targetStore;
+        citty::ComponentStore<Path> *pathStore;
 
         // Box to be used as index in the boost rtree
         // Pair each box with a corresponding road entity
 
         using Box = boost::geometry::model::box<glm::vec3>;
-        using BoxRoadPair = std::pair<Box, engine::Entity>;
+        using BoxRoadPair = std::pair<Box, citty::Entity>;
         using TransformTree = boost::geometry::index::rtree<BoxRoadPair, boost::geometry::index::quadratic<16>>;
 
-        using RoadGraph = boost::adjacency_list<boost::hash_setS, boost::hash_setS, boost::directedS, engine::Entity, PathProperties>;
+        using RoadGraph = boost::adjacency_list<boost::hash_setS, boost::hash_setS, boost::directedS, citty::Entity, PathProperties>;
 
         // This set contains all the roads that have been already loaded into the rtree and boost graph
-        std::unordered_set<engine::Entity> loadedRoads;
+        std::unordered_set<citty::Entity> loadedRoads;
 
         // Data structures for pathfinding
 //        NodeTree nodeTree;

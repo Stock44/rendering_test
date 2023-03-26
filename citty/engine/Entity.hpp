@@ -4,8 +4,6 @@
 
 #pragma once
 
-// an Element is just an ID.
-// Defined here as an unsigned int, type can be changed later in case
 namespace engine {
     using Entity = unsigned long;
 }

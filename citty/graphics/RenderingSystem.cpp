@@ -10,6 +10,7 @@
 #include <citty/graphics/RenderingSystem.hpp>
 #include <citty/graphics/components/Camera.hpp>
 
+
 namespace graphics {
     RenderingSystem::RenderingSystem(Gtk::GLArea *gl_area) {
         gl_area->signal_realize().connect([this, gl_area]() {
@@ -42,6 +43,8 @@ namespace graphics {
         gl_area->signal_render().connect([this, gl_area](auto context) {
             gl_area->make_current();
             render();
+
+            gl_area->queue_draw();
             return true;
         }, false);
 
@@ -52,7 +55,7 @@ namespace graphics {
 
     }
 
-    void RenderingSystem::setup(engine::ComponentManager &componentManager) {
+    void RenderingSystem::setup(citty::ComponentManager &componentManager) {
         meshStore = componentManager.getComponentStore<MeshRef>();
         colorStore = componentManager.getComponentStore<Color>();
         transformStore = componentManager.getComponentStore<Transform>();
@@ -67,7 +70,6 @@ namespace graphics {
     }
 
     void RenderingSystem::render() {
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         for (auto &[id, meshRecord]: loadedMeshes) {
@@ -99,7 +101,7 @@ namespace graphics {
         }
     }
 
-    void RenderingSystem::update(engine::EntityManager &elementManager) {
+    void RenderingSystem::update(citty::EntityManager &elementManager) {
     }
 
     void RenderingSystem::regenerateBuckets() {

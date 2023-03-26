@@ -16,8 +16,11 @@
 	(1,1,"GtkWindow","default-height","960",None,None,None,None,None),
 	(1,1,"GtkWindow","default-width","960",None,None,None,None,None),
 	(1,2,"GtkOrientable","orientation","vertical",None,None,None,None,None),
+	(1,2,"GtkWidget","height-request","0",None,None,None,None,None),
+	(1,2,"GtkWidget","hexpand","True",None,None,None,None,None),
 	(1,8,"GtkGLArea","has-depth-buffer","True",None,None,None,None,None),
 	(1,8,"GtkGLArea","has-stencil-buffer","True",None,None,None,None,None),
-	(1,8,"GtkWidget","height-request","60",None,None,None,None,None)
+	(1,8,"GtkWidget","height-request","180",None,None,None,None,None),
+	(1,8,"GtkWidget","vexpand","True",None,None,None,None,None)
   </object_property>
 </cambalache-project>

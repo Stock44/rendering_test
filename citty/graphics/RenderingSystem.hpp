@@ -28,8 +28,8 @@ namespace graphics {
         GLADInitError() : std::runtime_error("Failed to initialize GLAD") {};
     };
 
-    using engine::Entity;
-    using engine::EntitySet;
+    using citty::Entity;
+    using citty::EntitySet;
 
     struct RenderCommand {
         long meshID;
@@ -64,15 +64,15 @@ namespace graphics {
         bool dirty;
     };
 
-    class RenderingSystem : public engine::System {
+    class RenderingSystem : public citty::System {
     public:
         RenderingSystem(Gtk::GLArea *gl_area);
 
         void render();
 
-        void setup(engine::ComponentManager &componentManager) override;
+        void setup(citty::ComponentManager &componentManager) override;
 
-        void update(engine::EntityManager &elementManager) override;
+        void update(citty::EntityManager &elementManager) override;
 
         void stageMeshIntoBuffers(Mesh const &mesh);
 
@@ -115,10 +115,10 @@ namespace graphics {
         // Bucket ranges, start position and size
         std::vector<std::pair<int, int>> buckets;
 
-        engine::ComponentStore<MeshRef> *meshStore = nullptr;
-        engine::ComponentStore<Color> *colorStore = nullptr;
-        engine::ComponentStore<Transform> *transformStore = nullptr;
-        engine::ComponentStore<Camera> *cameraStore = nullptr;
+        citty::ComponentStore<MeshRef> *meshStore = nullptr;
+        citty::ComponentStore<Color> *colorStore = nullptr;
+        citty::ComponentStore<Transform> *transformStore = nullptr;
+        citty::ComponentStore<Camera> *cameraStore = nullptr;
     };
 
 } // graphics

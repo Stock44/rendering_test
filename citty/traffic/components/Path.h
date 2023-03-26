@@ -8,5 +8,5 @@
 #include <citty/engine/Entity.hpp>
 
 namespace traffic {
-    using Path = std::vector<engine::Entity>;
+    using Path = std::vector<citty::Entity>;
 } // traffic

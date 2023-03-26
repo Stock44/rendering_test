@@ -1,14 +1,6 @@
-#include <chrono>
-#include <iostream>
 #include <thread>
-#include <citty/Window.hpp>
 #include <citty/engine/Engine.hpp>
-#include <citty/graphics/RenderingSystem.hpp>
-#include <citty/input/InputSystem.hpp>
-#include <citty/map/utils.hpp>
-#include <citty/map/MapRenderingSystem.hpp>
-#include <citty/traffic/components/Target.h>
-#include <citty/traffic/PathfindingSystem.h>
+//#include <citty/graphics/RenderingSystem.hpp>
 
 #include <gtkmm.h>
 
@@ -21,10 +13,6 @@ int main(int argc, char *argv[]) {
 
     engine::Engine engine;
 
-    std::thread engine_loop([&engine]() {
-        engine.run();
-    });
-
     app->signal_activate().connect([&app, &builder, &engine]() {
         auto mainWindow = builder->get_widget<Gtk::Window>("main_window");
 
@@ -34,26 +22,15 @@ int main(int argc, char *argv[]) {
 
         auto gl_area = builder->get_widget<Gtk::GLArea>("gl_area");
 
-        auto rendering_system = std::make_shared<graphics::RenderingSystem>(gl_area);
+//        auto rendering_system = std::make_shared<graphics::RenderingSystem>(gl_area);
 
-        engine.registerSystem(rendering_system);
+//        engine.registerSystem(rendering_system);
     });
 
-    app->signal_shutdown().connect([&engine, &engine_loop]() {
-        engine.stop();
-
-        engine_loop.join();
-    });
-
-    return app->run(argc, argv);
-//    using namespace std::chrono;
-//    Window window({500, 500});
-//
-//
 //    engine.registerSystem(std::make_unique<input::InputSystem>(window));
 //    engine.registerSystem(std::make_unique<map::MapRenderingSystem>());
 //    engine.registerSystem(std::make_unique<traffic::PathfindingSystem>());
-//
+
 //    auto &entityManager = engine.getEntityManager();
 //    auto &componentManager = engine.getComponentManager();
 //
@@ -69,12 +46,21 @@ int main(int argc, char *argv[]) {
 //    cameraStore->setComponent(cameraEntity, cameraComponent);
 //    auto roadStore = componentManager.getComponentStore<map::Road>();
 //    auto nodeStore = componentManager.getComponentStore<map::Node>();
-//
+
 //    map::loadXMLMap("/home/hiram/Projects/citty/samples/sample_map.osm", componentManager, entityManager);
 //    std::cout << "Number of entities in the system: " << entityManager.createEntity() << std::endl;
-//    std::cout << "Number of roads: " <<  roadStore->getComponents().size() << std::endl;
-//    std::cout << "Number of nodes: " <<  nodeStore->getComponents().size() << std::endl;
-//
+//    std::cout << "Number of roads: " << roadStore->getComponents().size() << std::endl;
+//    std::cout << "Number of nodes: " << nodeStore->getComponents().size() << std::endl;
+
+    std::jthread engineThread([&engine](std::stop_token stopToken) {
+        while (!stopToken.stop_requested()) {
+            engine.update();
+        }
+    });
+
+
+    return app->run(argc, argv);
+
 //
 //    while (!window.shouldWindowClose()) {
 //        auto last = std::chrono::steady_clock::now();

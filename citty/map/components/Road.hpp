@@ -12,8 +12,8 @@ namespace map {
     struct Road {
         std::optional<std::string> name;
         float roadWidth = 2.0f;
-        engine::Entity origin;
-        engine::Entity destination;
+        citty::Entity origin;
+        citty::Entity destination;
         int lanes = 1;
         int revLanes = 0;
         RoadType type = RoadType::RESIDENTIAL;

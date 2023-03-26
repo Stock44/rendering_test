@@ -10,22 +10,22 @@
 #include <citty/graphics/components/Color.hpp>
 
 namespace map {
-    void MapRenderingSystem::setup(engine::ComponentManager &componentManager) {
+    void MapRenderingSystem::setup(citty::ComponentManager &componentManager) {
         roadStore = componentManager.getComponentStore<Road>();
         nodeStore = componentManager.getComponentStore<Node>();
         transformStore = componentManager.getComponentStore<Transform>();
         colorStore = componentManager.getComponentStore<graphics::Color>();
         meshStore = componentManager.getComponentStore<graphics::MeshRef>();
 
-        roadStore->onComponentCreation([this](engine::EntitySet entities) { onRoadCreate(entities); });
-        transformStore->onComponentCreation([this](engine::EntitySet entities) { onTransformCreate(entities); });
+        roadStore->onComponentCreation([this](citty::EntitySet entities) { onRoadCreate(entities); });
+        transformStore->onComponentCreation([this](citty::EntitySet entities) { onTransformCreate(entities); });
     }
 
-    void MapRenderingSystem::update(engine::EntityManager &elementManager) {
+    void MapRenderingSystem::update(citty::EntityManager &elementManager) {
         // This system doesn't need to periodically update itself, reacts only to events.
     }
 
-    void MapRenderingSystem::onRoadCreate(engine::EntitySet entities) {
+    void MapRenderingSystem::onRoadCreate(citty::EntitySet entities) {
         for (auto const &entity: entities) {
             // Skip entity if it doesn't have a road
             if (!roadStore->hasComponent(entity)) continue;
@@ -78,7 +78,7 @@ namespace map {
         }
     }
 
-    void MapRenderingSystem::onTransformCreate(engine::EntitySet entities) {
+    void MapRenderingSystem::onTransformCreate(citty::EntitySet entities) {
 
     }
 } // map
