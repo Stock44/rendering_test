@@ -24,4 +24,14 @@ namespace engine {
     // operations.
     using ArchetypeFlyweight = boost::flyweight<Archetype, boost::flyweights::no_tracking>;
 
+    /**
+     * Creates an ArchetypeFlyweight using a list of template components. Used only for testing
+     * @tparam ComponentTypes
+     * @return
+     */
+    template<Component ...ComponentTypes>
+    ArchetypeFlyweight makeArchetype() {
+        return ArchetypeFlyweight({std::type_index(typeid(ComponentTypes))...});
+    }
+
 }

@@ -30,12 +30,16 @@ namespace engine {
          */
         template<Component T>
         explicit ComponentContainer(Container<T> &&container) : componentContainerBase(
-                std::make_unique<ConcreteComponentContainer<T>>(std::move(container))) {}
+                std::make_unique<ConcreteComponentContainer<T>>
+
+                        (
+                                std::move(container)
+                        )) {}
 
         /**
          * Default-constructs a component at the end of the container
          */
-        void addDefaultComponent();
+//        void addDefaultComponent();
 
         /**
          * Moves a component at a given index to the end of the other component
@@ -63,14 +67,14 @@ namespace engine {
          */
         template<Component T>
         Container<T> &getBaseContainer() {
-            return dynamic_cast<ConcreteComponentContainer<T>>(componentContainerBase.get())->container;
+            return dynamic_cast<ConcreteComponentContainer<T> *>(componentContainerBase.get())->container;
         }
 
     private:
 
         struct AbstractComponentContainer {
         public:
-            virtual void addDefaultComponent() = 0;
+//            virtual void addDefaultComponent() = 0;
 
             virtual void moveComponent(std::size_t index, AbstractComponentContainer *other) = 0;
 
@@ -84,14 +88,16 @@ namespace engine {
 
         template<Component T>
         struct ConcreteComponentContainer : public AbstractComponentContainer {
-            explicit ConcreteComponentContainer(Container <T> &&container) : container(std::move(container)) {}
+            ConcreteComponentContainer() = default;
 
-            void addDefaultComponent() override {
-                container.emplace_back();
-            }
+            explicit ConcreteComponentContainer(Container<T> &&container) : container(std::move(container)) {}
+
+//            void addDefaultComponent() override {
+//                container.emplace_back();
+//            }
 
             void moveComponent(std::size_t index, AbstractComponentContainer *other) override {
-                auto *concreteOther = dynamic_cast<ConcreteComponentContainer<T>>(other);
+                auto *concreteOther = dynamic_cast<ConcreteComponentContainer<T> *>(other);
                 concreteOther->container.emplace_back(container.at(index));
                 container.erase(container.begin() + index);
             }
@@ -104,7 +110,7 @@ namespace engine {
                 container.erase(container.begin() + index);
             }
 
-            Container <T> container;
+            Container<T> container;
         };
 
         /**

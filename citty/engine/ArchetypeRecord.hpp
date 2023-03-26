@@ -36,7 +36,8 @@ namespace engine {
         }
 
         /**
-         * Adds an entity to the archetype record, initializing all components with default-constructed values
+         * Attempts to add an entity to this archetype, assuming this is the record for the empty archetype
+         * Undefined behaviour if the archetype is not empty.
          * @param entity
          */
         void add(Entity entity);
@@ -54,12 +55,12 @@ namespace engine {
         void moveToNextArchetype(Entity entity, ArchetypeRecord &other, Args &&...args) {
             // move each of the entity's components to the end of the next archetype's containers
             for (auto &[componentType, componentContainer]: componentContainers) {
-                auto &otherContainer = other.componentContainers[componentType];
+                auto &otherContainer = other.componentContainers.at(componentType);
                 componentContainer.moveComponent(entityIndices.at(entity), otherContainer);
             }
 
             // construct in place the new component at the other archetype's corresponding component container
-            other.componentContainers.at(typeid(T)).getBaseContainer<T>().emplace_back(std::forward(args)...);
+            other.componentContainers.at(typeid(T)).getBaseContainer<T>().emplace_back(std::forward<Args>(args)...);
 
             shiftIndicesToOther(entity, other);
         }

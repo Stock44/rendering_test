@@ -6,6 +6,6 @@
 
 namespace engine {
     template<typename T>
-    concept Component = std::semiregular<T>;
+    concept Component = std::copyable<T>;
 }
 

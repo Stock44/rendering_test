@@ -23,22 +23,25 @@ namespace engine {
          */
         template<Component T, typename ...Args>
         void add(Entity entity, Args &&...args) {
-            auto archetype = entityArchetypes[entity];
+            auto &archetype = entityArchetypes[entity];
             auto nextArchetype = archetypeGraph.next<T>(archetype);
 
-            // This is guaranteed to only create a new empty archetype record when an entity has an empty archetype
             auto &archetypeRecord = archetypeRecords[archetype];
+            if (archetype.get().empty()) {
+                archetypeRecord.add(entity);
+            }
 
             // attempt to get the next archetype record, if it doesn't exist, create it as a derived record from the
             // current archetype
             try {
                 auto &nextArchetypeRecord = archetypeRecords.at(nextArchetype);
-                archetypeRecord.moveToNextArchetype<T>(entity, nextArchetypeRecord, std::forward(args)...);
+                archetypeRecord.moveToNextArchetype<T>(entity, nextArchetypeRecord, std::forward<Args>(args)...);
             } catch (std::out_of_range const &) {
                 archetypeRecords.try_emplace(nextArchetype, archetypeRecord.constructDerivedRecord<T>());
                 auto &nextArchetypeRecord = archetypeRecords.at(nextArchetype);
-                archetypeRecord.moveToNextArchetype<T>(entity, nextArchetypeRecord, std::forward(args)...);
+                archetypeRecord.moveToNextArchetype<T>(entity, nextArchetypeRecord, std::forward<Args>(args)...);
             }
+            archetype = nextArchetype;
         }
 
         /**
@@ -74,12 +77,13 @@ namespace engine {
          */
         template<Component T>
         void remove(Entity entity) {
-            auto archetype = entityArchetypes[entity];
+            auto &archetype = entityArchetypes[entity];
             auto prevArchetype = archetypeGraph.prev<T>(archetype);
 
             auto &archetypeRecord = archetypeRecords.at(archetype);
             auto &prevArchetypeRecord = archetypeRecords.at(prevArchetype);
             archetypeRecord.moveToPrevArchetype<T>(entity, prevArchetypeRecord);
+            archetype = prevArchetype;
         }
 
         /**

@@ -34,12 +34,18 @@ namespace engine {
     }
 
     void ArchetypeRecord::add(Entity entity) {
-        for (auto &[_, componentContainer]: componentContainers) {
-            componentContainer.addDefaultComponent();
-        }
-
-        entities.emplace_back(entity);
-        entityIndices.try_emplace(entity, size_v);
+        entityIndices.emplace(entity, entities.size());
+        entities.push_back(entity);
         size_v++;
     }
+
+//    void ArchetypeRecord::add(Entity entity) {
+//        for (auto &[_, componentContainer]: componentContainers) {
+//            componentContainer.addDefaultComponent();
+//        }
+//
+//        entities.emplace_back(entity);
+//        entityIndices.try_emplace(entity, size_v);
+//        size_v++;
+//    }
 }

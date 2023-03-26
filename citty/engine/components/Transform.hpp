@@ -12,16 +12,20 @@
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/register/point.hpp>
 
-struct Transform {
-    glm::quat rotation;
-    glm::vec3 position;
-    glm::vec3 scale;
+namespace engine {
+    struct Transform {
+        glm::quat rotation;
+        glm::vec3 position;
+        glm::vec3 scale;
 
-    [[nodiscard]] glm::mat4 calculateMatrix() const {
-        auto modelMatrix = glm::mat4(1.0f);
-        modelMatrix = glm::translate(modelMatrix, position);
-        modelMatrix = modelMatrix * glm::toMat4(rotation);
-        modelMatrix = glm::scale(modelMatrix, scale);
-        return modelMatrix;
-    }
-};
+//        [[nodiscard]] glm::mat4 calculateMatrix() const {
+//            auto modelMatrix = glm::mat4(1.0f);
+//            modelMatrix = glm::translate(modelMatrix, position);
+//            modelMatrix = modelMatrix * glm::toMat4(rotation);
+//            modelMatrix = glm::scale(modelMatrix, scale);
+//            return modelMatrix;
+//        }
+    };
+}
+
+

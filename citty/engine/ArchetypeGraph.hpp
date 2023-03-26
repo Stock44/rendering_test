@@ -19,10 +19,11 @@ namespace engine {
          * @param archetype The base archetype
          * @return
          */
-        template<typename T>
+        template<Component T>
         ArchetypeFlyweight next(ArchetypeFlyweight archetype) {
             // if it doesn't exist, it is initialized as an empty vector
             auto &nextArchetypes = outEdges[archetype];
+            inEdges[archetype];
             try {
                 return nextArchetypes.at(typeid(T));
             } catch (std::out_of_range const &) {
@@ -53,10 +54,16 @@ namespace engine {
          * @param archetype
          * @return
          */
-        template<typename T>
+        template<Component T>
         ArchetypeFlyweight prev(ArchetypeFlyweight archetype) {
             // if it doesn't exist, it is initialized as an empty vector
             auto &prevArchetypes = inEdges[archetype];
+            auto &nextArchetypes = outEdges[archetype];
+
+            if (nextArchetypes.empty()) {
+                endArchetypes.emplace(archetype);
+            }
+
             try {
                 return prevArchetypes.at(typeid(T));
             } catch (std::out_of_range const &) {

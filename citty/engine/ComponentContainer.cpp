@@ -7,9 +7,9 @@
 
 namespace engine {
 
-    void ComponentContainer::addDefaultComponent() {
-        componentContainerBase->addDefaultComponent();
-    }
+//    void ComponentContainer::addDefaultComponent() {
+//        componentContainerBase->addDefaultComponent();
+//    }
 
     void ComponentContainer::moveComponent(std::size_t index, ComponentContainer &other) {
         componentContainerBase->moveComponent(index, other.componentContainerBase.get());

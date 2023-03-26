@@ -12,3 +12,4 @@ depends: pugixml ^1.12.1
 depends: libboost-graph ~1.78.0
 depends: libboost-flyweight ~1.78.0
 depends: libboost-hana ~1.78.0
+depends: catch2 ^3.1.0
