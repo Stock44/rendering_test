@@ -9,7 +9,7 @@
 #include <citty/engine/Archetype.hpp>
 #include <stack>
 
-namespace engine {
+namespace citty::engine {
 
     class ArchetypeGraph {
     public:

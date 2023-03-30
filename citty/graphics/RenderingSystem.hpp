@@ -10,26 +10,22 @@
 #include <set>
 #include <citty/engine/System.hpp>
 #include <citty/graphics/components/Mesh.hpp>
+#include <citty/graphics/components/Vertex.hpp>
 #include <citty/engine/components/Transform.hpp>
 #include <citty/graphics/components/Camera.hpp>
 #include <citty/graphics/components/Color.hpp>
-#include <citty/Window.hpp>
 #include <citty/graphics/Shader.hpp>
 #include <citty/graphics/buffers/VertexBuffer.hpp>
 #include <citty/graphics/buffers/IndexBuffer.hpp>
 #include <citty/graphics/VertexArray.hpp>
 #include <citty/graphics/buffers/ColorVertexBuffer.hpp>
 #include <citty/graphics/buffers/ModelMatBuffer.hpp>
-#include <citty/graphics/components/MeshRef.hpp>
 
-namespace graphics {
+namespace citty::graphics {
     class GLADInitError : public std::runtime_error {
     public:
         GLADInitError() : std::runtime_error("Failed to initialize GLAD") {};
     };
-
-    using citty::Entity;
-    using citty::EntitySet;
 
     struct RenderCommand {
         long meshID;
@@ -64,15 +60,15 @@ namespace graphics {
         bool dirty;
     };
 
-    class RenderingSystem : public citty::System {
+    class RenderingSystem : public engine::System {
     public:
         RenderingSystem(Gtk::GLArea *gl_area);
 
         void render();
 
-        void setup(citty::ComponentManager &componentManager) override;
+        void init() override;
 
-        void update(citty::EntityManager &elementManager) override;
+        void update() override;
 
         void stageMeshIntoBuffers(Mesh const &mesh);
 
@@ -114,11 +110,6 @@ namespace graphics {
 
         // Bucket ranges, start position and size
         std::vector<std::pair<int, int>> buckets;
-
-        citty::ComponentStore<MeshRef> *meshStore = nullptr;
-        citty::ComponentStore<Color> *colorStore = nullptr;
-        citty::ComponentStore<Transform> *transformStore = nullptr;
-        citty::ComponentStore<Camera> *cameraStore = nullptr;
     };
 
 } // graphics

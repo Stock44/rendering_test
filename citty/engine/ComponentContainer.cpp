@@ -5,7 +5,7 @@
 #include <citty/engine/ComponentContainer.hpp>
 
 
-namespace engine {
+namespace citty::engine {
 
 //    void ComponentContainer::addDefaultComponent() {
 //        componentContainerBase->addDefaultComponent();

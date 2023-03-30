@@ -12,7 +12,7 @@
 #include <memory>
 #include <citty/engine/Component.hpp>
 
-namespace engine {
+namespace citty::engine {
     /**
      * ComponentContainer offers a type-erased interface to manipulate containers of Component types. It allows
      * the creation of new containers that are able of storing the same type of container as the current one, without

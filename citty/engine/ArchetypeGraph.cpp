@@ -4,7 +4,7 @@
 
 #include <citty/engine/ArchetypeGraph.hpp>
 
-namespace engine {
+namespace citty::engine {
 
     std::set<ArchetypeFlyweight> ArchetypeGraph::getSupersets(ArchetypeFlyweight archetype) {
         std::stack<ArchetypeFlyweight> unexploredArchetypes;

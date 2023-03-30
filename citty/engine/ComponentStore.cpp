@@ -5,5 +5,12 @@
 #include <citty/engine/ComponentStore.hpp>
 #include "ArchetypeRecord.hpp"
 
-namespace engine {
+namespace citty::engine {
+    void ComponentStore::removeAll(EntityId entity) {
+        auto &archetype = entityArchetypes[entity];
+        auto &archetypeRecord = archetypeRecords.at(archetype);
+        archetypeRecord.remove(entity);
+        // entity now has an empty archetype
+        archetype = Archetype();
+    }
 } // engine

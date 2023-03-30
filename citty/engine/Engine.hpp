@@ -5,31 +5,38 @@
 #pragma once
 
 #include <citty/engine/System.hpp>
-#include <citty/engine/EntityManager.hpp>
+#include <citty/engine/ComponentStore.hpp>
 
-namespace engine {
+namespace citty::engine {
 
     class Engine {
     public:
         Engine() = default;
 
-//        void registerSystem(std::shared_ptr<System> system);
-
-//        EntityManager &getEntityManager();
-
-//        ComponentManager &getComponentManager();
+        Engine(Engine &&other) = default;
 
         Engine(Engine const &other) = delete;
 
         Engine &operator=(Engine const &other) = delete;
 
+        Engine &operator=(Engine &&other) = default;
+
+        template<typename T, typename ...Args>
+        T *addSystem(Args &&...args) {
+            std::unique_ptr<System> system = systems.emplace_back(std::make_unique<T>(std::forward<Args>(args)...));
+
+            system->setup(&componentStore, &entityStore);
+            system->init();
+
+            return static_cast<T *>(system.get());
+        }
+
         void update();
 
     private:
-//        EntityManager entityManager;
-//        ComponentManager componentManager;
-
-//        std::vector<std::shared_ptr<System>> systems;
+        ComponentStore componentStore;
+        EntityIdStore entityStore;
+        std::vector<std::unique_ptr<System>> systems;
     };
 
 } // engine

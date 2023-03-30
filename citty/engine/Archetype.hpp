@@ -16,7 +16,7 @@
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/no_tracking.hpp>
 
-namespace engine {
+namespace citty::engine {
 
     using Archetype = std::set<std::type_index>;
 

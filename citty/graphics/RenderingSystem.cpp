@@ -11,7 +11,7 @@
 #include <citty/graphics/components/Camera.hpp>
 
 
-namespace graphics {
+namespace citty::graphics {
     RenderingSystem::RenderingSystem(Gtk::GLArea *gl_area) {
         gl_area->signal_realize().connect([this, gl_area]() {
             gl_area->make_current();

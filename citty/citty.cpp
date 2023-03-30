@@ -1,6 +1,6 @@
 #include <thread>
 #include <citty/engine/Engine.hpp>
-//#include <citty/graphics/RenderingSystem.hpp>
+#include <citty/graphics/RenderingSystem.hpp>
 
 #include <gtkmm.h>
 #include "citty/engine/components/Transform.hpp"
@@ -12,7 +12,10 @@ struct TestComponent {
 };
 
 int main(int argc, char *argv[]) {
+    using namespace citty;
     Glib::init();
+
+    citty::graphics::RenderingSystem renderingSystem;
 
     auto app = Gtk::Application::create("org.gtkmm.examples.base");
 

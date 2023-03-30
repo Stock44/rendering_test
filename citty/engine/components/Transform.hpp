@@ -4,19 +4,14 @@
 
 #pragma once
 
-#include <glm/vec3.hpp>
-#include <glm/ext/matrix_float4x4.hpp>
-#include <glm/ext/matrix_transform.hpp>
-#include <glm/ext/quaternion_float.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/register/point.hpp>
+#include <Eigen/Geometry>
+#include <Eigen/Dense>
 
-namespace engine {
+namespace citty::engine {
     struct Transform {
-        glm::quat rotation;
-        glm::vec3 position;
-        glm::vec3 scale;
+        Eigen::Quaterniond rotation;
+        Eigen::Vector3d position;
+        Eigen::Vector3d scale;
 
 //        [[nodiscard]] glm::mat4 calculateMatrix() const {
 //            auto modelMatrix = glm::mat4(1.0f);

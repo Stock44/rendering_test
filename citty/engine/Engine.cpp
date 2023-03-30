@@ -4,7 +4,7 @@
 
 #include <citty/engine/Engine.hpp>
 
-namespace engine {
+namespace citty::engine {
 
 //    void Engine::registerSystem(std::shared_ptr<System> system) {
 //        system->setup(componentManager);
@@ -12,11 +12,12 @@ namespace engine {
 //    }
 
     void Engine::update() {
-//        componentManager.handleEvents();
-//        for (auto const &system: systems) {
-//            system->update(entityManager);
-//        }
+        for (auto const &system: systems) {
+            system->update();
+        }
     }
+
+
 
 //    EntityManager &Engine::getEntityManager() {
 //        return entityManager;

@@ -5,13 +5,13 @@
 #pragma once
 
 #include <citty/engine/Archetype.hpp>
-#include <citty/engine/Entity.hpp>
+#include <citty/engine/EntityId.hpp>
 #include <citty/engine/Component.hpp>
 #include <citty/engine/ArchetypeRecord.hpp>
 #include <citty/engine/ArchetypeGraph.hpp>
 #include <boost/hana.hpp>
 
-namespace engine {
+namespace citty::engine {
     class ComponentStore {
     public:
         /**
@@ -22,7 +22,7 @@ namespace engine {
          * @param args the arguments for the component's constructor
          */
         template<Component T, typename ...Args>
-        void add(Entity entity, Args &&...args) {
+        void add(EntityId entity, Args &&...args) {
             auto &archetype = entityArchetypes[entity];
             auto nextArchetype = archetypeGraph.next<T>(archetype);
 
@@ -51,7 +51,7 @@ namespace engine {
          * @return a reference to the component. Becomes a dangling reference if entity has a component added or removed.
          */
         template<Component T>
-        T &get(Entity entity) {
+        T &get(EntityId entity) {
             auto archetype = entityArchetypes.at(entity);
             auto &archetypeRecord = archetypeRecords.at(archetype);
             return archetypeRecord.get<T>(entity);
@@ -64,7 +64,7 @@ namespace engine {
          * @return a reference to the component. Becomes a dangling reference if entity has a component added or removed.
          */
         template<Component T>
-        T const &get(Entity entity) const {
+        T const &get(EntityId entity) const {
             auto archetype = entityArchetypes.at(entity);
             auto &archetypeRecord = archetypeRecords.at(archetype);
             return archetypeRecord.get<T>(entity);
@@ -73,10 +73,10 @@ namespace engine {
         /**
          * Attempts to remove the specified component from the specified entity
          * @tparam T type of component to remove
-         * @param entity entity from which to remove the component
+         * @param entity entity from which to removeAll the component
          */
         template<Component T>
-        void remove(Entity entity) {
+        void remove(EntityId entity) {
             auto &archetype = entityArchetypes[entity];
             auto prevArchetype = archetypeGraph.prev<T>(archetype);
 
@@ -85,6 +85,12 @@ namespace engine {
             archetypeRecord.moveToPrevArchetype<T>(entity, prevArchetypeRecord);
             archetype = prevArchetype;
         }
+
+        /**
+         * Remove all components from this entity
+         * @param entity
+         */
+        void removeAll(EntityId entity);
 
         /**
          * Obtains a map of component type indices to range views of all the existing components.
@@ -122,7 +128,7 @@ namespace engine {
 
     private:
         ArchetypeGraph archetypeGraph;
-        std::unordered_map<Entity, ArchetypeFlyweight> entityArchetypes;
+        std::unordered_map<EntityId, ArchetypeFlyweight> entityArchetypes;
         std::unordered_map<ArchetypeFlyweight, ArchetypeRecord> archetypeRecords;
     };
 

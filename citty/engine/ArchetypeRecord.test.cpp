@@ -4,7 +4,7 @@
 #include "citty/engine/components/Transform.hpp"
 
 TEST_CASE ("constructs valid derived archetype records", "[ArchetypeRecord]") {
-    using namespace engine;
+    using namespace citty::engine;
     ArchetypeRecord record;
 
     REQUIRE_NOTHROW(record = record.constructDerivedRecord<SimpleComponent>());
@@ -21,13 +21,13 @@ TEST_CASE ("constructs valid derived archetype records", "[ArchetypeRecord]") {
 }
 
 TEST_CASE("can move entities and its components with valid record transitions", "[ArchetypeRecord]") {
-    using namespace engine;
+    using namespace citty::engine;
     ArchetypeRecord empty;
     ArchetypeRecord first = empty.constructDerivedRecord<SimpleComponent>();
     ArchetypeRecord second = first.constructDerivedRecord<Transform>();
 
-    Entity entity = 0;
-    Entity entity2 = 1;
+    EntityId entity = 0;
+    EntityId entity2 = 1;
     REQUIRE_NOTHROW(empty.add(entity));
     REQUIRE_NOTHROW(empty.add(entity2));
 
@@ -50,20 +50,20 @@ TEST_CASE("can move entities and its components with valid record transitions", 
 }
 
 TEST_CASE("can access entity components", "[ArchetypeRecord]") {
-    using namespace engine;
+    using namespace citty::engine;
     ArchetypeRecord empty;
     ArchetypeRecord first = empty.constructDerivedRecord<SimpleComponent>();
-    for (Entity i = 0; i < 30; i++) {
+    for (EntityId i = 0; i < 30; i++) {
         REQUIRE_NOTHROW(empty.add(i));
     }
 
-    for (Entity i = 0; i < 30; i++) {
+    for (EntityId i = 0; i < 30; i++) {
         REQUIRE_NOTHROW(empty.moveToNextArchetype<SimpleComponent>(i, first, SimpleComponent{static_cast<float>(i),
                                                                                              static_cast<int>(i),
                                                                                              i % 2 == 0}));
     }
 
-    for (Entity i = 0; i < 30; i++) {
+    for (EntityId i = 0; i < 30; i++) {
         REQUIRE(first.get<SimpleComponent>(i) ==
                 SimpleComponent{static_cast<float>(i), static_cast<int>(i), i % 2 == 0});
     }

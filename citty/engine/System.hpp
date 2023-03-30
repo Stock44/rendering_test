@@ -5,18 +5,35 @@
 #pragma once
 
 #include <vector>
-#include <citty/engine/ComponentManager.hpp>
-#include <citty/engine/EntityManager.hpp>
+#include <citty/engine/ComponentStore.hpp>
+#include <citty/engine/EntityIdStore.hpp>
+#include <citty/engine/Entity.hpp>
 
-namespace engine {
+namespace citty::engine {
 
     class System {
     public:
         virtual ~System() = default;
 
-//        virtual void setup(ComponentManager &componentManager) = 0;
+        void setup(ComponentStore *componentStore, EntityIdStore *entityStore);
 
-        virtual void update(EntityManager &elementManager) = 0;
+        virtual void init() = 0;
+
+        virtual void update() = 0;
+
+    protected:
+        Entity newEntity();
+
+        void deleteEntity(Entity entity);
+
+        template<Component ...ComponentTypes>
+        inline auto getComponents() {
+            return componentStore->getAll<ComponentTypes...>();
+        }
+
+    private:
+        ComponentStore *componentStore = nullptr;
+        EntityIdStore *entityStore = nullptr;
     };
 
 } // engine

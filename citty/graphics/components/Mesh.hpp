@@ -3,21 +3,15 @@
 //
 #pragma once
 
+#include <Eigen/Dense>
 #include <vector>
-#include <citty/graphics/components/Vertex.hpp>
 
-namespace graphics {
+namespace citty::graphics {
     struct Mesh {
-        long ID;
-        std::vector<Vertex> vertices;
+        std::vector<Eigen::Vector3d> vertices;
         std::vector<unsigned int> indices;
-
-        Mesh(long ID, std::vector<Vertex> vertices, std::vector<unsigned int> indices) : ID(ID), vertices(
-                std::move(vertices)), indices(std::move(indices)) {}
-
-        Mesh(Mesh const &other) = delete;
-
-        Mesh operator=(Mesh const &other) = delete;
+        engine::Entity material;
+        bool loaded = false;
     };
 }
 

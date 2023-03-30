@@ -4,14 +4,15 @@ import libs = \
     libboost-flyweight%lib{boost_flyweight} \
     libboost-hana%lib{boost_hana} \
     epoxy%lib{epoxy} \
-    gtkmm-4.0%lib{gtkmm}
+    gtkmm-4.0%lib{gtkmm} \
+    Eigen%lib{Eigen}
 
 import testlibs = \
     catch2%lib{catch2} \
     catch2%lib{catch2wmain}
 
-exe{tests}: {hxx h cxx c}{engine/**} $libs $testlibs
+exe{tests}: {hxx h cxx c}{engine/** graphics/**} $libs $testlibs
 exe{tests}: test = true
-exe{citty}: {hxx h cxx c}{* engine/**} $libs
+exe{citty}: {hxx h cxx c}{* engine/** graphics/**} $libs
 
 cc.poptions =+ "-I$out_root" "-I$src_root"

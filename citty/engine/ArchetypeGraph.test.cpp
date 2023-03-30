@@ -5,7 +5,7 @@
 
 
 TEST_CASE ("archetype graph can be traversed both forwards and backwards", "[ArchetypeGraph]") {
-    using namespace engine;
+    using namespace citty::engine;
     ArchetypeGraph archetypeGraph;
 
     SECTION("forward traversal through graph") {
@@ -48,7 +48,7 @@ TEST_CASE ("archetype graph can be traversed both forwards and backwards", "[Arc
 }
 
 TEST_CASE("archetype graph throws with invalid operations", "[ArchetypeGraph]") {
-    using namespace engine;
+    using namespace citty::engine;
     ArchetypeGraph archetypeGraph;
 
     SECTION("attempt to add components already in archetype") {
@@ -58,7 +58,7 @@ TEST_CASE("archetype graph throws with invalid operations", "[ArchetypeGraph]") 
                 archetypeGraph.next<CompoundComponent>(makeArchetype<Transform, SimpleComponent, CompoundComponent>()));
     }
 
-    SECTION("attempt to remove components not in archetype") {
+    SECTION("attempt to removeAll components not in archetype") {
         REQUIRE_THROWS(archetypeGraph.prev<Transform>(makeArchetype<>()));
         REQUIRE_THROWS(archetypeGraph.prev<Transform>(makeArchetype<SimpleComponent, CompoundComponent>()));
         REQUIRE_THROWS(
@@ -67,7 +67,7 @@ TEST_CASE("archetype graph throws with invalid operations", "[ArchetypeGraph]") 
 }
 
 TEST_CASE("archetype graph can be queried for registered supersets", "[ArchetypeGraph]") {
-    using namespace engine;
+    using namespace citty::engine;
     ArchetypeGraph archetypeGraph;
 
     SECTION("get all the subsets for a given archetype") {

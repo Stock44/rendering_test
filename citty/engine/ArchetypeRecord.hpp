@@ -16,9 +16,9 @@
 #include <citty/engine/Archetype.hpp>
 #include <citty/engine/Component.hpp>
 #include <citty/engine/ComponentContainer.hpp>
-#include <citty/engine/Entity.hpp>
+#include <citty/engine/EntityId.hpp>
 
-namespace engine {
+namespace citty::engine {
 
     class ArchetypeRecord {
     public:
@@ -47,7 +47,7 @@ namespace engine {
          * Throws if the archetype is not empty.
          * @param entity
          */
-        void add(Entity entity);
+        void add(EntityId entity);
 
         /**
          * Moves an entity from this archetype to the next archetype, with T as the component being added.
@@ -59,7 +59,7 @@ namespace engine {
          * @param args arguments for the constructor of T
          */
         template<Component T, typename ...Args>
-        void moveToNextArchetype(Entity entity, ArchetypeRecord &other, Args &&...args) {
+        void moveToNextArchetype(EntityId entity, ArchetypeRecord &other, Args &&...args) {
             // move each of the entity's components to the end of the next archetype's containers
             for (auto &[componentType, componentContainer]: componentContainers) {
                 auto &otherContainer = other.componentContainers.at(componentType);
@@ -79,7 +79,7 @@ namespace engine {
          * @param other
          */
         template<Component T>
-        void moveToPrevArchetype(Entity entity, ArchetypeRecord &other) {
+        void moveToPrevArchetype(EntityId entity, ArchetypeRecord &other) {
             // move each of the entity's components to the end of the previous archetype's containers
             for (auto &[componentType, componentContainer]: componentContainers) {
                 if (componentType == typeid(T)) continue;
@@ -100,7 +100,7 @@ namespace engine {
          */
         template<typename T>
         requires Component<std::remove_cvref<T>>
-        void set(Entity entity, T &&component) {
+        void set(EntityId entity, T &&component) {
             using ComponentType = std::remove_cvref<T>;
 
             std::size_t entityIndex = entityIndices.at(entity);
@@ -116,7 +116,7 @@ namespace engine {
          * @return a reference to the entity's component
          */
         template<Component T>
-        T &get(Entity entity) {
+        T &get(EntityId entity) {
             auto entityIndex = entityIndices.at(entity);
             return componentContainers.at(typeid(T)).getBaseContainer<T>()[entityIndex];
         };
@@ -128,7 +128,7 @@ namespace engine {
          * @return a const reference to the entity's component
          */
         template<Component T>
-        T const &get(Entity entity) const {
+        T const &get(EntityId entity) const {
             auto entityIndex = entityIndices.at(entity);
             return componentContainers.at(typeid(T)).getBaseContainer<T>()[entityIndex];
         };
@@ -145,6 +145,12 @@ namespace engine {
             return componentContainers.at(typeid(T)).getBaseContainer<T>();
         }
 
+        /**
+         * Remove an entity from this record, erasing all of its components
+         * @param entity entity to removeAll
+         */
+        void remove(EntityId entity);
+
         std::size_t size() const;
 
     private:
@@ -154,11 +160,11 @@ namespace engine {
          * @param entity
          * @param other
          */
-        void shiftIndicesToOther(Entity entity, ArchetypeRecord &other);
+        void shiftIndicesToOther(EntityId entity, ArchetypeRecord &other);
 
         std::size_t size_v = 0;
-        std::unordered_map<Entity, std::size_t> entityIndices;
-        std::vector<Entity> entities;
+        std::unordered_map<EntityId, std::size_t> entityIndices;
+        std::vector<EntityId> entities;
         std::unordered_map<std::type_index, ComponentContainer> componentContainers;
     };
 } //engine

@@ -7,27 +7,32 @@
 #include <vector>
 #include <memory>
 
-struct EmptyComponent {
-};
+namespace citty::engine {
+    struct EmptyComponent {
+    };
 
-struct SimpleComponent {
-    float floatNumber;
-    int number;
-    bool boolean;
+    struct SimpleComponent {
+        float floatNumber;
+        int number;
+        bool boolean;
 
-    auto operator <=>(SimpleComponent const &) const = default;
-};
+        auto operator<=>(SimpleComponent const &) const = default;
+    };
 
-struct CompoundComponent {
-    SimpleComponent embedded;
-    int test;
-    auto operator <=>(CompoundComponent const &) const = default;
-};
+    struct CompoundComponent {
+        SimpleComponent embedded;
+        int test;
 
-template<typename T>
-struct ComplexComponent {
-    std::vector<T> container;
-    std::shared_ptr<T> copyablePtr;
-    T value;
-    auto operator <=>(ComplexComponent<T> const &) const = default;
-};
+        auto operator<=>(CompoundComponent const &) const = default;
+    };
+
+    template<typename T>
+    struct ComplexComponent {
+        std::vector<T> container;
+        std::shared_ptr<T> copyablePtr;
+        T value;
+
+        auto operator<=>(ComplexComponent<T> const &) const = default;
+    };
+}
+

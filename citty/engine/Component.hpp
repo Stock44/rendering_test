@@ -4,7 +4,7 @@
 
 #pragma once
 
-namespace engine {
+namespace citty::engine {
     template<typename T>
     concept Component = std::copyable<T>;
 }
