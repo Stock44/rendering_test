@@ -8,8 +8,13 @@
 
 namespace citty::graphics {
     struct Material {
+        Eigen::Vector3f diffuse;
+        Eigen::Vector3f specular;
         engine::Entity diffuseMap;
         engine::Entity specularMap;
+        engine::Entity normalMap;
+        engine::Entity heightMap;
+
         float shininess;
     };
 }

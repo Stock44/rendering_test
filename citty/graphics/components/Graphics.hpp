@@ -4,10 +4,11 @@
 
 #pragma once
 
+#include <citty/engine/Entity.hpp>
+
 namespace citty::graphics {
     struct Graphics {
-        engine::Entity material;
         engine::Entity mesh;
-        engine::Entity texture;
+        engine::Entity material;
     };
 }

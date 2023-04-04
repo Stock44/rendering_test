@@ -14,6 +14,7 @@
 #include <citty/engine/components/Transform.hpp>
 #include <citty/graphics/components/Camera.hpp>
 #include <citty/graphics/components/Texture.hpp>
+#include <citty/graphics/components/Graphics.hpp>
 #include <citty/graphics/Shader.hpp>
 #include <citty/graphics/buffers/VertexBuffer.hpp>
 #include <citty/graphics/buffers/IndexBuffer.hpp>
