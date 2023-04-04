@@ -4,7 +4,6 @@
 
 #include <citty/graphics/Shader.hpp>
 #include <citty/graphics/OpenGlError.hpp>
-#include <cstring>
 #include <fstream>
 #include <sstream>
 #include <iostream>

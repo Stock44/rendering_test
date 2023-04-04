@@ -3,15 +3,14 @@
 //
 #pragma once
 
-#include <Eigen/Dense>
+#include <citty/graphics/components/Vertex.hpp>
 #include <vector>
 
 namespace citty::graphics {
     struct Mesh {
-        std::vector<Eigen::Vector3d> vertices;
-        std::vector<unsigned int> indices;
-        engine::Entity material;
-        bool loaded = false;
+        std::vector<Vertex> const vertices;
+        // unsigned int instead of std::size_t, as OpenGL uses this type for mesh indices
+        std::vector<unsigned int> const indices;
     };
 }
 
