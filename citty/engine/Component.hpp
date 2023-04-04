@@ -6,6 +6,6 @@
 
 namespace citty::engine {
     template<typename T>
-    concept Component = std::copyable<T>;
+    concept Component = std::movable<T>;
 }
 

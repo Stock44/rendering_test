@@ -1,6 +1,6 @@
 #include <thread>
 #include <citty/engine/Engine.hpp>
-#include <citty/graphics/RenderingSystem.hpp>
+//#include <citty/graphics/RenderingSystem.hpp>
 
 #include <gtkmm.h>
 #include "citty/engine/components/Transform.hpp"
@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
     using namespace citty;
     Glib::init();
 
-    citty::graphics::RenderingSystem renderingSystem;
+//    citty::graphics::RenderingSystem renderingSystem;
 
     auto app = Gtk::Application::create("org.gtkmm.examples.base");
 
@@ -26,11 +26,11 @@ int main(int argc, char *argv[]) {
     components.add<engine::Transform>(0);
     components.add<TestComponent>(0, 255);
 
-    auto &transform = components.get<engine::Transform>(0);
-    auto &test = components.get<TestComponent>(0);
+//    auto &transform = components.get<engine::Transform>(0);
+//    auto &test = components.get<TestComponent>(0);
 
-    test.value = 1024;
-    transform.position.x = 2012;
+//    test.value = 1024;
+//    transform.position.x = 2012;
 
     components.remove<TestComponent>(0);
 

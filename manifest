@@ -13,4 +13,5 @@ depends: libboost-graph ~1.78.0
 depends: libboost-flyweight ~1.78.0
 depends: libboost-hana ~1.78.0
 depends: catch2 ^3.1.0
-depends: Eigen ~3.3.9
+depends: Eigen ^3.4.0
+depends: stb_image ^2.26.0

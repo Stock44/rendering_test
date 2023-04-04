@@ -1,18 +1,19 @@
 import libs = \
+    Eigen%lib{Eigen} \
     pugixml%lib{pugixml} \
     libboost-graph%lib{boost_graph} \
     libboost-flyweight%lib{boost_flyweight} \
     libboost-hana%lib{boost_hana} \
+    stb_image%lib{stb_image} \
     epoxy%lib{epoxy} \
-    gtkmm-4.0%lib{gtkmm} \
-    Eigen%lib{Eigen}
+    gtkmm-4.0%lib{gtkmm}
 
 import testlibs = \
     catch2%lib{catch2} \
     catch2%lib{catch2wmain}
 
-exe{tests}: {hxx h cxx c}{engine/** graphics/**} $libs $testlibs
+exe{tests}: {hxx h cxx c}{** -main.cpp} $libs $testlibs
 exe{tests}: test = true
-exe{citty}: {hxx h cxx c}{* engine/** graphics/**} $libs
+exe{citty}: {hxx h cxx c}{**} $libs
 
 cc.poptions =+ "-I$out_root" "-I$src_root"
