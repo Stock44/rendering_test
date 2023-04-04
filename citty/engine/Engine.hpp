@@ -23,7 +23,7 @@ namespace citty::engine {
 
         template<typename T, typename ...Args>
         T *addSystem(Args &&...args) {
-            std::unique_ptr<System> system = systems.emplace_back(std::make_unique<T>(std::forward<Args>(args)...));
+            std::unique_ptr<System> &system = systems.emplace_back(std::make_unique<T>(std::forward<Args>(args)...));
 
             system->setup(&componentStore, &entityStore);
             system->init();
