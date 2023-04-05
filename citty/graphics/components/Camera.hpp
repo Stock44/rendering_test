@@ -4,7 +4,7 @@
 
 #pragma once
 
-namespace graphics {
+namespace citty::graphics {
 
     struct Camera {
         float fov = 90.0f;

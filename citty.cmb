@@ -8,19 +8,13 @@
 	(1,1,"GtkWindow","main_window",None,None,None,None,None),
 	(1,2,"GtkBox",None,1,None,None,None,-1),
 	(1,3,"GtkHeaderBar",None,2,None,None,None,None),
-	(1,7,"GtkStatusbar",None,2,None,None,None,2),
-	(1,8,"GtkGLArea","gl_area",2,None,None,None,1)
+	(1,4,"GtkGLArea","gl_area",2,None,None,None,1)
   </object>
   <object_property>
+	(1,1,"GtkWidget","height-request","180",None,None,None,None,None),
 	(1,1,"GtkWindow","decorated","False",None,None,None,None,None),
-	(1,1,"GtkWindow","default-height","960",None,None,None,None,None),
-	(1,1,"GtkWindow","default-width","960",None,None,None,None,None),
 	(1,2,"GtkOrientable","orientation","vertical",None,None,None,None,None),
-	(1,2,"GtkWidget","height-request","0",None,None,None,None,None),
-	(1,2,"GtkWidget","hexpand","True",None,None,None,None,None),
-	(1,8,"GtkGLArea","has-depth-buffer","True",None,None,None,None,None),
-	(1,8,"GtkGLArea","has-stencil-buffer","True",None,None,None,None,None),
-	(1,8,"GtkWidget","height-request","180",None,None,None,None,None),
-	(1,8,"GtkWidget","vexpand","True",None,None,None,None,None)
+	(1,2,"GtkWidget","height-request","300",None,None,None,None,None),
+	(1,4,"GtkWidget","height-request","180",None,None,None,None,None)
   </object_property>
 </cambalache-project>

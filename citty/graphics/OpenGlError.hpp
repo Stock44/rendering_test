@@ -6,7 +6,7 @@
 
 #include <stdexcept>
 
-namespace graphics {
+namespace citty::graphics {
 
     class OpenGLError : public std::runtime_error {
     public:
@@ -16,5 +16,7 @@ namespace graphics {
     private:
         unsigned int errorCode;
     };
+
+    void checkOpenGlErrors();
 
 } // graphics

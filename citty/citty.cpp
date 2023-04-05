@@ -1,54 +1,32 @@
 #include <thread>
 #include <citty/engine/Engine.hpp>
-//#include <citty/graphics/RenderingSystem.hpp>
+#include <citty/graphics/RenderingSystem.hpp>
 
 #include <gtkmm.h>
-#include "citty/engine/components/Transform.hpp"
-
-struct TestComponent {
-    int value;
-
-    explicit TestComponent(int value) : value(value) {};
-};
+#include <iostream>
 
 int main(int argc, char *argv[]) {
     using namespace citty;
+
     Glib::init();
 
-//    citty::graphics::RenderingSystem renderingSystem;
-
-    auto app = Gtk::Application::create("org.gtkmm.examples.base");
+    auto app = Gtk::Application::create("org.hiram.citty.main");
 
     auto builder = Gtk::Builder::create_from_file("citty.ui");
 
-    engine::ComponentStore components;
+    auto glArea = builder->get_widget<Gtk::GLArea>("gl_area");
 
-    components.add<engine::Transform>(0);
-    components.add<TestComponent>(0, 255);
+    engine::Engine engine;
 
-//    auto &transform = components.get<engine::Transform>(0);
-//    auto &test = components.get<TestComponent>(0);
-
-//    test.value = 1024;
-//    transform.position.x = 2012;
-
-    components.remove<TestComponent>(0);
-
-
-//    engine::Engine engine;
+    auto renderingSystem = engine.addSystem<graphics::RenderingSystem>(glArea);
 
     app->signal_activate().connect([&app, &builder]() {
+        std::cout << "app activated" << std::endl;
         auto mainWindow = builder->get_widget<Gtk::Window>("main_window");
 
         app->add_window(*mainWindow);
 
         mainWindow->show();
-
-        auto gl_area = builder->get_widget<Gtk::GLArea>("gl_area");
-
-//        auto rendering_system = std::make_shared<graphics::RenderingSystem>(gl_area);
-
-//        engine.registerSystem(rendering_system);
     });
 
 //    engine.registerSystem(std::make_unique<input::InputSystem>(window));
@@ -76,12 +54,11 @@ int main(int argc, char *argv[]) {
 //    std::cout << "Number of roads: " << roadStore->getComponents().size() << std::endl;
 //    std::cout << "Number of nodes: " << nodeStore->getComponents().size() << std::endl;
 
-//    std::jthread engineThread([&engine](std::stop_token stopToken) {
-//        while (!stopToken.stop_requested()) {
-//            engine.update();
-//        }
-//    });
-
+    std::jthread engineThread([&engine](std::stop_token const &stopToken) {
+        while (!stopToken.stop_requested()) {
+            engine.update();
+        }
+    });
 
     return app->run(argc, argv);
 

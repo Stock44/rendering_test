@@ -5,23 +5,19 @@
 #pragma once
 
 #include <gtkmm/glarea.h>
-#include <queue>
-#include <optional>
-#include <set>
 #include <citty/engine/System.hpp>
 #include <citty/graphics/components/Mesh.hpp>
 #include <citty/graphics/components/Vertex.hpp>
-#include <citty/engine/components/Transform.hpp>
 #include <citty/graphics/components/Camera.hpp>
 #include <citty/graphics/components/Texture.hpp>
 #include <citty/graphics/components/Graphics.hpp>
+#include <citty/graphics/Buffer.hpp>
+#include <citty/graphics/VertexAttributesBuffer.hpp>
+#include <citty/graphics/VertexIndicesBuffer.hpp>
 #include <citty/graphics/Shader.hpp>
-#include <citty/graphics/buffers/VertexBuffer.hpp>
-#include <citty/graphics/buffers/IndexBuffer.hpp>
-#include <citty/graphics/VertexArray.hpp>
-#include <citty/graphics/buffers/ModelMatBuffer.hpp>
+#include <citty/graphics/ShaderProgram.hpp>
 
-//namespace citty::graphics {
+namespace citty::graphics {
 //    class GLADInitError : public std::runtime_error {
 //    public:
 //        GLADInitError() : std::runtime_error("Failed to initialize GLAD") {};
@@ -60,8 +56,16 @@
 //        bool dirty;
 //    };
 //
-//    class RenderingSystem : public engine::System {
-//    public:
+    class RenderingSystem : public engine::System {
+    public:
+        explicit RenderingSystem(Gtk::GLArea *glArea);
+
+        void init() override;
+
+        void update() override;
+
+        void render();
+
 //        RenderingSystem(Gtk::GLArea *gl_area);
 //
 //        void render();
@@ -110,6 +114,6 @@
 //
 //        // Bucket ranges, start position and size
 //        std::vector<std::pair<int, int>> buckets;
-//    };
-//
-//} // graphics
+    };
+
+} // graphics

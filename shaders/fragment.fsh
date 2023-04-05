@@ -5,7 +5,6 @@ in vec4 color;
 
 //uniform sampler2D ourTexture;
 
-void main()
-{
+void main() {
     FragColor = color;
 }

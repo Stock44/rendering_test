@@ -1,36 +1,41 @@
 //
-// Created by hiram on 4/21/22.
+// Created by hiram on 4/4/23.
 //
 
 #pragma once
 
-#include <glm/glm.hpp>
-#include <string>
+#include <string_view>
+#include <epoxy/gl.h>
 
-namespace graphics {
+namespace citty::graphics {
+    enum class ShaderType {
+        VERTEX = GL_VERTEX_SHADER,
+        FRAGMENT = GL_FRAGMENT_SHADER,
+    };
+
+    GLenum asGlEnum(ShaderType type) {
+        return static_cast<std::underlying_type_t<ShaderType>>(type);
+    }
+
+
+
     class Shader {
     public:
-        int ID;
-        std::string vertexPath;
-        std::string fragmentPath;
+        Shader(std::string_view pathToSrc, ShaderType type);
 
-        Shader(const char *vertexPath, const char *fragmentPath);
+        Shader(Shader const &other) = delete;
 
-        void use();
+        Shader &operator=(Shader const &other) = delete;
 
-        void setBool(const std::string &name, bool value);
+        Shader(Shader &&other) noexcept;
 
-        void setInt(const std::string &name, int value);
+        Shader &operator=(Shader &&other) noexcept;
 
-        void setFloat(const std::string &name, float value);
+        ~Shader();
 
-        void setMatrix(const std::string &name, glm::mat4 value);
+        unsigned int getShaderName() const;
 
-        void setVec3(const std::string &name, glm::vec3 value);
-
-        void setVec4(const std::string &name, glm::vec4 value);
-
-        void setVec2(const std::string &name, glm::vec2 value);
+    private:
+        unsigned int shaderName;
     };
-}
-
+} // graphics

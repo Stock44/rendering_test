@@ -2,19 +2,39 @@
 // Created by hiram on 6/6/22.
 //
 
-#include <epoxy/gl.h>
-#include <glm/ext/matrix_transform.hpp>
-#include <glm/ext/matrix_clip_space.hpp>
-#include <algorithm>
 #include <iterator>
 #include <citty/graphics/RenderingSystem.hpp>
-#include <citty/graphics/components/Mesh.hpp>
-#include <citty/graphics/components/Material.hpp>
-#include <citty/graphics/components/Camera.hpp>
 
 
-//namespace citty::graphics {
-//    RenderingSystem::RenderingSystem(Gtk::GLArea *gl_area) {
+namespace citty::graphics {
+    RenderingSystem::RenderingSystem(Gtk::GLArea *glArea) {
+        if (glArea->get_realized()) throw std::runtime_error("GLArea has already been realized!");
+
+        glArea->signal_realize().connect(
+                [&glArea]() {
+                    glArea->make_current();
+
+                    // initialize stuff
+                });
+
+        glArea->signal_render().connect([this](auto context) {
+            render();
+            return true;
+        }, false);
+    }
+
+    void RenderingSystem::init() {
+
+    }
+
+    void RenderingSystem::update() {
+
+    }
+
+    void RenderingSystem::render() {
+
+    }
+
 //        gl_area->signal_realize().connect([this, gl_area]() {
 //            gl_area->make_current();
 //
@@ -308,4 +328,5 @@
 //        shader->setMatrix("projection", proj);
 //    }
 //
-//} // graphics
+} // graphics
+
