@@ -58,3 +58,10 @@ _deps
 
 #ignore executable symlink
 citty/citty
+
+citty/tests
+
+.bdep/
+
+build/bootstrap/
+
