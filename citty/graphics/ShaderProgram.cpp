@@ -29,17 +29,24 @@ namespace citty::graphics {
     }
 
 
+    void ShaderProgram::use() {
+        glUseProgram(programName);
+    }
+
     void ShaderProgram::setUniform(std::string_view name, int value) {
+        use();
         glUniform1i(glGetUniformLocation(programName, name.data()), value);
         checkOpenGlErrors();
     }
 
-    void ShaderProgram::setUniform(std::string_view name, Eigen::Matrix4f value) {
-        glUniformMatrix4fv(glGetUniformLocation(programName, name.data()), 1, GL_FALSE, &value(0));
+    void ShaderProgram::setUniform(std::string_view name, Eigen::Matrix4f value, bool transpose) {
+        use();
+        glUniformMatrix4fv(glGetUniformLocation(programName, name.data()), 1, transpose, &value(0));
         checkOpenGlErrors();
     }
 
     void ShaderProgram::setUniform(std::string_view name, Eigen::Vector3f value) {
+        use();
         glUniform4fv(glGetUniformLocation(programName, name.data()), 1, &value[0]);
         checkOpenGlErrors();
     }

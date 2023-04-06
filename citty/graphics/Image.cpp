@@ -3,47 +3,59 @@
 //
 
 #include <citty/graphics/Image.hpp>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
-namespace citty {
-    namespace graphics {
-        Image::Image(Image &&other) noexcept: data(other.data), width(other.width), height(other.height),
-                                              nrChannels(other.nrChannels) {
-            other.data = nullptr;
-            other.width = 0;
-            other.height = 0;
-            other.nrChannels = 0;
+
+namespace citty::graphics {
+    Image::Image(Image &&other) noexcept: data(other.data), width(other.width), height(other.height),
+                                          channels(other.channels) {
+        other.data = nullptr;
+        other.width = 0;
+        other.height = 0;
+    }
+
+    Image &Image::operator=(Image &&other) noexcept {
+        // they point to the same data
+        if (data == other.data) {
+            return *this;
         }
 
-        Image &Image::operator=(Image &&other) noexcept {
-            data = other.data;
-            width = other.width;
-            height = other.height;
-            nrChannels = other.nrChannels;
+        data = other.data;
+        width = other.width;
+        height = other.height;
+        channels = other.channels;
 
-            other.data = nullptr;
-            other.width = 0;
-            other.height = 0;
-            other.nrChannels = 0;
-        }
+        other.data = nullptr;
+        other.width = 0;
+        other.height = 0;
 
-        unsigned char const *Image::getData() const {
-            return data;
-        }
+        return *this;
+    }
 
-        int Image::getWidth() const {
-            return width;
-        }
+    unsigned char const *Image::getData() const {
+        return data;
+    }
 
-        int Image::getHeight() const {
-            return height;
-        }
+    int Image::getWidth() const {
+        return width;
+    }
 
-        Image::Image(std::string_view pathToTexture) {
-            data = stbi_load(pathToTexture.data(), &width, &height, &nrChannels, 0);
-        }
+    int Image::getHeight() const {
+        return height;
+    }
 
-        Image::~Image() {
-            stbi_image_free(data);
-        }
-    } // citty
+    Image::Image(std::string_view pathToTexture) {
+        int numberOfChannels;
+        data = stbi_load(pathToTexture.data(), &width, &height, &numberOfChannels, 0);
+        channels = static_cast<ColorChannels>(numberOfChannels);
+    }
+
+    Image::~Image() {
+        stbi_image_free(data);
+    }
+
+    ColorChannels Image::getChannels() const {
+        return channels;
+    }
 } // graphics

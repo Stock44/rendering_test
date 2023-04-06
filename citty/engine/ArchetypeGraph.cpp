@@ -6,7 +6,7 @@
 
 namespace citty::engine {
 
-    std::set<ArchetypeFlyweight> ArchetypeGraph::getSupersets(ArchetypeFlyweight archetype) {
+    std::set<ArchetypeFlyweight> ArchetypeGraph::getSupersets(ArchetypeFlyweight archetype) const {
         std::stack<ArchetypeFlyweight> unexploredArchetypes;
         std::set<ArchetypeFlyweight> supersets;
 

@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <citty/graphics/Shader.hpp>
+#include <citty/graphics/AsGlEnum.hpp>
 
 namespace citty::graphics {
     Shader::Shader(std::string_view pathToSrc, ShaderType type) {

@@ -128,21 +128,28 @@ namespace citty::engine {
          * @return a const reference to the entity's component
          */
         template<Component T>
-        T const &get(EntityId entity) const {
-            auto entityIndex = entityIndices.at(entity);
-            return componentContainers.at(typeid(T)).getBaseContainer<T>()[entityIndex];
+        ComponentContainer::Container<T> const &getAll() const {
+            return componentContainers.at(typeid(T)).getBaseContainer<T>();
         };
 
 
         /**
-         * Get the base container for all components of the specified type as a const reference. This is to prevent
-         * rude modification of the inner container without the ArchetypeRecord methods.
+         * Get a range view of all the components of the specified type in this archetype. Using a range view
+         * enables modification of elements, but disables adding and removing elements
          * @tparam T
          * @return
          */
         template<Component T>
         ComponentContainer::Container<T> &getAll() {
             return componentContainers.at(typeid(T)).getBaseContainer<T>();
+        }
+
+        /**
+         * Gets a range view of all the entity IDs contained in this archetype.
+         * @return
+         */
+        std::vector<EntityId> const &getAllEntityIds() const {
+            return entities;
         }
 
         /**

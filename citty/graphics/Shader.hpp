@@ -13,12 +13,6 @@ namespace citty::graphics {
         FRAGMENT = GL_FRAGMENT_SHADER,
     };
 
-    GLenum asGlEnum(ShaderType type) {
-        return static_cast<std::underlying_type_t<ShaderType>>(type);
-    }
-
-
-
     class Shader {
     public:
         Shader(std::string_view pathToSrc, ShaderType type);
@@ -33,7 +27,7 @@ namespace citty::graphics {
 
         ~Shader();
 
-        unsigned int getShaderName() const;
+        [[nodiscard]] unsigned int getShaderName() const;
 
     private:
         unsigned int shaderName;

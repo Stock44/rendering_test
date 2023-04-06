@@ -4,11 +4,16 @@
 
 #pragma once
 
-#include <stb_image.h>
+#include<string>
+#include <citty/graphics/TextureObject.hpp>
 
 namespace citty::graphics {
-    struct Texture {
-        std::string const texturePath;
 
-};
+
+    struct Texture {
+        std::string texturePath;
+        WrapMode wrappingMode = WrapMode::REPEAT;
+        MinFilter minFilter = MinFilter::NEAREST;
+        MagFilter magFilter = MagFilter::NEAREST;
+    };
 }

@@ -19,8 +19,4 @@ namespace citty::graphics {
         DYNAMIC_READ = GL_DYNAMIC_READ,
         DYNAMIC_COPY = GL_DYNAMIC_COPY,
     };
-
-    auto asGlEnum(BufferUsage bufferUsage) {
-        return static_cast<std::underlying_type_t <BufferUsage>>(bufferUsage);
-    }
 }

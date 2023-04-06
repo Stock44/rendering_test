@@ -23,6 +23,6 @@ namespace citty::graphics {
             throw std::runtime_error("shader program build failed");
         }
 
-        return {programName};
+        return ShaderProgram(programName);
     }
 } // graphics

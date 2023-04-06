@@ -84,10 +84,11 @@ namespace citty::engine {
          * @param archetype
          * @return
          */
-        std::set<ArchetypeFlyweight> getSupersets(ArchetypeFlyweight archetype);
+        std::set<ArchetypeFlyweight> getSupersets(ArchetypeFlyweight archetype) const;
 
     private:
         using ArchetypeEdges = std::unordered_map<std::type_index, ArchetypeFlyweight>;
+
         std::set<ArchetypeFlyweight> endArchetypes; // archetypes that don't have any out edges
         std::unordered_map<ArchetypeFlyweight, ArchetypeEdges> outEdges; // the resulting archetypes for adding a given type
         std::unordered_map<ArchetypeFlyweight, ArchetypeEdges> inEdges; // the resulting archetype for removing a given type

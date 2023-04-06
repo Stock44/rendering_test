@@ -8,16 +8,7 @@
 
 namespace citty::graphics {
     RenderingSystem::RenderingSystem(Gtk::GLArea *glArea) {
-        if (glArea->get_realized()) throw std::runtime_error("GLArea has already been realized!");
-
-        glArea->signal_realize().connect(
-                [&glArea]() {
-                    glArea->make_current();
-
-                    // initialize stuff
-                });
-
-        glArea->signal_render().connect([this](auto context) {
+        glArea->signal_render().connect([this](Glib::RefPtr<Gdk::GLContext> const &glContext) {
             render();
             return true;
         }, false);
@@ -28,7 +19,18 @@ namespace citty::graphics {
     }
 
     void RenderingSystem::update() {
+        auto [entities, textures] = getComponents<Texture>();
 
+        auto entityIt = entities.begin();
+        auto textureIt = textures.begin();
+
+        while(entityIt != entities.end() && textureIt != textures.end()) {
+            std::cout << *entityIt << " " << textureIt->texturePath << "\n";
+            entityIt++;
+            textureIt++;
+        }
+
+        std::cout.flush();
     }
 
     void RenderingSystem::render() {

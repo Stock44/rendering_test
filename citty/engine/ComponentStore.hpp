@@ -94,36 +94,52 @@ namespace citty::engine {
         void removeAll(EntityId entity);
 
         /**
-         * Obtains a map of component type indices to range views of all the existing components.
+         * Obtains a map of component type indices to range views of all the existing components. Component types may
+         * not be repeated
          * @tparam ComponentTypes the component types to get
          * @return the map
          */
         template<Component ...ComponentTypes>
         auto getAll() {
-            using namespace boost;
+            using boost::hana::make_tuple;
+            using boost::hana::type_c;
+            using boost::hana::transform;
+            using boost::hana::prepend;
+
+            using std::ranges::ref_view;
+            using std::ranges::owning_view;
+            using std::views::join;
+
             ArchetypeFlyweight archetype = makeArchetype<ComponentTypes...>();
             auto supersets = archetypeGraph.getSupersets(archetype);
-            auto componentTypesTuple = hana::make_tuple(hana::type_c<ComponentTypes>...);
-            auto completeContainers = hana::transform(componentTypesTuple,
-                                                      [&supersets, this](auto hanaType) {
-                                                          using CurrentComponent = decltype(hanaType)::type;
-                                                          using Container = ComponentContainer::Container<CurrentComponent>;
-                                                          using ContainerRefView = std::ranges::ref_view<Container>;
+            auto componentTypes = make_tuple(type_c<ComponentTypes>...);
 
-                                                          std::vector<ContainerRefView> componentContainers;
 
-                                                          for (auto const &superset: supersets) {
-                                                              auto &record = archetypeRecords.at(superset);
-                                                              auto &container = record.getAll<CurrentComponent>();
-                                                              componentContainers.emplace_back(container);
-                                                          }
+            auto completeContainers = transform(componentTypes,
+                                                [&supersets, this](auto hanaType) {
+                                                    using CurrentComponent = decltype(hanaType)::type;
+                                                    using Container = ComponentContainer::Container<CurrentComponent>;
+                                                    using ContainerRefView = ref_view<Container>;
 
-                                                          return std::ranges::owning_view(
-                                                                  std::move(componentContainers))
-                                                                 | std::views::join;
-                                                      });
+                                                    std::vector<ContainerRefView> componentContainers;
 
-            return completeContainers;
+                                                    for (auto const &superset: supersets) {
+                                                        auto &container = archetypeRecords.at(
+                                                                superset).getAll<CurrentComponent>();
+                                                        componentContainers.emplace_back(container);
+                                                    }
+
+                                                    return owning_view(std::move(componentContainers)) | join;
+                                                });
+
+            using EntitiesRefView = ref_view<std::vector<EntityId> const>;
+            std::vector<EntitiesRefView> entityViews;
+            for (auto const &superset: supersets) {
+                auto &entities = archetypeRecords.at(superset).getAllEntityIds();
+                entityViews.emplace_back(entities);
+            }
+
+            return prepend(std::move(completeContainers), owning_view(std::move(entityViews)) | join);
         }
 
     private:

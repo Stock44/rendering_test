@@ -12,8 +12,6 @@
 #include <citty/graphics/components/Texture.hpp>
 #include <citty/graphics/components/Graphics.hpp>
 #include <citty/graphics/Buffer.hpp>
-#include <citty/graphics/VertexAttributesBuffer.hpp>
-#include <citty/graphics/VertexIndicesBuffer.hpp>
 #include <citty/graphics/Shader.hpp>
 #include <citty/graphics/ShaderProgram.hpp>
 

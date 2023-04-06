@@ -11,7 +11,7 @@
 namespace citty::graphics {
     class ShaderProgram {
     public:
-        ShaderProgram(unsigned int programName);
+        explicit ShaderProgram(unsigned int programName);
 
         ShaderProgram(ShaderProgram const &other) = delete;
 
@@ -21,9 +21,11 @@ namespace citty::graphics {
 
         ShaderProgram &operator=(ShaderProgram &&other) noexcept;
 
+        void use();
+
         void setUniform(std::string_view name, int value);
 
-        void setUniform(std::string_view name, Eigen::Matrix4f value);
+        void setUniform(std::string_view name, Eigen::Matrix4f value, bool transpose = false);
 
         void setUniform(std::string_view name, Eigen::Vector3f value);
 

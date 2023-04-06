@@ -5,9 +5,15 @@
 #pragma once
 
 #include <string_view>
-#include <stb_image.h>
 
 namespace citty::graphics {
+    enum class ColorChannels : int {
+        G = 1,
+        GA = 2,
+        RGB = 3,
+        RGBA = 4,
+    };
+
     class Image {
     public:
         explicit Image(std::string_view pathToTexture);
@@ -20,19 +26,20 @@ namespace citty::graphics {
 
         Image &operator=(Image &&other) noexcept;
 
+        ~Image();
+
         [[nodiscard]] unsigned char const *getData() const;
 
-        int getWidth() const;
+        [[nodiscard]] int getWidth() const;
 
-        int getHeight() const;
+        [[nodiscard]] int getHeight() const;
 
-        ~Image();
+        [[nodiscard]] ColorChannels getChannels() const;
 
     private:
         unsigned char *data;
-
         int width;
         int height;
-        int nrChannels;
+        ColorChannels channels;
     };
 } // graphics

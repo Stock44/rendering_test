@@ -1,9 +1,11 @@
 #include <thread>
 #include <citty/engine/Engine.hpp>
 #include <citty/graphics/RenderingSystem.hpp>
+#include <citty/graphics/components/Texture.hpp>
 
 #include <gtkmm.h>
 #include <iostream>
+#include <citty/engine/components/Transform.hpp>
 
 int main(int argc, char *argv[]) {
     using namespace citty;
@@ -19,6 +21,18 @@ int main(int argc, char *argv[]) {
     engine::Engine engine;
 
     auto renderingSystem = engine.addSystem<graphics::RenderingSystem>(glArea);
+
+    auto entity = engine.getEntityStore().newEntityId();
+    auto entity2 = engine.getEntityStore().newEntityId();
+    auto entity3 = engine.getEntityStore().newEntityId();
+
+    int hello[] = {1, 2, 3};
+
+    engine.getComponentStore().add<graphics::Texture>(entity, "home.png");
+    engine.getComponentStore().add<engine::Transform>(entity);
+
+    engine.getComponentStore().add<graphics::Texture>(entity2, "test1.png");
+    engine.getComponentStore().add<graphics::Texture>(entity3, "test2.png");
 
     app->signal_activate().connect([&app, &builder]() {
         std::cout << "app activated" << std::endl;
