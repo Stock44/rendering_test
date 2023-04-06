@@ -141,7 +141,7 @@ namespace citty::engine {
          * @return
          */
         template<Component T>
-        ComponentContainer::Container<T> const &getAll() const {
+        ComponentContainer::Container<T> &getAll() {
             return componentContainers.at(typeid(T)).getBaseContainer<T>();
         }
 

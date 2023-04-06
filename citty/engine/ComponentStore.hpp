@@ -10,6 +10,7 @@
 #include <citty/engine/ArchetypeRecord.hpp>
 #include <citty/engine/ArchetypeGraph.hpp>
 #include <boost/hana.hpp>
+#include <citty/graphics/HanaTupleDestructure.hpp>
 
 namespace citty::engine {
     class ComponentStore {
@@ -100,30 +101,29 @@ namespace citty::engine {
         template<Component ...ComponentTypes>
         auto getAll() {
             using namespace boost;
-            ArchetypeFlyweight archetype = {typeid(ComponentTypes)...};
+            ArchetypeFlyweight archetype = makeArchetype<ComponentTypes...>();
             auto supersets = archetypeGraph.getSupersets(archetype);
             auto componentTypesTuple = hana::make_tuple(hana::type_c<ComponentTypes>...);
-            auto componentRangePairs = hana::transform(componentTypesTuple,
-                                                       [&supersets, this](auto hanaType) {
-                                                           using ComponentType = decltype(hanaType)::type;
-                                                           using ContainerType = ComponentContainer::Container<ComponentType>;
-                                                           using ContainerReferenceType = std::reference_wrapper<ContainerType>;
+            auto completeContainers = hana::transform(componentTypesTuple,
+                                                      [&supersets, this](auto hanaType) {
+                                                          using CurrentComponent = decltype(hanaType)::type;
+                                                          using Container = ComponentContainer::Container<CurrentComponent>;
+                                                          using ContainerRefView = std::ranges::ref_view<Container>;
 
-                                                           std::vector<ContainerReferenceType> componentContainers;
+                                                          std::vector<ContainerRefView> componentContainers;
 
-                                                           for (auto const &superset: supersets) {
-                                                               auto &record = archetypeRecords.at(superset);
-                                                               componentContainers.emplace_back(
-                                                                       record.getAll<ComponentType>());
-                                                           }
+                                                          for (auto const &superset: supersets) {
+                                                              auto &record = archetypeRecords.at(superset);
+                                                              auto &container = record.getAll<CurrentComponent>();
+                                                              componentContainers.emplace_back(container);
+                                                          }
 
-                                                           auto componentRange = componentContainers | std::views::join;
+                                                          return std::ranges::owning_view(
+                                                                  std::move(componentContainers))
+                                                                 | std::views::join;
+                                                      });
 
-                                                           return hana::make_pair(
-                                                                   std::type_index(typeid(ComponentType)),
-                                                                   componentRange);
-                                                       });
-            return hana::make_map(componentRangePairs);
+            return completeContainers;
         }
 
     private:

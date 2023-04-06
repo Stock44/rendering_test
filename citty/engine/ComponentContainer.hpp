@@ -30,16 +30,7 @@ namespace citty::engine {
          */
         template<Component T>
         explicit ComponentContainer(Container<T> &&container) : componentContainerBase(
-                std::make_unique<ConcreteComponentContainer<T>>
-
-                        (
-                                std::move(container)
-                        )) {}
-
-        /**
-         * Default-constructs a component at the end of the container
-         */
-//        void addDefaultComponent();
+                std::make_unique<ConcreteComponentContainer < T>>(std::move(container))) {}
 
         /**
          * Moves a component at a given index to the end of the other component
@@ -67,7 +58,17 @@ namespace citty::engine {
          */
         template<Component T>
         Container<T> &getBaseContainer() {
-            return dynamic_cast<ConcreteComponentContainer<T> *>(componentContainerBase.get())->container;
+            return dynamic_cast<ConcreteComponentContainer <T> *>(componentContainerBase.get())->container;
+        }
+
+        /**
+         * Attempts to retrieve the base container with its type.
+         * @tparam T Type that this ComponentContainer should have
+         * @return the typed base container
+         */
+        template<Component T>
+        Container<T> const &getBaseContainer() const {
+            return dynamic_cast<ConcreteComponentContainer <T> *>(componentContainerBase.get())->container;
         }
 
     private:

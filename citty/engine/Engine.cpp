@@ -17,6 +17,14 @@ namespace citty::engine {
         }
     }
 
+    ComponentStore &Engine::getComponentStore() {
+        return componentStore;
+    }
+
+    EntityIdStore &Engine::getEntityStore() {
+        return entityStore;
+    }
+
 
 
 //    EntityManager &Engine::getEntityManager() {

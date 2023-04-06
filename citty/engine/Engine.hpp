@@ -33,6 +33,10 @@ namespace citty::engine {
 
         void update();
 
+        ComponentStore &getComponentStore();
+
+        EntityIdStore &getEntityStore();
+
     private:
         ComponentStore componentStore;
         EntityIdStore entityStore;
