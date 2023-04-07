@@ -10,7 +10,7 @@
 #include <citty/engine/ArchetypeRecord.hpp>
 #include <citty/engine/ArchetypeGraph.hpp>
 #include <boost/hana.hpp>
-#include <citty/graphics/HanaTupleDestructure.hpp>
+#include <citty/engine/HanaTupleDestructure.hpp>
 
 namespace citty::engine {
     class ComponentStore {
