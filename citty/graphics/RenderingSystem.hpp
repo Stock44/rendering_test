@@ -12,8 +12,10 @@
 #include <citty/graphics/components/Texture.hpp>
 #include <citty/graphics/components/Graphics.hpp>
 #include <citty/graphics/Buffer.hpp>
+#include <citty/graphics/VertexArray.hpp>
 #include <citty/graphics/Shader.hpp>
 #include <citty/graphics/ShaderProgram.hpp>
+#include <mutex>
 
 namespace citty::graphics {
 //    class GLADInitError : public std::runtime_error {
@@ -54,6 +56,11 @@ namespace citty::graphics {
 //        bool dirty;
 //    };
 //
+    struct MeshRecord {
+        Buffer<Eigen::Matrix4f> matBuffer;
+        VertexArray vertexArrayObject;
+    };
+
     class RenderingSystem : public engine::System {
     public:
         explicit RenderingSystem(Gtk::GLArea *glArea);
@@ -67,6 +74,26 @@ namespace citty::graphics {
     private:
         void handleTextures();
 
+        void loadTextures();
+
+        void handleMeshes();
+
+        void loadMeshes();
+
+        std::set<engine::Entity> loadedTextures;
+        std::unordered_map<engine::Entity, TextureObject> textureObjects;
+        std::queue<std::pair<engine::Entity, Texture>> textureLoadQueue;
+        std::mutex textureLock;
+
+        std::set<engine::Entity> loadedMeshes;
+        std::queue<std::pair<engine::Entity, Mesh>> meshLoadingQueue;
+        std::mutex meshLock;
+        std::unordered_map<engine::Entity, std::size_t> meshIds;
+        std::size_t nextMeshId = 0;
+
+        // shared buffers for non-mutable meshes
+        std::shared_ptr<Buffer<Vertex>> vertexBuffer;
+        std::shared_ptr<Buffer<unsigned int>> indexBuffer;
 
 //        RenderingSystem(Gtk::GLArea *gl_area);
 //

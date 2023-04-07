@@ -8,9 +8,9 @@
 
 namespace citty::graphics {
     struct Mesh {
-        std::vector<Vertex> const vertices;
+        std::vector<Vertex> vertices;
         // unsigned int instead of std::size_t, as OpenGL uses this type for mesh indices
-        std::vector<unsigned int> const indices;
+        std::vector<unsigned int> indices;
     };
 }
 

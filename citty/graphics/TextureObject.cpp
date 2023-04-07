@@ -3,30 +3,40 @@
 //
 
 #include <citty/graphics/TextureObject.hpp>
+#include "OpenGlError.hpp"
 
 namespace citty::graphics {
     TextureObject::TextureObject(Image const &image) {
         glCreateTextures(GL_TEXTURE_2D, 1, &textureObjectName);
+        checkOpenGlErrors();
 
-        GLenum color;
+        GLenum internalFormat;
+        GLenum imageFormat;
         switch (image.getChannels()) {
             case ColorChannels::G:
-                color = GL_R8;
+                internalFormat = GL_R8;
+                imageFormat = GL_RED;
                 break;
             case ColorChannels::GA:
-                color = GL_RG8;
+                internalFormat = GL_RG8;
+                imageFormat = GL_RG;
                 break;
             case ColorChannels::RGB:
-                color = GL_RGB8;
+                internalFormat = GL_RGB8;
+                imageFormat = GL_RGB;
                 break;
             case ColorChannels::RGBA:
-                color = GL_RGBA8;
+                internalFormat = GL_RGBA8;
+                imageFormat = GL_RGBA;
                 break;
         }
 
-        glTextureStorage2D(textureObjectName, 1, color, image.getWidth(), image.getHeight());
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.getWidth(), image.getHeight(), color, GL_UNSIGNED_BYTE,
-                        image.getData());
+        glTextureStorage2D(textureObjectName, 1, internalFormat, image.getWidth(), image.getHeight());
+        checkOpenGlErrors();
+        glTextureSubImage2D(textureObjectName, 0, 0, 0, image.getWidth(), image.getHeight(), imageFormat,
+                            GL_UNSIGNED_BYTE,
+                            image.getData());
+        checkOpenGlErrors();
     }
 
     TextureObject::TextureObject(TextureObject &&other) noexcept {
@@ -54,26 +64,32 @@ namespace citty::graphics {
 
     void TextureObject::setTextureSWrapMode(WrapMode mode) {
         glTextureParameteri(textureObjectName, GL_TEXTURE_WRAP_S, asParam(mode));
+        checkOpenGlErrors();
     }
 
     void TextureObject::setTextureTWrapMode(WrapMode mode) {
         glTextureParameteri(textureObjectName, GL_TEXTURE_WRAP_T, asParam(mode));
+        checkOpenGlErrors();
     }
 
     void TextureObject::setTextureMinFilter(MinFilter filter) {
         glTextureParameteri(textureObjectName, GL_TEXTURE_MIN_FILTER, asParam(filter));
+        checkOpenGlErrors();
     }
 
     void TextureObject::setTextureMagFilter(MagFilter filter) {
         glTextureParameteri(textureObjectName, GL_TEXTURE_MAG_FILTER, asParam(filter));
+        checkOpenGlErrors();
     }
 
     void TextureObject::generateMipmaps() {
         glGenerateTextureMipmap(textureObjectName);
+        checkOpenGlErrors();
     }
 
     void TextureObject::bindToTextureUnit(unsigned int unit) {
         glBindTextureUnit(unit, textureObjectName);
+        checkOpenGlErrors();
     }
 
 } // graphics

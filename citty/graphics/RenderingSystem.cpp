@@ -8,8 +8,15 @@
 
 namespace citty::graphics {
     RenderingSystem::RenderingSystem(Gtk::GLArea *glArea) {
-        glArea->signal_render().connect([this](Glib::RefPtr<Gdk::GLContext> const &glContext) {
+        glArea->signal_realize().connect([this, glArea]() {
+            glArea->make_current();
+
+            vertexBuffer = std::make_shared<Buffer<Vertex>>(BufferUsage::STATIC_DRAW);
+        });
+
+        glArea->signal_render().connect([this, glArea](Glib::RefPtr<Gdk::GLContext> const &glContext) {
             render();
+            glArea->queue_render();
             return true;
         }, false);
     }
@@ -20,10 +27,12 @@ namespace citty::graphics {
 
     void RenderingSystem::update() {
         handleTextures();
+        handleMeshes();
     }
 
     void RenderingSystem::render() {
-
+        loadTextures();
+        loadMeshes();
     }
 
     void RenderingSystem::handleTextures() {
@@ -32,13 +41,83 @@ namespace citty::graphics {
 
         auto entityIt = entities.begin();
         auto textureIt = textures.begin();
+        std::queue<std::pair<engine::Entity, Texture>> queue;
         while (entityIt != entities.end() && textureIt != textures.end()) {
-            std::cout << *entityIt << " " << textureIt->texturePath << "\n";
+            auto entity = *entityIt;
+            auto &texture = *textureIt;
+
+            if (!loadedTextures.contains(entity)) {
+                loadedTextures.emplace(entity);
+                queue.emplace(*entityIt, texture);
+            }
 
             entityIt++;
             textureIt++;
         }
-        std::cout.flush();
+
+        if (!queue.empty()) {
+            std::scoped_lock lock{textureLock};
+            textureLoadQueue = std::move(queue);
+        }
+    }
+
+    void RenderingSystem::loadTextures() {
+        if (textureLoadQueue.empty()) return;
+        std::scoped_lock lock{textureLock};
+
+        while (!textureLoadQueue.empty()) {
+            auto &[entity, texture] = textureLoadQueue.front();
+
+            Image textureImage(texture.texturePath);
+            auto [it, inserted] = textureObjects.try_emplace(entity, textureImage);
+            textureLoadQueue.pop();
+
+            auto &textureObject = it->second;
+
+            textureObject.setTextureMagFilter(texture.magFilter);
+            textureObject.setTextureMinFilter(texture.minFilter);
+            textureObject.setTextureSWrapMode(texture.sWrappingMode);
+            textureObject.setTextureTWrapMode(texture.tWrappingMode);
+        }
+    }
+
+    void RenderingSystem::handleMeshes() {
+        auto entities = getEntities<Mesh>();
+        auto [meshes] = getComponents<Mesh>();
+
+        auto entityIt = entities.begin();
+        auto meshesIt = meshes.begin();
+        std::queue<std::pair<engine::Entity, Mesh>> queue;
+        while (entityIt != entities.end() && meshesIt != meshes.end()) {
+            auto entity = *entityIt;
+            auto &mesh = *meshesIt;
+
+            if (!loadedMeshes.contains(entity)) {
+                std::cout << "queued mesh for loading" << std::endl;
+                loadedMeshes.emplace(entity);
+                queue.emplace(*entityIt, mesh);
+            }
+
+            entityIt++;
+            meshesIt++;
+        }
+
+        if (!queue.empty()) {
+            std::scoped_lock lock{meshLock};
+            meshLoadingQueue = std::move(queue);
+        }
+    }
+
+    void RenderingSystem::loadMeshes() {
+        if (meshLoadingQueue.empty()) return;
+        std::scoped_lock lock{textureLock};
+
+        while (!meshLoadingQueue.empty()) {
+            auto &[entity, texture] = textureLoadQueue.front();
+
+
+            textureLoadQueue.pop();
+        }
     }
 
 //        gl_area->signal_realize().connect([this, gl_area]() {

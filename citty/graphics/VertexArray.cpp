@@ -3,7 +3,6 @@
 //
 
 #include <citty/graphics/VertexArray.hpp>
-#include "OpenGlError.hpp"
 
 namespace citty::graphics {
     VertexArray::VertexArray() {

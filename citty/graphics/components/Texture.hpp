@@ -12,7 +12,8 @@ namespace citty::graphics {
 
     struct Texture {
         std::string texturePath;
-        WrapMode wrappingMode = WrapMode::REPEAT;
+        WrapMode sWrappingMode = WrapMode::REPEAT;
+        WrapMode tWrappingMode = WrapMode::REPEAT;
         MinFilter minFilter = MinFilter::NEAREST;
         MagFilter magFilter = MagFilter::NEAREST;
     };

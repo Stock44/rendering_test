@@ -22,19 +22,10 @@ int main(int argc, char *argv[]) {
 
     auto renderingSystem = engine.addSystem<graphics::RenderingSystem>(glArea);
 
-    auto entity = engine.getEntityStore().newEntityId();
-    auto entity2 = engine.getEntityStore().newEntityId();
-    auto entity3 = engine.getEntityStore().newEntityId();
-
-
-    engine.getComponentStore().add<graphics::Texture>(entity, "home.png");
-    engine.getComponentStore().add<engine::Transform>(entity);
-
-    engine.getComponentStore().add<graphics::Texture>(entity2, "test1.png");
-    engine.getComponentStore().add<graphics::Texture>(entity3, "test2.png");
+    auto noTexture = engine.getEntityStore().newEntityId();
+    engine.getComponentStore().add<graphics::Texture>(noTexture, "resources/no_texture.png");
 
     app->signal_activate().connect([&app, &builder]() {
-        std::cout << "app activated" << std::endl;
         auto mainWindow = builder->get_widget<Gtk::Window>("main_window");
 
         app->add_window(*mainWindow);
