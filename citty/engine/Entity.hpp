@@ -7,6 +7,7 @@
 #include <citty/engine/Component.hpp>
 #include <citty/engine/ComponentStore.hpp>
 #include <citty/engine/EntityId.hpp>
+#include <ostream>
 
 namespace citty::engine {
 
@@ -15,6 +16,11 @@ namespace citty::engine {
                                                                   componentStore(componentStore) {};
 
         EntityId entity;
+
+        friend inline std::ostream &operator<<(std::ostream &os, const Entity &entity) {
+            os << "entity: " << entity.entity;
+            return os;
+        }
 
         template<Component T, typename ...Args>
         inline void addComponent(Args &&...args) {

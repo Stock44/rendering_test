@@ -19,22 +19,26 @@ namespace citty::graphics {
     }
 
     void RenderingSystem::update() {
-        auto [entities, textures] = getComponents<Texture>();
-
-        auto entityIt = entities.begin();
-        auto textureIt = textures.begin();
-
-        while(entityIt != entities.end() && textureIt != textures.end()) {
-            std::cout << *entityIt << " " << textureIt->texturePath << "\n";
-            entityIt++;
-            textureIt++;
-        }
-
-        std::cout.flush();
+        handleTextures();
     }
 
     void RenderingSystem::render() {
 
+    }
+
+    void RenderingSystem::handleTextures() {
+        auto entities = getEntities<Texture>();
+        auto [textures] = getComponents<Texture>();
+
+        auto entityIt = entities.begin();
+        auto textureIt = textures.begin();
+        while (entityIt != entities.end() && textureIt != textures.end()) {
+            std::cout << *entityIt << " " << textureIt->texturePath << "\n";
+
+            entityIt++;
+            textureIt++;
+        }
+        std::cout.flush();
     }
 
 //        gl_area->signal_realize().connect([this, gl_area]() {

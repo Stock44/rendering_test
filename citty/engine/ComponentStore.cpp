@@ -13,4 +13,5 @@ namespace citty::engine {
         // entity now has an empty archetype
         archetype = Archetype();
     }
+
 } // engine

@@ -27,6 +27,14 @@ namespace citty::engine {
         void deleteEntity(Entity entity);
 
         template<Component ...ComponentTypes>
+        inline auto getEntities() const {
+            auto allEntities = componentStore->getAllEntities<ComponentTypes...>();
+            return std::views::transform(std::move(allEntities), [this](EntityId entity) {
+                return Entity(entity, *componentStore);
+            });
+        }
+
+        template<Component ...ComponentTypes>
         inline auto getComponents() {
             return componentStore->getAll<ComponentTypes...>();
         }

@@ -93,6 +93,25 @@ namespace citty::engine {
          */
         void removeAll(EntityId entity);
 
+        template<Component ...ComponentTypes>
+        auto getAllEntities() const {
+            using std::ranges::ref_view;
+            using std::ranges::owning_view;
+            using std::views::join;
+            using EntitiesRefView = ref_view<std::vector<EntityId> const>;
+
+            ArchetypeFlyweight archetype = makeArchetype<ComponentTypes...>();
+            auto supersets = archetypeGraph.getSupersets(archetype);
+
+            std::vector<EntitiesRefView> entityViews;
+            for (auto const &superset: supersets) {
+                auto &entities = archetypeRecords.at(superset).getAllEntityIds();
+                entityViews.emplace_back(entities);
+            }
+
+            return owning_view(std::move(entityViews)) | join;
+        }
+
         /**
          * Obtains a map of component type indices to range views of all the existing components. Component types may
          * not be repeated
@@ -132,14 +151,8 @@ namespace citty::engine {
                                                     return owning_view(std::move(componentContainers)) | join;
                                                 });
 
-            using EntitiesRefView = ref_view<std::vector<EntityId> const>;
-            std::vector<EntitiesRefView> entityViews;
-            for (auto const &superset: supersets) {
-                auto &entities = archetypeRecords.at(superset).getAllEntityIds();
-                entityViews.emplace_back(entities);
-            }
 
-            return prepend(std::move(completeContainers), owning_view(std::move(entityViews)) | join);
+            return completeContainers;
         }
 
     private:

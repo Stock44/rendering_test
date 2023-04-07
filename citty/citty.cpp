@@ -26,7 +26,6 @@ int main(int argc, char *argv[]) {
     auto entity2 = engine.getEntityStore().newEntityId();
     auto entity3 = engine.getEntityStore().newEntityId();
 
-    int hello[] = {1, 2, 3};
 
     engine.getComponentStore().add<graphics::Texture>(entity, "home.png");
     engine.getComponentStore().add<engine::Transform>(entity);

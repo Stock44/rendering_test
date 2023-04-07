@@ -64,6 +64,10 @@ namespace citty::graphics {
 
         void render();
 
+    private:
+        void handleTextures();
+
+
 //        RenderingSystem(Gtk::GLArea *gl_area);
 //
 //        void render();
