@@ -27,11 +27,12 @@ namespace citty::graphics {
 
         VertexArray &operator=(VertexArray &&other) noexcept;
 
-        void setVertexIndicesBuffer(Buffer<unsigned int> &buffer);
+        void setVertexIndicesBuffer(std::shared_ptr<Buffer<unsigned int>> const &buffer);
 
         template<typename T>
         void bindBuffer(std::shared_ptr<Buffer<T>> const &buffer, std::size_t offset = 0) {
-            unsigned int binding = bufferBindings.try_emplace(buffer->getBufferName(), nextBufferBinding);
+            auto [bindingIt, inserted] = bufferBindings.try_emplace(buffer->getBufferName(), nextBufferBinding);
+            auto [bufferName, binding] = *bindingIt;
             boundBuffers.try_emplace(nextBufferBinding, std::shared_ptr(buffer));
 
             nextBufferBinding++;
@@ -43,24 +44,28 @@ namespace citty::graphics {
         void unbindBuffer(std::shared_ptr<Buffer<T>> const &buffer) {
             auto binding = bufferBindings.at(buffer->getBufferName());
             glVertexArrayVertexBuffer(vertexArrayName, binding, 0, 0, sizeof(T));
+            checkOpenGlErrors();
             bufferBindings.erase(buffer->getBufferName());
             boundBuffers.erase(binding);
         }
 
         template<typename T>
-        void configureAttrib(unsigned int attributeIndex, Buffer<T> const &buffer, int size,
+        void configureAttrib(unsigned int attributeIndex, std::shared_ptr<Buffer<T>> const &buffer, int size,
                              AttributeType type, bool normalize, std::size_t offset) {
-            static_assert(sizeof(T) > offset, "offset can not be bigger than the buffer's data type");
+            if (sizeof(T) <= offset) {
+                throw std::runtime_error("offset can't be bigger than the the size of the buffer's data type");
+            }
 
             glEnableVertexArrayAttrib(vertexArrayName, attributeIndex);
             glVertexArrayAttribFormat(vertexArrayName, attributeIndex, size, asGlEnum(type), normalize, offset);
-            glVertexArrayAttribBinding(vertexArrayName, attributeIndex, bufferBindings.at(buffer.getBufferName()));
+            glVertexArrayAttribBinding(vertexArrayName, attributeIndex, bufferBindings.at(buffer->getBufferName()));
             checkOpenGlErrors();
         }
 
         template<typename T>
-        void setBufferDivisor(Buffer<T> const &buffer, int divisor) {
-            glVertexArrayBindingDivisor(vertexArrayName, bufferBindings.at(buffer.getBufferName()), divisor);
+        void setBufferDivisor(std::shared_ptr<Buffer<T>> const &buffer, int divisor) {
+            glVertexArrayBindingDivisor(vertexArrayName, bufferBindings.at(buffer->getBufferName()), divisor);
+            checkOpenGlErrors();
         }
 
         void enableAttrib(unsigned int attributeIndex);

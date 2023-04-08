@@ -57,8 +57,10 @@ namespace citty::graphics {
 //    };
 //
     struct MeshRecord {
-        Buffer<Eigen::Matrix4f> matBuffer;
+        std::shared_ptr<Buffer<Eigen::Matrix4f>> matBuffer;
         VertexArray vertexArrayObject;
+        std::size_t verticesOffset;
+        std::size_t indicesOffset;
     };
 
     class RenderingSystem : public engine::System {
@@ -72,6 +74,12 @@ namespace citty::graphics {
         void render();
 
     private:
+        using Id = int_fast64_t;
+        const Id MATERIAL_ID_MAX = INT32_MAX;
+        const int MATERIAL_ID_SIZE = 32;
+        const Id MESH_ID_MAX = INT32_MAX;
+        const int MESH_ID_SIZE = 32;
+
         void handleTextures();
 
         void loadTextures();
@@ -80,20 +88,21 @@ namespace citty::graphics {
 
         void loadMeshes();
 
-        std::set<engine::Entity> loadedTextures;
-        std::unordered_map<engine::Entity, TextureObject> textureObjects;
+        std::unordered_set<engine::Entity> loadedTextureEntities;
         std::queue<std::pair<engine::Entity, Texture>> textureLoadQueue;
+        std::unordered_map<engine::Entity, TextureObject> textureObjects;
         std::mutex textureLock;
 
-        std::set<engine::Entity> loadedMeshes;
+        std::unordered_set<engine::Entity> loadedMeshEntities;
         std::queue<std::pair<engine::Entity, Mesh>> meshLoadingQueue;
+        std::unordered_map<Id, MeshRecord> meshRecords;
+        std::unordered_map<engine::Entity, Id> meshIds; // maps ecs Mesh entity to a specific mesh id
+        Id nextMeshId = 0;
         std::mutex meshLock;
-        std::unordered_map<engine::Entity, std::size_t> meshIds;
-        std::size_t nextMeshId = 0;
 
         // shared buffers for non-mutable meshes
-        std::shared_ptr<Buffer<Vertex>> vertexBuffer;
-        std::shared_ptr<Buffer<unsigned int>> indexBuffer;
+        std::shared_ptr<Buffer<Vertex>> vertexBuffer = nullptr;
+        std::shared_ptr<Buffer<unsigned int>> indexBuffer = nullptr;
 
 //        RenderingSystem(Gtk::GLArea *gl_area);
 //

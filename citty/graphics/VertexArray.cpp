@@ -25,16 +25,19 @@ namespace citty::graphics {
         return *this;
     }
 
-    void VertexArray::setVertexIndicesBuffer(Buffer<unsigned int> &buffer) {
-        glVertexArrayElementBuffer(vertexArrayName, buffer.getBufferName());
+    void VertexArray::setVertexIndicesBuffer(std::shared_ptr<Buffer<unsigned int>> const &buffer) {
+        glVertexArrayElementBuffer(vertexArrayName, buffer->getBufferName());
+        checkOpenGlErrors();
     }
 
     void VertexArray::enableAttrib(unsigned int attributeIndex) {
         glEnableVertexArrayAttrib(vertexArrayName, attributeIndex);
+        checkOpenGlErrors();
     }
 
     void VertexArray::disableAttrib(unsigned int attributeIndex) {
         glDisableVertexArrayAttrib(vertexArrayName, attributeIndex);
+        checkOpenGlErrors();
     }
 
 } // graphics

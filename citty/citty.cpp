@@ -20,10 +20,43 @@ int main(int argc, char *argv[]) {
 
     engine::Engine engine;
 
-    auto renderingSystem = engine.addSystem<graphics::RenderingSystem>(glArea);
+    engine.addSystem<graphics::RenderingSystem>(glArea);
 
-    auto noTexture = engine.getEntityStore().newEntityId();
-    engine.getComponentStore().add<graphics::Texture>(noTexture, "resources/no_texture.png");
+    auto &entityStore = engine.getEntityStore();
+    auto &componentStore = engine.getComponentStore();
+
+    auto noTexture = entityStore.newEntityId();
+    componentStore.add<graphics::Texture>(noTexture, "resources/no_texture.png");
+
+    auto cubeMesh = entityStore.newEntityId();
+    componentStore.add<graphics::Mesh>(cubeMesh, graphics::Mesh{
+            {
+                    // vertices (pos, normal, tangent, bitangent, texture)
+                    {{0.0f, 0.0f, 0.0f}, {}, {}, {}, {}},
+                    {{1.0f, 0.0f, 0.0f}, {}, {}, {}, {}},
+                    {{0.0f, 1.0f, 0.0f}, {}, {}, {}, {}},
+                    {{1.0f, 1.0f, 0.0f}, {}, {}, {}, {}},
+                    {{0.0f, 0.0f, 1.0f}, {}, {}, {}, {}},
+                    {{1.0f, 0.0f, 1.0f}, {}, {}, {}, {}},
+                    {{0.0f, 1.0f, 1.0f}, {}, {}, {}, {}},
+                    {{1.0f, 1.0f, 1.0f}, {}, {}, {}, {}},
+            },
+            {
+                    //indices
+                    0, 1, 3,
+                    0, 3, 2,
+                    2, 3, 7,
+                    2, 7, 6,
+                    4, 0, 2,
+                    4, 2, 6,
+                    1, 5, 7,
+                    1, 7, 3,
+                    4, 5, 1,
+                    4, 1, 0,
+                    5, 4, 6,
+                    5, 6, 7,
+            }
+    });
 
     app->signal_activate().connect([&app, &builder]() {
         auto mainWindow = builder->get_widget<Gtk::Window>("main_window");

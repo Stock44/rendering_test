@@ -11,7 +11,8 @@ namespace citty::graphics {
         glArea->signal_realize().connect([this, glArea]() {
             glArea->make_current();
 
-            vertexBuffer = std::make_shared<Buffer<Vertex>>(BufferUsage::STATIC_DRAW);
+            vertexBuffer = std::make_shared<Buffer<Vertex >>(BufferUsage::STATIC_DRAW);
+            indexBuffer = std::make_shared<Buffer<unsigned int >>(BufferUsage::STATIC_DRAW);
         });
 
         glArea->signal_render().connect([this, glArea](Glib::RefPtr<Gdk::GLContext> const &glContext) {
@@ -46,8 +47,8 @@ namespace citty::graphics {
             auto entity = *entityIt;
             auto &texture = *textureIt;
 
-            if (!loadedTextures.contains(entity)) {
-                loadedTextures.emplace(entity);
+            if (!loadedTextureEntities.contains(entity)) {
+                loadedTextureEntities.emplace(entity);
                 queue.emplace(*entityIt, texture);
             }
 
@@ -92,9 +93,9 @@ namespace citty::graphics {
             auto entity = *entityIt;
             auto &mesh = *meshesIt;
 
-            if (!loadedMeshes.contains(entity)) {
+            if (!loadedMeshEntities.contains(entity)) {
                 std::cout << "queued mesh for loading" << std::endl;
-                loadedMeshes.emplace(entity);
+                loadedMeshEntities.emplace(entity);
                 queue.emplace(*entityIt, mesh);
             }
 
@@ -110,13 +111,51 @@ namespace citty::graphics {
 
     void RenderingSystem::loadMeshes() {
         if (meshLoadingQueue.empty()) return;
-        std::scoped_lock lock{textureLock};
+        std::scoped_lock lock{meshLock};
 
         while (!meshLoadingQueue.empty()) {
-            auto &[entity, texture] = textureLoadQueue.front();
+            std::cout << "loading mesh" << std::endl;
+            auto &[entity, mesh] = meshLoadingQueue.front();
 
+            MeshRecord meshRecord{
+                    std::make_shared < Buffer < Eigen::Matrix4f >> (BufferUsage::DYNAMIC_DRAW),
+                    VertexArray{},
+                    vertexBuffer->getSize(),
+                    indexBuffer->getSize(),
+            };
 
-            textureLoadQueue.pop();
+            auto &vao = meshRecord.vertexArrayObject;
+            auto &matBuffer = meshRecord.matBuffer;
+
+            vertexBuffer->append(mesh.vertices);
+            indexBuffer->append(mesh.indices);
+
+            vao.bindBuffer(vertexBuffer, meshRecord.verticesOffset);
+            vao.enableAttrib(0);
+            vao.configureAttrib(0, vertexBuffer, 3, AttributeType::FLOAT, false, 0);
+            vao.enableAttrib(1);
+            vao.configureAttrib(1, vertexBuffer, 3, AttributeType::FLOAT, false, offsetof(Vertex, normal));
+            vao.enableAttrib(2);
+            vao.configureAttrib(2, vertexBuffer, 3, AttributeType::FLOAT, false, offsetof(Vertex, tangent));
+            vao.enableAttrib(3);
+            vao.configureAttrib(3, vertexBuffer, 3, AttributeType::FLOAT, false, offsetof(Vertex, bitangent));
+            vao.enableAttrib(4);
+            vao.configureAttrib(4, vertexBuffer, 2, AttributeType::FLOAT, false, offsetof(Vertex, texCoords));
+
+            vao.setVertexIndicesBuffer(indexBuffer);
+
+            vao.bindBuffer(matBuffer, 0);
+            vao.enableAttrib(5);
+            vao.configureAttrib(5, matBuffer, 4, AttributeType::FLOAT, false, 0);
+            vao.enableAttrib(5);
+            vao.configureAttrib(6, matBuffer, 4, AttributeType::FLOAT, false, 4 * sizeof(float));
+            vao.enableAttrib(5);
+            vao.configureAttrib(7, matBuffer, 4, AttributeType::FLOAT, false, 8 * sizeof(float));
+            vao.enableAttrib(5);
+            vao.configureAttrib(8, matBuffer, 4, AttributeType::FLOAT, false, 12 * sizeof(float));
+            vao.setBufferDivisor(matBuffer, 1);
+
+            meshLoadingQueue.pop();
         }
     }
 
