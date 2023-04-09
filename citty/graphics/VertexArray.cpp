@@ -40,4 +40,13 @@ namespace citty::graphics {
         checkOpenGlErrors();
     }
 
+    void VertexArray::drawElementsInstanced(DrawMode mode, int count, int instanceCount,
+                                            unsigned int indicesIndex, int baseVertex) {
+        glDrawElementsInstancedBaseVertex(asGlEnum(mode), count, GL_UNSIGNED_INT,
+                                          (void const *) (indicesIndex * sizeof(unsigned int)),
+                                          instanceCount,
+                                          baseVertex);
+        checkOpenGlErrors();
+    }
+
 } // graphics

@@ -25,6 +25,8 @@ namespace citty::graphics {
 
         void setUniform(std::string_view name, int value);
 
+        void setUniform(std::string_view name, float value);
+
         void setUniform(std::string_view name, Eigen::Matrix4f value, bool transpose = false);
 
         void setUniform(std::string_view name, Eigen::Vector3f value);

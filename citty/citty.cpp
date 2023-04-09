@@ -25,21 +25,26 @@ int main(int argc, char *argv[]) {
     auto &entityStore = engine.getEntityStore();
     auto &componentStore = engine.getComponentStore();
 
-    auto noTexture = entityStore.newEntityId();
-    componentStore.add<graphics::Texture>(noTexture, "resources/no_texture.png");
+    auto noTexture = engine::Entity{entityStore.newEntityId(), componentStore};
+    noTexture.addComponent<graphics::Texture>("resources/no_texture.png");
 
-    auto cubeMesh = entityStore.newEntityId();
-    componentStore.add<graphics::Mesh>(cubeMesh, graphics::Mesh{
+    auto testMaterial = engine::Entity{entityStore.newEntityId(), componentStore};
+    testMaterial.addComponent<graphics::Material>(Eigen::Vector3f{1.0f, 1.0f, 1.0f},
+                                                  Eigen::Vector3f{1.0f, 1.0f, 1.0f}, noTexture, noTexture,
+                                                  noTexture, noTexture, 1.0f);
+
+    auto cubeMesh = engine::Entity{entityStore.newEntityId(), componentStore};
+    cubeMesh.addComponent<graphics::Mesh>(graphics::Mesh{
             {
                     // vertices (pos, normal, tangent, bitangent, texture)
                     {{0.0f, 0.0f, 0.0f}, {}, {}, {}, {}},
-                    {{1.0f, 0.0f, 0.0f}, {}, {}, {}, {}},
-                    {{0.0f, 1.0f, 0.0f}, {}, {}, {}, {}},
+                       {{1.0f, 0.0f, 0.0f}, {}, {}, {}, {}},
+                          {{0.0f, 1.0f, 0.0f}, {}, {}, {}, {}},
                     {{1.0f, 1.0f, 0.0f}, {}, {}, {}, {}},
-                    {{0.0f, 0.0f, 1.0f}, {}, {}, {}, {}},
-                    {{1.0f, 0.0f, 1.0f}, {}, {}, {}, {}},
+                       {{0.0f, 0.0f, 1.0f}, {}, {}, {}, {}},
+                          {{1.0f, 0.0f, 1.0f}, {}, {}, {}, {}},
                     {{0.0f, 1.0f, 1.0f}, {}, {}, {}, {}},
-                    {{1.0f, 1.0f, 1.0f}, {}, {}, {}, {}},
+                       {{1.0f, 1.0f, 1.0f}, {}, {}, {}, {}},
             },
             {
                     //indices
@@ -57,6 +62,13 @@ int main(int argc, char *argv[]) {
                     5, 6, 7,
             }
     });
+
+    auto testEntity = engine::Entity{entityStore.newEntityId(), componentStore};
+    testEntity.addComponent<engine::Transform>(
+            Eigen::Quaternionf{Eigen::AngleAxisf(0.0f, Eigen::Vector3f{0.0f, 1.0f, 0.0f})},
+            Eigen::Vector3f{5.0f, 0.0f, 0.0f},
+            Eigen::Vector3f{1.0f, 1.0f, 1.0f});
+    testEntity.addComponent<graphics::Graphics>(cubeMesh, testMaterial);
 
     app->signal_activate().connect([&app, &builder]() {
         auto mainWindow = builder->get_widget<Gtk::Window>("main_window");

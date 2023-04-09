@@ -3,7 +3,10 @@
 //
 
 #include <iterator>
+#include <Eigen/Geometry>
 #include <citty/graphics/RenderingSystem.hpp>
+#include <citty/engine/components/Transform.hpp>
+#include <citty/graphics/ShaderProgramBuilder.hpp>
 
 
 namespace citty::graphics {
@@ -11,13 +14,26 @@ namespace citty::graphics {
         glArea->signal_realize().connect([this, glArea]() {
             glArea->make_current();
 
-            vertexBuffer = std::make_shared<Buffer<Vertex >>(BufferUsage::STATIC_DRAW);
-            indexBuffer = std::make_shared<Buffer<unsigned int >>(BufferUsage::STATIC_DRAW);
+            ShaderProgramBuilder builder;
+            builder.addShader({"shaders/vertex.vsh", ShaderType::VERTEX});
+            builder.addShader({"shaders/fragment.fsh", ShaderType::FRAGMENT});
+
+            shaderProgram = builder.build();
+
+            vertexBuffer = std::make_shared<Buffer<Vertex >>
+                    (BufferUsage::STATIC_DRAW);
+            indexBuffer = std::make_shared<Buffer<unsigned int >>
+                    (BufferUsage::STATIC_DRAW);
+            transformsBuffer = std::make_shared<Buffer<Eigen::Affine3f>>
+                    (BufferUsage::STREAM_DRAW);
+
+            glClearColor(0.4, 0.4, 0.8, 1);
         });
 
         glArea->signal_render().connect([this, glArea](Glib::RefPtr<Gdk::GLContext> const &glContext) {
+            glClear(GL_COLOR_BUFFER_BIT);
             render();
-            glArea->queue_render();
+            glArea->queue_draw();
             return true;
         }, false);
     }
@@ -28,12 +44,17 @@ namespace citty::graphics {
 
     void RenderingSystem::update() {
         handleTextures();
+        handleMaterials();
         handleMeshes();
+        handleGraphicsEntities();
     }
 
     void RenderingSystem::render() {
+        std::cout << "rendering" << std::endl;
         loadTextures();
         loadMeshes();
+        loadEntityTransforms();
+        renderGraphicsEntities();
     }
 
     void RenderingSystem::handleTextures() {
@@ -48,6 +69,7 @@ namespace citty::graphics {
             auto &texture = *textureIt;
 
             if (!loadedTextureEntities.contains(entity)) {
+                std::cout << "queueing texture for loading" << std::endl;
                 loadedTextureEntities.emplace(entity);
                 queue.emplace(*entityIt, texture);
             }
@@ -67,6 +89,7 @@ namespace citty::graphics {
         std::scoped_lock lock{textureLock};
 
         while (!textureLoadQueue.empty()) {
+            std::cout << "loading texture" << std::endl;
             auto &[entity, texture] = textureLoadQueue.front();
 
             Image textureImage(texture.texturePath);
@@ -82,6 +105,41 @@ namespace citty::graphics {
         }
     }
 
+    void RenderingSystem::handleMaterials() {
+        auto entities = getEntities<Material>();
+        auto [entityMaterials] = getComponents<Material>();
+
+        auto entityIt = entities.begin();
+        auto entitiesEnd = entities.end();
+        auto materialIt = entityMaterials.begin();
+        auto materialEnd = entityMaterials.end();
+
+        std::scoped_lock lock{materialLock};
+        while (entityIt != entitiesEnd && materialIt != materialEnd) {
+            auto entity = *entityIt;
+            auto &material = *materialIt;
+
+            if (!materialIds.contains(entity)) {
+                std::cout << "loading new material" << std::endl;
+
+                if (!loadedTextureEntities.contains(material.diffuseMap) ||
+                    !loadedTextureEntities.contains(material.specularMap) ||
+                    !loadedTextureEntities.contains(material.normalMap) ||
+                    !loadedTextureEntities.contains(material.heightMap)) {
+                    throw std::runtime_error("attempted to load material that contains unloaded textures");
+                }
+
+                materials.try_emplace(nextMaterialId, material);
+                materialIds.try_emplace(entity, nextMaterialId);
+
+                nextMaterialId++;
+            }
+
+            entityIt++;
+            materialIt++;
+        }
+    }
+
     void RenderingSystem::handleMeshes() {
         auto entities = getEntities<Mesh>();
         auto [meshes] = getComponents<Mesh>();
@@ -93,9 +151,10 @@ namespace citty::graphics {
             auto entity = *entityIt;
             auto &mesh = *meshesIt;
 
-            if (!loadedMeshEntities.contains(entity)) {
+            if (!meshIds.contains(entity)) {
                 std::cout << "queued mesh for loading" << std::endl;
-                loadedMeshEntities.emplace(entity);
+                meshIds.try_emplace(entity, nextMeshId);
+                nextMeshId++;
                 queue.emplace(*entityIt, mesh);
             }
 
@@ -118,14 +177,13 @@ namespace citty::graphics {
             auto &[entity, mesh] = meshLoadingQueue.front();
 
             MeshRecord meshRecord{
-                    std::make_shared < Buffer < Eigen::Matrix4f >> (BufferUsage::DYNAMIC_DRAW),
                     VertexArray{},
                     vertexBuffer->getSize(),
                     indexBuffer->getSize(),
+                    mesh.indices.size(),
             };
 
             auto &vao = meshRecord.vertexArrayObject;
-            auto &matBuffer = meshRecord.matBuffer;
 
             vertexBuffer->append(mesh.vertices);
             indexBuffer->append(mesh.indices);
@@ -144,18 +202,115 @@ namespace citty::graphics {
 
             vao.setVertexIndicesBuffer(indexBuffer);
 
-            vao.bindBuffer(matBuffer, 0);
+            vao.bindBuffer(transformsBuffer, 0);
             vao.enableAttrib(5);
-            vao.configureAttrib(5, matBuffer, 4, AttributeType::FLOAT, false, 0);
+            vao.configureAttrib(5, transformsBuffer, 4, AttributeType::FLOAT, false, 0);
             vao.enableAttrib(5);
-            vao.configureAttrib(6, matBuffer, 4, AttributeType::FLOAT, false, 4 * sizeof(float));
+            vao.configureAttrib(6, transformsBuffer, 4, AttributeType::FLOAT, false, 4 * sizeof(float));
             vao.enableAttrib(5);
-            vao.configureAttrib(7, matBuffer, 4, AttributeType::FLOAT, false, 8 * sizeof(float));
+            vao.configureAttrib(7, transformsBuffer, 4, AttributeType::FLOAT, false, 8 * sizeof(float));
             vao.enableAttrib(5);
-            vao.configureAttrib(8, matBuffer, 4, AttributeType::FLOAT, false, 12 * sizeof(float));
-            vao.setBufferDivisor(matBuffer, 1);
+            vao.configureAttrib(8, transformsBuffer, 4, AttributeType::FLOAT, false, 12 * sizeof(float));
+            vao.setBufferDivisor(transformsBuffer, 1);
+
+            meshRecords.try_emplace(meshIds.at(entity), std::move(meshRecord));
+
 
             meshLoadingQueue.pop();
+        }
+    }
+
+    void RenderingSystem::handleGraphicsEntities() {
+        auto [transforms, graphics] = getComponents<engine::Transform, Graphics>();
+
+        auto transformIt = transforms.begin();
+        auto transformsEnd = transforms.end();
+        auto graphicsIt = graphics.begin();
+        auto graphicsEnd = graphics.end();
+
+        std::size_t count = 0;
+
+        std::scoped_lock lock{transformsLock};
+        while (transformIt != transformsEnd && graphicsIt != graphicsEnd) {
+            auto &transform = *transformIt;
+            auto &graphic = *graphicsIt;
+
+            Id materialId = materialIds.at(graphic.material);
+            Id meshId = meshIds.at(graphic.mesh);
+
+            if (count >= drawIds.size()) {
+                drawIds.resize(count * 2);
+                loadedTransforms.resize(count * 2);
+            } else {
+                drawIds[count] = {(materialId << MATERIAL_ID_OFFSET) | (meshId << MESH_ID_OFFSET),
+                                  Eigen::Translation3f{transform.position} * transform.rotation *
+                                  Eigen::AlignedScaling3f{transform.scale}};
+            }
+
+            transformIt++;
+            graphicsIt++;
+        }
+
+        std::ranges::sort(drawIds, std::less(), &std::pair<Id, Eigen::Affine3f>::first);
+        std::ranges::copy(drawIds | std::views::transform([](auto pair) { return pair.second; }),
+                          std::begin(loadedTransforms));
+    }
+
+    void RenderingSystem::loadEntityTransforms() {
+        std::scoped_lock lock{transformsLock};
+
+        if (loadedTransforms.size() > transformsBuffer->getSize())
+            transformsBuffer->reallocate(loadedTransforms.size() * 2, BufferUsage::STREAM_DRAW);
+
+        transformsBuffer->setSubData(loadedTransforms, 0);
+    }
+
+    void RenderingSystem::renderGraphicsEntities() {
+        std::scoped_lock lock{transformsLock};
+        std::optional<Id> currentMaterialId;
+        std::optional<Id> currentMeshId;
+        shaderProgram.use();
+        shaderProgram.setUniform("projection", perspective(70.0f, 1080.0f / 1920.0f, 0.0, 10.0).matrix());
+        shaderProgram.setUniform("view", lookAt({0.0f, 0.0f, 0.0f}, {10.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}).matrix());
+        std::size_t totalCount = 0;
+        std::size_t count = 0;
+        for (auto const &[id, transform]: drawIds) {
+            Id newMaterialId = (id & (MATERIAL_ID_MAX << MATERIAL_ID_OFFSET)) >> MATERIAL_ID_OFFSET;
+            Id newMeshId = (id & (MESH_ID_MAX << MESH_ID_OFFSET) >> MESH_ID_OFFSET);
+
+            if (currentMaterialId != newMaterialId) {
+                currentMaterialId = newMaterialId;
+                auto &material = materials.at(currentMaterialId.value());
+                auto &diffuseMap = textureObjects.at(material.diffuseMap);
+                auto &specularMap = textureObjects.at(material.specularMap);
+                auto &normalMap = textureObjects.at(material.normalMap);
+                auto &heightMap = textureObjects.at(material.heightMap);
+
+                shaderProgram.setUniform("diffuse", material.diffuse);
+                shaderProgram.setUniform("specular", material.specular);
+                shaderProgram.setUniform("shininess", material.shininess);
+
+                diffuseMap.bindToTextureUnit(0);
+                specularMap.bindToTextureUnit(1);
+                normalMap.bindToTextureUnit(2);
+                heightMap.bindToTextureUnit(3);
+            }
+
+            if (!currentMeshId.has_value() || currentMeshId != newMeshId) {
+                currentMeshId = newMeshId;
+
+                auto &meshRecord = meshRecords.at(currentMeshId.value());
+                auto &vao = meshRecord.vertexArrayObject;
+                vao.bindBuffer(transformsBuffer, totalCount - count);
+
+                vao.drawElementsInstanced(DrawMode::TRIANGLES, meshRecord.indicesSize, count, meshRecord.indicesOffset,
+                                          meshRecord.verticesOffset);
+
+                count = 0;
+            }
+
+            count++;
+            totalCount++;
         }
     }
 
@@ -452,5 +607,48 @@ namespace citty::graphics {
 //        shader->setMatrix("projection", proj);
 //    }
 //
+    Eigen::Projective3f perspective(float verticalFoV, float aspectRatio, float zNear, float zFar) {
+        if (aspectRatio < 0) throw std::domain_error("aspect ratio cannot be negative");
+        if (zFar < zNear) throw std::domain_error("frustrum far cannot be less than frustrum near");
+        if (zNear < 0) throw std::domain_error("frustrum near cannot be negative");
+
+        auto projection = Eigen::Projective3f::Identity();
+        float tanHalfFoV = std::tan(verticalFoV / 2.0f);
+
+        projection(0, 0) /= aspectRatio * tanHalfFoV;
+        projection(1, 1) /= tanHalfFoV;
+        projection(2, 2) = -(zFar + zNear) / (zFar - zNear);
+        projection(3, 2) = -1.0f;
+        projection(2, 3) = -(2.0f * zFar * zNear) / (zFar - zNear);
+        projection(0, 0) = 0.0f;
+        return projection;
+    }
+
+    Eigen::Affine3f
+    lookAt(const Eigen::Vector3f &cameraPos, const Eigen::Vector3f &targetPosition, const Eigen::Vector3f &up) {
+        Eigen::Vector3f front = (targetPosition - cameraPos).normalized();
+        Eigen::Vector3f right = front.cross(up);
+
+//        auto lookAt = Eigen::Affine3f::Identity();
+        Eigen::Affine3f lookAt;
+        lookAt.matrix() << right.x(), right.y(), right.z(), -right.dot(cameraPos),
+                up.x(), up.y(), up.z(), -up.dot(cameraPos),
+                -front.x(), -front.y(), -front.z(), front.dot(cameraPos),
+                0.0f, 0.0f, 0.0f, 1.0f;
+
+//        lookAt(0, 0) = right.x();
+//        lookAt(0, 1) = right.y();
+//        lookAt(0, 2) = right.z();
+//        lookAt(0, 3) = -right.dot(cameraPos);
+//        lookAt(1, 0) = up.x();
+//        lookAt(1, 1) = up.y();
+//        lookAt(1, 2) = up.z();
+//        lookAt(1, 3) = -up.dot(cameraPos);
+//        lookAt(2, 0) = -front.x();
+//        lookAt(2, 1) = -front.y();
+//        lookAt(2, 2) = -front.z();
+//        lookAt(2, 3) = front.dot(cameraPos);
+        return lookAt;
+    }
 } // graphics
 

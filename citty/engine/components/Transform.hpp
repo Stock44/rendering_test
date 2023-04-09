@@ -5,13 +5,12 @@
 #pragma once
 
 #include <Eigen/Geometry>
-#include <Eigen/Dense>
 
 namespace citty::engine {
     struct Transform {
-        Eigen::Quaterniond rotation;
-        Eigen::Vector3d position;
-        Eigen::Vector3d scale;
+        Eigen::Quaternionf rotation;
+        Eigen::Vector3f position;
+        Eigen::Vector3f scale;
 
 //        [[nodiscard]] glm::mat4 calculateMatrix() const {
 //            auto modelMatrix = glm::mat4(1.0f);

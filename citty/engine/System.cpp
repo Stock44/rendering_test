@@ -15,7 +15,7 @@ namespace citty::engine {
     }
 
     inline void System::deleteEntity(Entity entity) {
-        componentStore->removeAll(entity.id);
-        entityStore->freeEntityId(entity.id);
+        componentStore->removeAll(entity);
+        entityStore->freeEntityId(entity);
     }
 }

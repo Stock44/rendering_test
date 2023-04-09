@@ -39,6 +39,12 @@ namespace citty::graphics {
         checkOpenGlErrors();
     }
 
+    void ShaderProgram::setUniform(std::string_view name, float value) {
+        use();
+        glUniform1f(glGetUniformLocation(programName, name.data()), value);
+        checkOpenGlErrors();
+    }
+
     void ShaderProgram::setUniform(std::string_view name, Eigen::Matrix4f value, bool transpose) {
         use();
         glUniformMatrix4fv(glGetUniformLocation(programName, name.data()), 1, transpose, &value(0));

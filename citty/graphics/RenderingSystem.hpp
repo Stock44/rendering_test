@@ -16,6 +16,9 @@
 #include <citty/graphics/Shader.hpp>
 #include <citty/graphics/ShaderProgram.hpp>
 #include <mutex>
+#include <citty/graphics/components/Material.hpp>
+#include <cmath>
+#include <numbers>
 
 namespace citty::graphics {
 //    class GLADInitError : public std::runtime_error {
@@ -57,11 +60,17 @@ namespace citty::graphics {
 //    };
 //
     struct MeshRecord {
-        std::shared_ptr<Buffer<Eigen::Matrix4f>> matBuffer;
         VertexArray vertexArrayObject;
         std::size_t verticesOffset;
         std::size_t indicesOffset;
+        std::size_t indicesSize;
     };
+
+    Eigen::Projective3f perspective(float verticalFoV, float aspectRatio, float zNear, float zFar);
+
+    Eigen::Affine3f
+    lookAt(Eigen::Vector3f const &cameraPos, Eigen::Vector3f const &targetPosition, Eigen::Vector3f const &up);
+
 
     class RenderingSystem : public engine::System {
     public:
@@ -74,35 +83,59 @@ namespace citty::graphics {
         void render();
 
     private:
+        // TODO implement checks for reaching the maximum number of meshes or materials (improbable, but good practice)
         using Id = int_fast64_t;
-        const Id MATERIAL_ID_MAX = INT32_MAX;
-        const int MATERIAL_ID_SIZE = 32;
-        const Id MESH_ID_MAX = INT32_MAX;
+
+        const int MESH_ID_OFFSET = 0;
         const int MESH_ID_SIZE = 32;
+        const Id MESH_ID_MAX = INT32_MAX;
+
+        const int MATERIAL_ID_OFFSET = MESH_ID_SIZE;
+        const int MATERIAL_ID_SIZE = 32;
+        const Id MATERIAL_ID_MAX = INT32_MAX;
 
         void handleTextures();
 
         void loadTextures();
 
+        void handleMaterials();
+
         void handleMeshes();
 
         void loadMeshes();
+
+        void handleGraphicsEntities();
+
+        void renderGraphicsEntities();
+
+        void loadEntityTransforms();
+
+        ShaderProgram shaderProgram{0};
 
         std::unordered_set<engine::Entity> loadedTextureEntities;
         std::queue<std::pair<engine::Entity, Texture>> textureLoadQueue;
         std::unordered_map<engine::Entity, TextureObject> textureObjects;
         std::mutex textureLock;
 
-        std::unordered_set<engine::Entity> loadedMeshEntities;
         std::queue<std::pair<engine::Entity, Mesh>> meshLoadingQueue;
         std::unordered_map<Id, MeshRecord> meshRecords;
         std::unordered_map<engine::Entity, Id> meshIds; // maps ecs Mesh entity to a specific mesh id
         Id nextMeshId = 0;
         std::mutex meshLock;
 
+        std::unordered_map<Id, Material> materials;
+        std::unordered_map<engine::Entity, Id> materialIds;
+        Id nextMaterialId = 0;
+        std::mutex materialLock;
+
         // shared buffers for non-mutable meshes
         std::shared_ptr<Buffer<Vertex>> vertexBuffer = nullptr;
         std::shared_ptr<Buffer<unsigned int>> indexBuffer = nullptr;
+        std::shared_ptr<Buffer<Eigen::Affine3f>> transformsBuffer = nullptr;
+
+        std::vector<std::pair<Id, Eigen::Affine3f>> drawIds;
+        std::vector<Eigen::Affine3f> loadedTransforms;
+        std::mutex transformsLock;
 
 //        RenderingSystem(Gtk::GLArea *gl_area);
 //

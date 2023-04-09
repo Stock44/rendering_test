@@ -11,9 +11,11 @@ layout (location = 5) in mat4 model;
 
 out vec4 color;
 
+uniform mat4 projection;
 uniform mat4 view;
 uniform vec3 diffuse;
 uniform vec3 specular;
+uniform float shininess;
 uniform sampler2D diffuseMap;
 uniform sampler2D specularMap;
 uniform sampler2D normalMap;

@@ -14,7 +14,7 @@ namespace citty::engine {
 
     struct Entity {
         Entity(EntityId id, ComponentStore &componentStore) : id(id),
-                                                                  componentStore(componentStore) {};
+                                                              componentStore(componentStore) {};
 
         auto operator<=>(const Entity &rhs) const {
             return id <=> rhs.id;
@@ -24,6 +24,10 @@ namespace citty::engine {
             return id == rhs.id;
         }
 
+        explicit(false) operator EntityId() const {
+            return id;
+        }
+
         friend inline std::ostream &operator<<(std::ostream &os, const Entity &entity) {
             os << "entity: " << entity.id;
             return os;
@@ -31,28 +35,27 @@ namespace citty::engine {
 
         template<Component T, typename ...Args>
         inline void addComponent(Args &&...args) {
-            componentStore.add<T>(id, std::forward<Args>(args)...);
+            componentStore.get().add<T>(id, std::forward<Args>(args)...);
         }
 
         template<Component T>
         inline T &getComponent() {
-            return componentStore.get<T>(id);
+            return componentStore.get().get<T>(id);
         }
 
         template<Component T>
         inline T const &getComponent() const {
-            return componentStore.get<T>(id);
+            return componentStore.get().get<T>(id);
         }
 
         template<Component T>
         inline void removeComponent() {
-            componentStore.remove<T>(id);
+            componentStore.get().remove<T>(id);
         }
 
-        EntityId const id;
-
     private:
-        ComponentStore &componentStore;
+        EntityId id;
+        std::reference_wrapper<ComponentStore> componentStore;
     };
 
 } // engine
@@ -60,6 +63,6 @@ namespace citty::engine {
 template<>
 struct std::hash<citty::engine::Entity> {
     std::size_t operator()(citty::engine::Entity const &s) const noexcept {
-        return std::hash<citty::engine::EntityId>{}(s.id);
+        return std::hash<citty::engine::EntityId>{}(s);
     }
 };

@@ -15,6 +15,10 @@ namespace citty::graphics {
         FLOAT = GL_FLOAT,
     };
 
+    enum class DrawMode {
+        TRIANGLES = GL_TRIANGLES,
+    };
+
     class VertexArray {
     public:
         VertexArray();
@@ -31,9 +35,13 @@ namespace citty::graphics {
 
         template<typename T>
         void bindBuffer(std::shared_ptr<Buffer<T>> const &buffer, std::size_t offset = 0) {
+            if (offset != 0 && offset >= buffer->getSize()) {
+                throw std::runtime_error("buffer offset is bigger than the buffer");
+            }
+
             auto [bindingIt, inserted] = bufferBindings.try_emplace(buffer->getBufferName(), nextBufferBinding);
             auto [bufferName, binding] = *bindingIt;
-            boundBuffers.try_emplace(nextBufferBinding, std::shared_ptr(buffer));
+            boundBuffers.try_emplace(binding, std::shared_ptr(buffer));
 
             nextBufferBinding++;
             glVertexArrayVertexBuffer(vertexArrayName, binding, buffer->getBufferName(), offset, sizeof(T));
@@ -71,6 +79,10 @@ namespace citty::graphics {
         void enableAttrib(unsigned int attributeIndex);
 
         void disableAttrib(unsigned int attributeIndex);
+
+        void drawElementsInstanced(DrawMode mode, int count, int instanceCount,
+                                   unsigned int indicesIndex = 0,
+                                   int baseVertex = 0);
 
     private:
         unsigned int vertexArrayName = 0;
