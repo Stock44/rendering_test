@@ -7,6 +7,7 @@ license: other: TODO
 requires: c++20
 requires: gtkmm-4.0 ^4.8.0
 requires: libepoxy ^1.5.10
+requires: assimp ^5.2.0
 
 depends: pugixml ^1.12.1
 depends: libboost-graph ~1.78.0

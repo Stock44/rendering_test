@@ -5,20 +5,15 @@
 #pragma once
 
 #include <Eigen/Geometry>
+#include <optional>
+#include <citty/engine/Entity.hpp>
 
 namespace citty::engine {
     struct Transform {
         Eigen::Quaternionf rotation;
         Eigen::Vector3f position;
         Eigen::Vector3f scale;
-
-//        [[nodiscard]] glm::mat4 calculateMatrix() const {
-//            auto modelMatrix = glm::mat4(1.0f);
-//            modelMatrix = glm::translate(modelMatrix, position);
-//            modelMatrix = modelMatrix * glm::toMat4(rotation);
-//            modelMatrix = glm::scale(modelMatrix, scale);
-//            return modelMatrix;
-//        }
+        std::optional<Entity> parent;
     };
 }
 

@@ -87,6 +87,8 @@ namespace citty::graphics {
     private:
         unsigned int vertexArrayName = 0;
 
+        void bind();
+
         // maps binding to buffers type-erased shared_ptrs to concrete Buffer<>
         // serves to ensure that buffers are not deleted while bound to any vertex array
         std::unordered_map<unsigned int, std::any> boundBuffers;

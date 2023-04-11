@@ -3,9 +3,10 @@
 #include <citty/graphics/RenderingSystem.hpp>
 #include <citty/graphics/components/Texture.hpp>
 
-#include <gtkmm.h>
+#include <gtkmm-4.0/gtkmm.h>
 #include <iostream>
 #include <citty/engine/components/Transform.hpp>
+
 
 int main(int argc, char *argv[]) {
     using namespace citty;
@@ -66,16 +67,28 @@ int main(int argc, char *argv[]) {
     auto testEntity = engine::Entity{entityStore.newEntityId(), componentStore};
     testEntity.addComponent<engine::Transform>(
             Eigen::Quaternionf{Eigen::AngleAxisf(0.0f, Eigen::Vector3f{0.0f, 1.0f, 0.0f})},
-            Eigen::Vector3f{5.0f, 0.0f, 0.0f},
+            Eigen::Vector3f{15.0f, 0.0f, 0.0f},
             Eigen::Vector3f{1.0f, 1.0f, 1.0f});
     testEntity.addComponent<graphics::Graphics>(cubeMesh, testMaterial);
 
-    app->signal_activate().connect([&app, &builder]() {
+    auto testEntity2 = engine::Entity{entityStore.newEntityId(), componentStore};
+    testEntity2.addComponent<engine::Transform>(
+            Eigen::Quaternionf{Eigen::AngleAxisf(0.0f, Eigen::Vector3f{0.0f, 1.0f, 0.0f})},
+            Eigen::Vector3f{0.0f, 0.0f, 2.0f},
+            Eigen::Vector3f{1.0f, 1.0f, 1.0f},
+            testEntity);
+    testEntity2.addComponent<graphics::Graphics>(cubeMesh, testMaterial);
+
+    app->signal_activate().connect([&app, &builder, glArea]() {
         auto mainWindow = builder->get_widget<Gtk::Window>("main_window");
 
         app->add_window(*mainWindow);
 
         mainWindow->show();
+
+        mainWindow->get_frame_clock()->signal_paint().connect([glArea]() {
+            glArea->queue_draw();
+        });
     });
 
 //    engine.registerSystem(std::make_unique<input::InputSystem>(window));
@@ -103,9 +116,13 @@ int main(int argc, char *argv[]) {
 //    std::cout << "Number of roads: " << roadStore->getComponents().size() << std::endl;
 //    std::cout << "Number of nodes: " << nodeStore->getComponents().size() << std::endl;
 
-    std::jthread engineThread([&engine](std::stop_token const &stopToken) {
+    std::jthread engineThread([&engine, &testEntity](std::stop_token const &stopToken) {
+        Eigen::Vector3f rotation{0.5f, 1.0f, 0.5f};
+        rotation.normalize();
         while (!stopToken.stop_requested()) {
             engine.update();
+            testEntity.getComponent<engine::Transform>().rotation *= Eigen::Quaternionf(
+                    Eigen::AngleAxisf(0.0001f, rotation));
         }
     });
 
