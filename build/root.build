@@ -1,4 +1,5 @@
 cxx.std = latest
+cxx.internal.scope = current
 
 using cxx
 

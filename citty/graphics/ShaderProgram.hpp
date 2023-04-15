@@ -5,13 +5,13 @@
 #pragma once
 
 #include <citty/graphics/Shader.hpp>
-#include <citty/graphics/components/Texture.hpp>
+#include <citty/graphics/Texture.hpp>
 #include <Eigen/Dense>
 
 namespace citty::graphics {
     class ShaderProgram {
     public:
-        explicit ShaderProgram(unsigned int programName);
+        explicit ShaderProgram(unsigned int programName = 0);
 
         ShaderProgram(ShaderProgram const &other) = delete;
 

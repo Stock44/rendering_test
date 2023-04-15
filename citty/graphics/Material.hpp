@@ -4,17 +4,17 @@
 
 #pragma once
 
+#include <citty/engine/Entity.hpp>
 #include <Eigen/Dense>
 
 namespace citty::graphics {
     struct Material {
         Eigen::Vector3f diffuse;
         Eigen::Vector3f specular;
-        engine::Entity diffuseMap;
-        engine::Entity specularMap;
-        engine::Entity normalMap;
-        engine::Entity heightMap;
-
+        std::size_t diffuseMap;
+        std::size_t specularMap;
+        std::size_t normalMap;
+        std::size_t heightMap;
         float shininess;
     };
 }

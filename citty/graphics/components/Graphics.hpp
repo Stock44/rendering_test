@@ -8,7 +8,7 @@
 
 namespace citty::graphics {
     struct Graphics {
-        engine::Entity mesh;
-        engine::Entity material;
+        std::size_t mesh;
+        std::size_t material;
     };
 }

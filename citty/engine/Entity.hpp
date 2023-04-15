@@ -33,6 +33,11 @@ namespace citty::engine {
             return os;
         }
 
+        template<Component T>
+        inline bool hasComponent() {
+            return componentStore.get().has<T>(id);
+        }
+
         template<Component T, typename ...Args>
         inline void addComponent(Args &&...args) {
             componentStore.get().add<T>(id, std::forward<Args>(args)...);

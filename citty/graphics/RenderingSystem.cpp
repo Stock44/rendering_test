@@ -7,215 +7,122 @@
 #include <citty/graphics/RenderingSystem.hpp>
 #include <citty/engine/components/Transform.hpp>
 #include <citty/graphics/ShaderProgramBuilder.hpp>
+#include <citty/graphics/Math.hpp>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 
 namespace citty::graphics {
     RenderingSystem::RenderingSystem(Gtk::GLArea *glArea) {
         glArea->signal_realize().connect([this, glArea]() {
             glArea->make_current();
-
-            ShaderProgramBuilder builder;
-            builder.addShader({"shaders/vertex.vsh", ShaderType::VERTEX});
-            builder.addShader({"shaders/fragment.fsh", ShaderType::FRAGMENT});
-
-            shaderProgram = builder.build();
-
-            vertexBuffer = std::make_shared<Buffer<Vertex >>
-                    (BufferUsage::STATIC_DRAW);
-            indexBuffer = std::make_shared<Buffer<unsigned int >>
-                    (BufferUsage::STATIC_DRAW);
-            glClearColor(0.4, 0.4, 0.8, 1);
+            renderingEngine = std::make_unique<RenderingEngine>();
+            renderingEngine->setView(lookAt({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}));
+            renderingEngine->setProjection(
+                    perspectiveProjection(90.0f, static_cast<float>(1920) / static_cast<float>(1080), 5.0f, 50.0f));
         });
 
         glArea->signal_render().connect([this, glArea](Glib::RefPtr<Gdk::GLContext> const &glContext) {
-            glClear(GL_COLOR_BUFFER_BIT);
             render();
-            glFlush();
 
             return true;
         }, false);
 
         glArea->signal_resize().connect([this](int width, int height) {
-            viewportDimensions = {width, height};
+            renderingEngine->setProjection(
+                    perspectiveProjection(45.0f, static_cast<float>(width) / static_cast<float>(height), 0.0f, 100.0f));
         });
 
     }
 
     void RenderingSystem::init() {
-
+        emptyTextureId = loadTexture("resources/no_texture.png",
+                                     graphics::TextureSettings{});
     }
 
     void RenderingSystem::update() {
-        handleTextures();
-        handleMaterials();
-        handleMeshes();
         handleGraphicsEntities();
     }
 
     void RenderingSystem::render() {
-        loadTextures();
-        loadMeshes();
-        loadEntityTransforms();
-        renderGraphicsEntities();
+        processLoadingQueues();
+
+        uploadGraphicsEntities();
+
+        renderingEngine->render();
     }
 
-    void RenderingSystem::handleTextures() {
-        auto entities = getEntities<Texture>();
-        auto [textures] = getComponents<Texture>();
-
-        auto entityIt = entities.begin();
-        auto textureIt = textures.begin();
-        std::queue<std::pair<engine::Entity, Texture>> queue;
-        while (entityIt != entities.end() && textureIt != textures.end()) {
-            auto entity = *entityIt;
-            auto &texture = *textureIt;
-
-            if (!loadedTextureEntities.contains(entity)) {
-                loadedTextureEntities.emplace(entity);
-                queue.emplace(*entityIt, texture);
-            }
-
-            entityIt++;
-            textureIt++;
+    void RenderingSystem::uploadGraphicsEntities() {
+        using namespace std::chrono_literals;
+        if (!graphicEntityMutex.try_lock_for(50ms)) {
+            return;
         }
-
-        if (!queue.empty()) {
-            std::scoped_lock lock{textureLock};
-            textureLoadQueue = std::move(queue);
-        }
+        std::lock_guard lock{graphicEntityMutex, std::adopt_lock};
+        renderingEngine->setGraphicsEntities(graphicEntities);
     }
 
-    void RenderingSystem::loadTextures() {
-        if (textureLoadQueue.empty()) return;
-        std::scoped_lock lock{textureLock};
-
+    void RenderingSystem::processLoadingQueues() {
         while (!textureLoadQueue.empty()) {
-            auto &[entity, texture] = textureLoadQueue.front();
-
-            Image textureImage(texture.texturePath);
-            auto [it, inserted] = textureObjects.try_emplace(entity, textureImage);
+            std::scoped_lock lock{loadMutex};
+            auto &[idPromise, texturePath, textureSettings] = textureLoadQueue.front();
+            Image image{texturePath};
+            std::size_t textureId = renderingEngine->loadTexture(image, textureSettings);
+            idPromise.set_value(textureId);
             textureLoadQueue.pop();
+        }
 
-            auto &textureObject = it->second;
+        while (!materialLoadQueue.empty()) {
+            std::scoped_lock lock{loadMutex};
+            auto &[idPromise, material] = materialLoadQueue.front();
+            std::size_t materialId = renderingEngine->loadMaterial(material);
+            idPromise.set_value(materialId);
+            materialLoadQueue.pop();
+        }
 
-            textureObject.setTextureMagFilter(texture.magFilter);
-            textureObject.setTextureMinFilter(texture.minFilter);
-            textureObject.setTextureSWrapMode(texture.sWrappingMode);
-            textureObject.setTextureTWrapMode(texture.tWrappingMode);
+        while (!meshLoadQueue.empty()) {
+            std::scoped_lock lock{loadMutex};
+            auto &[idPromise, mesh] = meshLoadQueue.front();
+            std::size_t meshId = renderingEngine->loadMesh(mesh);
+            idPromise.set_value(meshId);
+            meshLoadQueue.pop();
         }
     }
 
-    void RenderingSystem::handleMaterials() {
-        auto entities = getEntities<Material>();
-        auto [entityMaterials] = getComponents<Material>();
-
-        auto entityIt = entities.begin();
-        auto entitiesEnd = entities.end();
-        auto materialIt = entityMaterials.begin();
-        auto materialEnd = entityMaterials.end();
-
-        std::scoped_lock lock{materialLock};
-        while (entityIt != entitiesEnd && materialIt != materialEnd) {
-            auto entity = *entityIt;
-            auto &material = *materialIt;
-
-            if (!materialIds.contains(entity)) {
-
-                if (!loadedTextureEntities.contains(material.diffuseMap) ||
-                    !loadedTextureEntities.contains(material.specularMap) ||
-                    !loadedTextureEntities.contains(material.normalMap) ||
-                    !loadedTextureEntities.contains(material.heightMap)) {
-                    throw std::runtime_error("attempted to load material that contains unloaded textures");
-                }
-
-                materials.try_emplace(nextMaterialId, material);
-                materialIds.try_emplace(entity, nextMaterialId);
-
-                nextMaterialId++;
-            }
-
-            entityIt++;
-            materialIt++;
+    std::size_t RenderingSystem::loadTexture(std::filesystem::path const &texturePath, TextureSettings settings) {
+        if (loadedTextures.contains(texturePath)) {
+            return loadedTextures.at(texturePath);
         }
+
+        std::promise<std::size_t> idPromise;
+        auto idFuture = idPromise.get_future();
+        {
+            std::scoped_lock lock{loadMutex};
+            textureLoadQueue.emplace(std::move(idPromise), texturePath, settings);
+        }
+        auto textureId = idFuture.get();
+        loadedTextures.try_emplace(texturePath, textureId);
+        return textureId;
     }
 
-    void RenderingSystem::handleMeshes() {
-        auto entities = getEntities<Mesh>();
-        auto [meshes] = getComponents<Mesh>();
-
-        auto entityIt = entities.begin();
-        auto meshesIt = meshes.begin();
-        std::queue<std::pair<engine::Entity, Mesh>> queue;
-        while (entityIt != entities.end() && meshesIt != meshes.end()) {
-            auto entity = *entityIt;
-            auto &mesh = *meshesIt;
-
-            if (!meshIds.contains(entity)) {
-                meshIds.try_emplace(entity, nextMeshId);
-                nextMeshId++;
-                queue.emplace(*entityIt, mesh);
-            }
-
-            entityIt++;
-            meshesIt++;
+    std::size_t RenderingSystem::loadMaterial(Material const &material) {
+        std::promise<std::size_t> idPromise;
+        auto idFuture = idPromise.get_future();
+        {
+            std::scoped_lock lock{loadMutex};
+            materialLoadQueue.emplace(std::move(idPromise), material);
         }
-
-        if (!queue.empty()) {
-            std::scoped_lock lock{meshLock};
-            meshLoadingQueue = std::move(queue);
-        }
+        return idFuture.get();
     }
 
-    void RenderingSystem::loadMeshes() {
-        if (meshLoadingQueue.empty()) return;
-        std::scoped_lock lock{meshLock};
-
-        while (!meshLoadingQueue.empty()) {
-            auto &[entity, mesh] = meshLoadingQueue.front();
-
-            MeshRecord meshRecord{
-                    std::make_shared<Buffer<Eigen::Affine3f >>(BufferUsage::STREAM_DRAW),
-                    std::vector<Eigen::Affine3f>(),
-                    VertexArray{},
-                    vertexBuffer->getSize(),
-                    indexBuffer->getSize(),
-                    mesh.indices.size(),
-            };
-
-            auto &vao = meshRecord.vertexArrayObject;
-
-            vertexBuffer->append(mesh.vertices);
-            indexBuffer->append(mesh.indices);
-
-            vao.bindBuffer(vertexBuffer, meshRecord.verticesOffset);
-            vao.enableAttrib(0);
-            vao.configureAttrib(0, vertexBuffer, 3, AttributeType::FLOAT, false, 0);
-            vao.enableAttrib(1);
-            vao.configureAttrib(1, vertexBuffer, 3, AttributeType::FLOAT, false, offsetof(Vertex, normal));
-            vao.enableAttrib(2);
-            vao.configureAttrib(2, vertexBuffer, 3, AttributeType::FLOAT, false, offsetof(Vertex, tangent));
-            vao.enableAttrib(3);
-            vao.configureAttrib(3, vertexBuffer, 3, AttributeType::FLOAT, false, offsetof(Vertex, bitangent));
-            vao.enableAttrib(4);
-            vao.configureAttrib(4, vertexBuffer, 2, AttributeType::FLOAT, false, offsetof(Vertex, texCoords));
-
-            vao.setVertexIndicesBuffer(indexBuffer);
-
-            vao.bindBuffer(meshRecord.transformBuffer, 0);
-            vao.enableAttrib(5);
-            vao.configureAttrib(5, meshRecord.transformBuffer, 4, AttributeType::FLOAT, false, 0);
-            vao.enableAttrib(5);
-            vao.configureAttrib(6, meshRecord.transformBuffer, 4, AttributeType::FLOAT, false, 4 * sizeof(float));
-            vao.enableAttrib(5);
-            vao.configureAttrib(7, meshRecord.transformBuffer, 4, AttributeType::FLOAT, false, 8 * sizeof(float));
-            vao.enableAttrib(5);
-            vao.configureAttrib(8, meshRecord.transformBuffer, 4, AttributeType::FLOAT, false, 12 * sizeof(float));
-            vao.setBufferDivisor(meshRecord.transformBuffer, 1);
-
-            meshRecords.try_emplace(meshIds.at(entity), std::move(meshRecord));
-
-            meshLoadingQueue.pop();
+    std::size_t RenderingSystem::loadMesh(Mesh const &mesh) {
+        std::promise<std::size_t> idPromise;
+        auto idFuture = idPromise.get_future();
+        {
+            std::scoped_lock lock{loadMutex};
+            meshLoadQueue.emplace(std::move(idPromise), mesh);
         }
+        return idFuture.get();
     }
 
     void RenderingSystem::handleGraphicsEntities() {
@@ -226,28 +133,11 @@ namespace citty::graphics {
         auto graphicsIt = graphics.begin();
         auto graphicsEnd = graphics.end();
 
-        std::size_t count = 0;
-
-        std::scoped_lock lock{transformsLock};
-        for (auto &meshRecord: meshRecords) {
-            meshRecord.second.transformData.clear();
-        }
-
-        drawIds.clear();
+        std::scoped_lock lock{graphicEntityMutex};
+        graphicEntities.clear();
         while (transformIt != transformsEnd && graphicsIt != graphicsEnd) {
             auto &transform = *transformIt;
             auto &graphic = *graphicsIt;
-
-            Id materialId = materialIds.at(graphic.material);
-            Id meshId = meshIds.at(graphic.mesh);
-
-            if (!meshRecords.contains(meshId)) continue;
-            auto &meshRecord = meshRecords.at(meshId);
-            auto &transformData = meshRecord.transformData;
-
-            if (count >= drawIds.size())
-                drawIds.resize(count * 2 + 1);
-            drawIds[count] = (materialId << MATERIAL_ID_OFFSET) | (meshId << MESH_ID_OFFSET);
 
             Eigen::Affine3f transformMatrix;
 
@@ -273,125 +163,156 @@ namespace citty::graphics {
                 transformMatrix = Eigen::Translation3f(transform.position) * transform.rotation *
                                   Eigen::AlignedScaling3f{transform.scale};
             }
-
-            transformData.emplace_back(std::move(transformMatrix));
+            graphicEntities.emplace_back(transformMatrix, graphic.material, graphic.mesh);
 
             transformIt++;
             graphicsIt++;
 
         }
-        std::ranges::sort(drawIds, std::less());
+
+
     }
 
-    void RenderingSystem::loadEntityTransforms() {
-        std::scoped_lock lock{transformsLock};
+    std::size_t RenderingSystem::loadModel(std::filesystem::path const &modelPath) {
+        Assimp::Importer importer;
+        aiScene const *scene = importer.ReadFile(modelPath.c_str(),
+                                                 aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_FlipUVs |
+                                                 aiProcess_CalcTangentSpace);
 
-//        if (loadedTransforms.size() > transformsBuffer->getSize())
-//            transformsBuffer->reallocate(loadedTransforms.size() * 2, BufferUsage::STREAM_DRAW);
-//
-//        transformsBuffer->setSubData(loadedTransforms, 0);
-    }
+        if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+            throw std::runtime_error("could not load model");
+        }
 
-    void RenderingSystem::renderGraphicsEntities() {
-        std::scoped_lock lock{transformsLock};
+        std::unordered_map<std::size_t, std::size_t> meshIdMap;
+        std::unordered_map<std::size_t, std::size_t> materialIdMap;
 
-        if (drawIds.empty()) return;
+        for (std::size_t modelMeshId = 0; modelMeshId < scene->mNumMeshes; modelMeshId++) {
+            aiMesh *assimpMesh = scene->mMeshes[modelMeshId];
+            auto meshId = loadAssimpMesh(assimpMesh);
+            meshIdMap.try_emplace(modelMeshId, meshId);
+        }
 
-        Id currentMaterialId = (drawIds[0] & (MATERIAL_ID_MAX << MATERIAL_ID_OFFSET)) >> MATERIAL_ID_OFFSET;
-        Id currentMeshId = (drawIds[0] & (MESH_ID_MAX << MESH_ID_OFFSET) >> MESH_ID_OFFSET);
-        shaderProgram.use();
-        shaderProgram.setUniform("projection", perspective(70.0f, static_cast<float>(viewportDimensions.first) /
-                                                                  static_cast<float>(viewportDimensions.second), 0.0,
-                                                           10.0).matrix());
-        shaderProgram.setUniform("view",
-                                 lookAt({0.0f, 0.0f, 0.0f}, {10.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}).matrix());
-        std::size_t totalCount = 0;
-        std::size_t instanceCount = 0;
+        for (std::size_t modelMaterialId = 0; modelMaterialId < scene->mNumMaterials; modelMaterialId++) {
+            auto assimpMaterial = scene->mMaterials[modelMaterialId];
+            auto materialId = loadAssimpMaterial(assimpMaterial);
+            materialIdMap.try_emplace(modelMaterialId, materialId);
+        }
 
-        enableMaterial(currentMaterialId);
+        Model model;
 
-        for (auto id: drawIds) {
-            auto &meshRecord = meshRecords.at(currentMeshId);
+        Model *currentNode = &model;
 
-            Id newMaterialId = (id & (MATERIAL_ID_MAX << MATERIAL_ID_OFFSET)) >> MATERIAL_ID_OFFSET;
-            Id newMeshId = (id & (MESH_ID_MAX << MESH_ID_OFFSET) >> MESH_ID_OFFSET);
+        std::queue<std::pair<Model *, aiNode *>> unexploredNodes;
+        unexploredNodes.emplace(&model, scene->mRootNode);
 
-            if (currentMaterialId != newMaterialId) {
-                currentMaterialId = newMaterialId;
-                enableMaterial(currentMaterialId);
+        while (!unexploredNodes.empty()) {
+            auto [node, assimpNode] = unexploredNodes.front();
+            unexploredNodes.pop();
+
+            aiQuaternion rotation;
+            aiVector3D position;
+            aiVector3D scaling;
+            assimpNode->mTransformation.Decompose(position, rotation, scaling);
+
+            currentNode->transform = {{rotation.w, rotation.x, rotation.y, rotation.z},
+                                      {position.x, position.y, position.z},
+                                      {scaling.x,  scaling.y,  scaling.z}};
+
+            for (std::size_t nodeMeshIdx = 0; nodeMeshIdx < assimpNode->mNumMeshes; nodeMeshIdx++) {
+                auto assimpMeshId = assimpNode->mMeshes[nodeMeshIdx];
+                auto meshId = meshIdMap.at(assimpMeshId);
+                auto materialId = materialIdMap.at(scene->mMeshes[assimpMeshId]->mMaterialIndex);
+                currentNode->graphics.emplace_back(meshId, materialId);
             }
 
-            if (currentMeshId != newMeshId) {
-                drawMesh(currentMeshId);
+            for (std::size_t childIdx; childIdx < assimpNode->mNumChildren; childIdx++) {
+                auto childAssimpNode = assimpNode->mChildren[childIdx];
+                auto &childNode = node->childNodes.emplace_back(std::make_unique<Model>());
+                unexploredNodes.emplace(childNode.get(), childAssimpNode);
             }
-
-            instanceCount++;
-            totalCount++;
         }
-        drawMesh(currentMeshId);
+
+        models.emplace_back(std::move(model));
+
+        return models.size() - 1;
     }
 
-    void RenderingSystem::drawMesh(RenderingSystem::Id meshId) {
-        auto &meshRecord = meshRecords.at(meshId);
-        auto &vao = meshRecord.vertexArrayObject;
-        auto &transforms = meshRecord.transformData;
-        auto &transformBuffer = meshRecord.transformBuffer;
+    engine::Entity RenderingSystem::buildModelInstance(std::size_t modelId) {
+        auto entity = newEntity();
+        return entity;
+    }
 
-        if (transformBuffer->getSize() < transforms.size()) {
-            transformBuffer->reallocate(transforms.size() * 2, BufferUsage::STREAM_DRAW);
+    std::optional<std::size_t> RenderingSystem::loadAssimpTexture(aiMaterial *material, aiTextureType textureType) {
+        if (material->GetTextureCount(textureType) > 0) {
+            aiString str;
+            material->GetTexture(textureType, 0, &str);
+            std::filesystem::path texturePath{str.C_Str()};
+            std::size_t textureId;
+            return loadTexture(texturePath, TextureSettings{});
+
+            return textureId;
         }
-        meshRecord.transformBuffer->setSubData(transforms);
-        vao.drawElementsInstanced(DrawMode::TRIANGLES, meshRecord.indicesSize, transforms.size(),
-                                  meshRecord.indicesOffset,
-                                  meshRecord.verticesOffset);
-        meshRecords.at(meshId).transformData.clear();
+        return {};
     }
 
-    void RenderingSystem::enableMaterial(RenderingSystem::Id materialId) {
-        auto &material = materials.at(materialId);
-        auto &diffuseMap = textureObjects.at(material.diffuseMap);
-        auto &specularMap = textureObjects.at(material.specularMap);
-        auto &normalMap = textureObjects.at(material.normalMap);
-        auto &heightMap = textureObjects.at(material.heightMap);
+    std::size_t RenderingSystem::loadAssimpMaterial(aiMaterial *assimpMaterial) {
+        aiColor3D diffuseColor;
+        aiColor3D specularColor;
+        assimpMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
+        assimpMaterial->Get(AI_MATKEY_COLOR_SPECULAR, specularColor);
+        Eigen::Vector3f diffuse{diffuseColor.r, diffuseColor.g, diffuseColor.b};
+        Eigen::Vector3f specular{specularColor.r, specularColor.g, specularColor.b};
 
-        shaderProgram.setUniform("diffuse", material.diffuse);
-        shaderProgram.setUniform("specular", material.specular);
-        shaderProgram.setUniform("shininess", material.shininess);
+        auto diffuseMap = loadAssimpTexture(assimpMaterial, aiTextureType_DIFFUSE);
+        auto specularMap = loadAssimpTexture(assimpMaterial, aiTextureType_SPECULAR);
+        auto heightMap = loadAssimpTexture(assimpMaterial, aiTextureType_HEIGHT);
+        auto normalMap = loadAssimpTexture(assimpMaterial, aiTextureType_NORMALS);
 
-        diffuseMap.bindToTextureUnit(0);
-        specularMap.bindToTextureUnit(1);
-        normalMap.bindToTextureUnit(2);
-        heightMap.bindToTextureUnit(3);
+        Material material{
+                diffuse,
+                specular,
+                diffuseMap ? diffuseMap.value() : emptyTextureId,
+                specularMap ? specularMap.value() : emptyTextureId,
+                normalMap ? normalMap.value() : emptyTextureId,
+                heightMap ? heightMap.value() : emptyTextureId,
+        };
+
+        auto materialId = loadMaterial(material);
+        return materialId;
     }
 
-    Eigen::Projective3f perspective(float verticalFoV, float aspectRatio, float zNear, float zFar) {
-        if (aspectRatio < 0) throw std::domain_error("aspect ratio cannot be negative");
-        if (zFar < zNear) throw std::domain_error("frustrum far cannot be less than frustrum near");
-        if (zNear < 0) throw std::domain_error("frustrum near cannot be negative");
+    std::size_t RenderingSystem::loadAssimpMesh(aiMesh *assimpMesh) {
+        Mesh mesh;
 
-        auto projection = Eigen::Projective3f::Identity();
-        float tanHalfFoV = std::tan(verticalFoV / 2.0f);
+        for (std::size_t vertexId = 0; vertexId < assimpMesh->mNumVertices; vertexId++) {
+            auto position = assimpMesh->mVertices[vertexId];
+            auto normal = assimpMesh->mNormals[vertexId];
+            auto tangent = assimpMesh->mTangents[vertexId];
+            auto bitangent = assimpMesh->mBitangents[vertexId];
+            auto texCoords = aiVector3D{0.0f, 0.0f, 0.0f};
+            if (assimpMesh->HasTextureCoords(0)) {
+                texCoords = assimpMesh->mTextureCoords[0][vertexId];
+            }
+            Vertex vertex{
+                    {position.x,  position.y,  position.z},
+                    {normal.x,    normal.y,    normal.z},
+                    {tangent.x,   tangent.y,   tangent.z},
+                    {bitangent.x, bitangent.y, bitangent.z},
+                    {texCoords.x, texCoords.y},
+            };
+            mesh.vertices.emplace_back(std::move(vertex));
+        }
 
-        projection(0, 0) /= aspectRatio * tanHalfFoV;
-        projection(1, 1) /= tanHalfFoV;
-        projection(2, 2) = -(zFar + zNear) / (zFar - zNear);
-        projection(3, 2) = -1.0f;
-        projection(2, 3) = -(2.0f * zFar * zNear) / (zFar - zNear);
-        return projection;
+
+        for (std::size_t faceId = 0; faceId < assimpMesh->mNumFaces; faceId++) {
+            aiFace face = assimpMesh->mFaces[faceId];
+            for (std::size_t i = 0; i < face.mNumIndices; i++) {
+                mesh.indices.push_back(face.mIndices[i]);
+            }
+        }
+
+        return loadMesh(mesh);
     }
+}
 
-    Eigen::Affine3f
-    lookAt(const Eigen::Vector3f &cameraPos, const Eigen::Vector3f &targetPosition, const Eigen::Vector3f &up) {
-        Eigen::Vector3f front = (cameraPos - targetPosition).normalized();
-        Eigen::Vector3f right = front.cross(up);
-
-        Eigen::Affine3f lookAt;
-        lookAt.matrix() << right.x(), right.y(), right.z(), -cameraPos.x(),
-                up.x(), up.y(), up.z(), -cameraPos.y(),
-                front.x(), front.y(), front.z(), -cameraPos.z(),
-                0.0f, 0.0f, 0.0f, 1.0f;
-
-        return lookAt;
-    }
-} // graphics
 

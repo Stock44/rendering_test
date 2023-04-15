@@ -3,7 +3,7 @@
 //
 #pragma once
 
-#include <citty/graphics/components/Vertex.hpp>
+#include <citty/graphics/Vertex.hpp>
 #include <vector>
 
 namespace citty::graphics {

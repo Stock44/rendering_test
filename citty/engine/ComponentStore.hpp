@@ -15,6 +15,12 @@
 namespace citty::engine {
     class ComponentStore {
     public:
+        template<Component T>
+        bool has(EntityId entity) {
+            auto &archetype = entityArchetypes[entity];
+            return archetype.get().contains(typeid(T));
+        }
+
         /**
          * Add a new component to the given entity, constructing it in place using the provided arguments
          * @tparam T Type of the component to add

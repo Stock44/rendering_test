@@ -3,7 +3,9 @@
 //
 
 #include <citty/graphics/Image.hpp>
+
 #define STB_IMAGE_IMPLEMENTATION
+
 #include <stb_image.h>
 
 
@@ -45,9 +47,9 @@ namespace citty::graphics {
         return height;
     }
 
-    Image::Image(std::string_view pathToTexture) {
+    Image::Image(std::filesystem::path const &pathToTexture) {
         int numberOfChannels;
-        data = stbi_load(pathToTexture.data(), &width, &height, &numberOfChannels, 0);
+        data = stbi_load(pathToTexture.c_str(), &width, &height, &numberOfChannels, 0);
         channels = static_cast<ColorChannels>(numberOfChannels);
     }
 

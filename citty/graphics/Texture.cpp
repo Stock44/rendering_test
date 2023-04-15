@@ -2,11 +2,11 @@
 // Created by hiram on 4/5/23.
 //
 
-#include <citty/graphics/TextureObject.hpp>
-#include "OpenGlError.hpp"
+#include <citty/graphics/Texture.hpp>
+#include <citty/graphics/OpenGlError.hpp>
 
 namespace citty::graphics {
-    TextureObject::TextureObject(Image const &image) {
+    Texture::Texture(Image const &image) {
         glCreateTextures(GL_TEXTURE_2D, 1, &textureObjectName);
         checkOpenGlErrors();
 
@@ -39,12 +39,12 @@ namespace citty::graphics {
         checkOpenGlErrors();
     }
 
-    TextureObject::TextureObject(TextureObject &&other) noexcept {
+    Texture::Texture(Texture &&other) noexcept {
         textureObjectName = other.textureObjectName;
         other.textureObjectName = 0;
     }
 
-    TextureObject &TextureObject::operator=(TextureObject &&other) noexcept {
+    Texture &Texture::operator=(Texture &&other) noexcept {
         if (textureObjectName == other.textureObjectName) {
             return *this;
         }
@@ -54,40 +54,40 @@ namespace citty::graphics {
         return *this;
     }
 
-    TextureObject::~TextureObject() {
+    Texture::~Texture() {
         glDeleteTextures(1, &textureObjectName);
     }
 
-    unsigned int graphics::TextureObject::getTextureObjectName() const {
+    unsigned int graphics::Texture::getTextureName() const {
         return textureObjectName;
     }
 
-    void TextureObject::setTextureSWrapMode(WrapMode mode) {
+    void Texture::setTextureSWrapMode(WrapMode mode) {
         glTextureParameteri(textureObjectName, GL_TEXTURE_WRAP_S, asParam(mode));
         checkOpenGlErrors();
     }
 
-    void TextureObject::setTextureTWrapMode(WrapMode mode) {
+    void Texture::setTextureTWrapMode(WrapMode mode) {
         glTextureParameteri(textureObjectName, GL_TEXTURE_WRAP_T, asParam(mode));
         checkOpenGlErrors();
     }
 
-    void TextureObject::setTextureMinFilter(MinFilter filter) {
+    void Texture::setTextureMinFilter(MinFilter filter) {
         glTextureParameteri(textureObjectName, GL_TEXTURE_MIN_FILTER, asParam(filter));
         checkOpenGlErrors();
     }
 
-    void TextureObject::setTextureMagFilter(MagFilter filter) {
+    void Texture::setTextureMagFilter(MagFilter filter) {
         glTextureParameteri(textureObjectName, GL_TEXTURE_MAG_FILTER, asParam(filter));
         checkOpenGlErrors();
     }
 
-    void TextureObject::generateMipmaps() {
+    void Texture::generateMipmaps() {
         glGenerateTextureMipmap(textureObjectName);
         checkOpenGlErrors();
     }
 
-    void TextureObject::bindToTextureUnit(unsigned int unit) {
+    void Texture::bindToTextureUnit(unsigned int unit) {
         glBindTextureUnit(unit, textureObjectName);
         checkOpenGlErrors();
     }

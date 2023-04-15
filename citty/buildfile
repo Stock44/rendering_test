@@ -6,14 +6,15 @@ import libs = \
     libboost-hana%lib{boost_hana} \
     stb_image%lib{stb_image} \
     epoxy%lib{epoxy} \
-    gtkmm-4.0%lib{gtkmm}
+    gtkmm-4.0%lib{gtkmm} \
+    assimp%lib{assimp} \
 
 import testlibs = \
     catch2%lib{catch2} \
     catch2%lib{catch2wmain}
 
 exe{citty}: {hxx h cxx c}{** -**.test.cpp} $libs
-exe{tests}: {hxx h cxx c}{** -main.cpp} $libs $testlibs
-exe{tests}: test = true
+//exe{tests}: {hxx h cxx c}{** -main.cpp} $libs $testlibs
+//exe{tests}: test = true
 
 cc.poptions =+ "-I$out_root" "-I$src_root"

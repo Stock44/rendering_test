@@ -22,9 +22,14 @@ namespace citty::engine {
         virtual void update() = 0;
 
     protected:
-        Entity newEntity();
+        inline Entity newEntity() {
+            return {entityStore->newEntityId(), *componentStore};
+        }
 
-        void deleteEntity(Entity entity);
+        inline void deleteEntity(Entity entity) {
+            componentStore->removeAll(entity);
+            entityStore->freeEntityId(entity);
+        }
 
         template<Component ...ComponentTypes>
         inline auto getEntities() const {

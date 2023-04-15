@@ -10,6 +10,11 @@ namespace citty::engine {
 //        system->setup(componentManager);
 //        systems.push_back(std::move(system));
 //    }
+    void Engine::init() {
+        for (auto const &system: systems) {
+            system->init();
+        }
+    }
 
     void Engine::update() {
         for (auto const &system: systems) {

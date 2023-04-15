@@ -26,10 +26,11 @@ namespace citty::engine {
             std::unique_ptr<System> &system = systems.emplace_back(std::make_unique<T>(std::forward<Args>(args)...));
 
             system->setup(&componentStore, &entityStore);
-            system->init();
 
             return static_cast<T *>(system.get());
         }
+
+        void init();
 
         void update();
 

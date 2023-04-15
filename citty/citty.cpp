@@ -1,12 +1,9 @@
 #include <thread>
 #include <citty/engine/Engine.hpp>
 #include <citty/graphics/RenderingSystem.hpp>
-#include <citty/graphics/components/Texture.hpp>
-
+#include <citty/graphics/RenderingEngine.hpp>
 #include <gtkmm-4.0/gtkmm.h>
-#include <iostream>
 #include <citty/engine/components/Transform.hpp>
-
 
 int main(int argc, char *argv[]) {
     using namespace citty;
@@ -20,76 +17,25 @@ int main(int argc, char *argv[]) {
     auto glArea = builder->get_widget<Gtk::GLArea>("gl_area");
 
     engine::Engine engine;
-
-    engine.addSystem<graphics::RenderingSystem>(glArea);
-
     auto &entityStore = engine.getEntityStore();
     auto &componentStore = engine.getComponentStore();
 
-    auto noTexture = engine::Entity{entityStore.newEntityId(), componentStore};
-    noTexture.addComponent<graphics::Texture>("resources/no_texture.png");
+    auto renderingSystem = engine.addSystem<graphics::RenderingSystem>(glArea);
 
-    auto testMaterial = engine::Entity{entityStore.newEntityId(), componentStore};
-    testMaterial.addComponent<graphics::Material>(Eigen::Vector3f{1.0f, 1.0f, 1.0f},
-                                                  Eigen::Vector3f{1.0f, 1.0f, 1.0f}, noTexture, noTexture,
-                                                  noTexture, noTexture, 1.0f);
+    app->signal_activate().connect(
+            [&app, &builder, glArea]() {
+                auto mainWindow = builder->get_widget<Gtk::Window>("main_window");
 
-    auto cubeMesh = engine::Entity{entityStore.newEntityId(), componentStore};
-    cubeMesh.addComponent<graphics::Mesh>(graphics::Mesh{
-            {
-                    // vertices (pos, normal, tangent, bitangent, texture)
-                    {{0.0f, 0.0f, 0.0f}, {}, {}, {}, {}},
-                       {{1.0f, 0.0f, 0.0f}, {}, {}, {}, {}},
-                          {{0.0f, 1.0f, 0.0f}, {}, {}, {}, {}},
-                    {{1.0f, 1.0f, 0.0f}, {}, {}, {}, {}},
-                       {{0.0f, 0.0f, 1.0f}, {}, {}, {}, {}},
-                          {{1.0f, 0.0f, 1.0f}, {}, {}, {}, {}},
-                    {{0.0f, 1.0f, 1.0f}, {}, {}, {}, {}},
-                       {{1.0f, 1.0f, 1.0f}, {}, {}, {}, {}},
-            },
-            {
-                    //indices
-                    0, 1, 3,
-                    0, 3, 2,
-                    2, 3, 7,
-                    2, 7, 6,
-                    4, 0, 2,
-                    4, 2, 6,
-                    1, 5, 7,
-                    1, 7, 3,
-                    4, 5, 1,
-                    4, 1, 0,
-                    5, 4, 6,
-                    5, 6, 7,
-            }
-    });
+                app->add_window(*mainWindow);
 
-    auto testEntity = engine::Entity{entityStore.newEntityId(), componentStore};
-    testEntity.addComponent<engine::Transform>(
-            Eigen::Quaternionf{Eigen::AngleAxisf(0.0f, Eigen::Vector3f{0.0f, 1.0f, 0.0f})},
-            Eigen::Vector3f{15.0f, 0.0f, 0.0f},
-            Eigen::Vector3f{1.0f, 1.0f, 1.0f});
-    testEntity.addComponent<graphics::Graphics>(cubeMesh, testMaterial);
+                mainWindow->show();
 
-    auto testEntity2 = engine::Entity{entityStore.newEntityId(), componentStore};
-    testEntity2.addComponent<engine::Transform>(
-            Eigen::Quaternionf{Eigen::AngleAxisf(0.0f, Eigen::Vector3f{0.0f, 1.0f, 0.0f})},
-            Eigen::Vector3f{0.0f, 0.0f, 2.0f},
-            Eigen::Vector3f{1.0f, 1.0f, 1.0f},
-            testEntity);
-    testEntity2.addComponent<graphics::Graphics>(cubeMesh, testMaterial);
+                mainWindow->get_frame_clock()->signal_paint().connect([glArea]() {
+                    glArea->queue_draw();
+                });
 
-    app->signal_activate().connect([&app, &builder, glArea]() {
-        auto mainWindow = builder->get_widget<Gtk::Window>("main_window");
 
-        app->add_window(*mainWindow);
-
-        mainWindow->show();
-
-        mainWindow->get_frame_clock()->signal_paint().connect([glArea]() {
-            glArea->queue_draw();
-        });
-    });
+            });
 
 //    engine.registerSystem(std::make_unique<input::InputSystem>(window));
 //    engine.registerSystem(std::make_unique<map::MapRenderingSystem>());
@@ -116,15 +62,78 @@ int main(int argc, char *argv[]) {
 //    std::cout << "Number of roads: " << roadStore->getComponents().size() << std::endl;
 //    std::cout << "Number of nodes: " << nodeStore->getComponents().size() << std::endl;
 
-    std::jthread engineThread([&engine, &testEntity](std::stop_token const &stopToken) {
-        Eigen::Vector3f rotation{0.5f, 1.0f, 0.5f};
-        rotation.normalize();
-        while (!stopToken.stop_requested()) {
-            engine.update();
-            testEntity.getComponent<engine::Transform>().rotation *= Eigen::Quaternionf(
-                    Eigen::AngleAxisf(0.0001f, rotation));
-        }
-    });
+    std::jthread engineThread(
+            [&engine, &renderingSystem, &entityStore, &componentStore](std::stop_token const &stopToken) {
+                engine.init();
+                Eigen::Vector3f rotation{0.5f, 1.0f, 0.5f};
+                rotation.normalize();
+                auto emptyTextureId = renderingSystem->loadTexture("resources/no_texture.png",
+                                                                   graphics::TextureSettings{});
+                graphics::Material testMaterial{
+                        Eigen::Vector3f{1.0f, 1.0f, 1.0f},
+                        Eigen::Vector3f{1.0f, 1.0f, 1.0f},
+                        emptyTextureId,
+                        emptyTextureId,
+                        emptyTextureId,
+                        emptyTextureId,
+                        1.0f
+                };
+                auto testMaterialId = renderingSystem->loadMaterial(testMaterial);
+
+                graphics::Mesh cubeMesh{
+                        {
+//                                 vertices (pos, normal, tangent, bitangent, texture)
+                                {{0.0f, 0.0f, 0.0f}, {}, {}, {}, {}},
+                                {{1.0f, 0.0f, 0.0f}, {}, {}, {}, {}},
+                                {{0.0f, 1.0f, 0.0f}, {}, {}, {}, {}},
+                                {{1.0f, 1.0f, 0.0f}, {}, {}, {}, {}},
+                                {{0.0f, 0.0f, 1.0f}, {}, {}, {}, {}},
+                                {{1.0f, 0.0f, 1.0f}, {}, {}, {}, {}},
+                                {{0.0f, 1.0f, 1.0f}, {}, {}, {}, {}},
+                                {{1.0f, 1.0f, 1.0f}, {}, {}, {}, {}},
+                        },
+                        {
+//                                indices
+                                0, 1, 3,
+                                0, 3, 2,
+                                2, 3, 7,
+                                2, 7, 6,
+                                4, 0, 2,
+                                4, 2, 6,
+                                1, 5, 7,
+                                1, 7, 3,
+                                4, 5, 1,
+                                4, 1, 0,
+                                5, 4, 6,
+                                5, 6, 7,
+                        }
+                };
+                auto cubeMeshId = renderingSystem->loadMesh(cubeMesh);
+
+                auto testEntity = engine::Entity{entityStore.newEntityId(), componentStore};
+                testEntity.addComponent<engine::Transform>(
+                        Eigen::Quaternionf{Eigen::AngleAxisf(0.0f, Eigen::Vector3f{0.0f, 1.0f, 0.0f})},
+                        Eigen::Vector3f{15.0f, 0.0f, 0.0f},
+                        Eigen::Vector3f{1.0f, 1.0f, 1.0f});
+                testEntity.addComponent<graphics::Graphics>(cubeMeshId, testMaterialId);
+
+                auto testEntity2 = engine::Entity{entityStore.newEntityId(), componentStore};
+                testEntity2.addComponent<engine::Transform>(
+                        Eigen::Quaternionf{Eigen::AngleAxisf(0.0f, Eigen::Vector3f{0.0f, 1.0f, 0.0f})},
+                        Eigen::Vector3f{0.0f, 0.0f, 2.0f},
+                        Eigen::Vector3f{1.0f, 1.0f, 1.0f},
+                        testEntity);
+                testEntity2.addComponent<graphics::Graphics>(cubeMeshId, testMaterialId);
+
+                auto model = renderingSystem->loadModel("assets/car.dae");
+                while (!stopToken.stop_requested()) {
+
+                    engine.update();
+                    testEntity.getComponent<engine::Transform>().rotation *= Eigen::Quaternionf(
+                            Eigen::AngleAxisf(0.0001f, rotation));
+
+                }
+            });
 
     return app->run(argc, argv);
 

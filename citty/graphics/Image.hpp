@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string_view>
+#include <filesystem>
 
 namespace citty::graphics {
     enum class ColorChannels : int {
@@ -16,7 +17,7 @@ namespace citty::graphics {
 
     class Image {
     public:
-        explicit Image(std::string_view pathToTexture);
+        explicit Image(std::filesystem::path const &pathToTexture);
 
         Image(Image const &other) = delete;
 
@@ -38,8 +39,8 @@ namespace citty::graphics {
 
     private:
         unsigned char *data;
-        int width;
-        int height;
+        int width = 0;
+        int height = 0;
         ColorChannels channels;
     };
 } // graphics

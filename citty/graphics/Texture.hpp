@@ -6,7 +6,7 @@
 
 #include <epoxy/gl.h>
 #include <type_traits>
-#include "Image.hpp"
+#include <citty/graphics/Image.hpp>
 
 namespace citty::graphics {
     template <typename T>
@@ -35,19 +35,19 @@ namespace citty::graphics {
         LINEAR_MIPMAP_LINEAR = GL_LINEAR_MIPMAP_LINEAR,
     };
 
-    class TextureObject {
+    class Texture {
     public:
-        explicit TextureObject(Image const &textureImage);
+        explicit Texture(Image const &textureImage);
 
-        TextureObject(TextureObject const &other) = delete;
+        Texture(Texture const &other) = delete;
 
-        TextureObject &operator=(TextureObject const &other) = delete;
+        Texture &operator=(Texture const &other) = delete;
 
-        TextureObject(TextureObject &&other) noexcept;
+        Texture(Texture &&other) noexcept;
 
-        TextureObject &operator=(TextureObject &&other) noexcept;
+        Texture &operator=(Texture &&other) noexcept;
 
-        ~TextureObject();
+        ~Texture();
 
         void setTextureSWrapMode(WrapMode mode);
 
@@ -62,7 +62,7 @@ namespace citty::graphics {
         void bindToTextureUnit(unsigned int unit);
 
     protected:
-        [[nodiscard]] unsigned int getTextureObjectName() const;
+        [[nodiscard]] unsigned int getTextureName() const;
 
     private:
         unsigned int textureObjectName = 0;

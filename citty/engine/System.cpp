@@ -9,13 +9,4 @@ namespace citty::engine {
         this->componentStore = componentStore;
         this->entityStore = entityStore;
     }
-
-    inline Entity System::newEntity() {
-        return {entityStore->newEntityId(), *componentStore};
-    }
-
-    inline void System::deleteEntity(Entity entity) {
-        componentStore->removeAll(entity);
-        entityStore->freeEntityId(entity);
-    }
 }

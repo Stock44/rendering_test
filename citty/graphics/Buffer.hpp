@@ -49,7 +49,9 @@ namespace citty::graphics {
         Buffer(Buffer &&other) noexcept {
             bufferName = other.bufferName;
             bufferUsage = other.bufferUsage;
+            size = other.size;
             other.bufferName = 0;
+            other.size = 0;
         }
 
         Buffer &operator=(Buffer &&other) noexcept {
@@ -59,7 +61,9 @@ namespace citty::graphics {
 
             bufferName = other.bufferName;
             bufferUsage = other.bufferUsage;
+            size = other.size;
             other.bufferName = 0;
+            other.size = 0;
 
             return *this;
         }
