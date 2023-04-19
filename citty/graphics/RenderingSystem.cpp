@@ -141,18 +141,21 @@ namespace citty::graphics {
 
             Eigen::Affine3f transformMatrix;
 
-            auto parent = transform.parent;
-            if (parent) {
+            if (transform.parent) {
                 transformMatrix = Eigen::Affine3f::Identity();
                 std::stack<Eigen::Affine3f> transformMatrices;
                 transformMatrices.emplace(Eigen::Translation3f{transform.position} * transform.rotation *
                                           Eigen::AlignedScaling3f{transform.scale});
-                while (parent) {
-                    auto &parentTransform = transform.parent.value().getComponent<engine::Transform>();
+                std::optional<engine::Entity> currentEntity = transform.parent;
+                while (currentEntity) {
+                    engine::Transform const &currentTransform = currentEntity.value().getComponent<engine::Transform>();
                     transformMatrices.emplace(
-                            Eigen::Translation3f{parentTransform.position} * parentTransform.rotation *
-                            Eigen::AlignedScaling3f{parentTransform.scale});
-                    parent = parentTransform.parent;
+                            Eigen::Translation3f{currentTransform.position} * currentTransform.rotation *
+                            Eigen::AlignedScaling3f{currentTransform.scale});
+                    if (!currentTransform.parent) break;
+                    if (currentEntity == currentTransform.parent)
+                        throw std::runtime_error("error: transform loop detected");
+                    currentEntity = currentTransform.parent;
                 }
 
                 while (!transformMatrices.empty()) {
@@ -170,7 +173,7 @@ namespace citty::graphics {
 
         }
 
-
+        return;
     }
 
     std::size_t RenderingSystem::loadModel(std::filesystem::path const &modelPath) {
@@ -200,8 +203,6 @@ namespace citty::graphics {
 
         Model model;
 
-        Model *currentNode = &model;
-
         std::queue<std::pair<Model *, aiNode *>> unexploredNodes;
         unexploredNodes.emplace(&model, scene->mRootNode);
 
@@ -212,17 +213,17 @@ namespace citty::graphics {
             aiQuaternion rotation;
             aiVector3D position;
             aiVector3D scaling;
-            assimpNode->mTransformation.Decompose(position, rotation, scaling);
+            assimpNode->mTransformation.Decompose(scaling, rotation, position);
 
-            currentNode->transform = {{rotation.w, rotation.x, rotation.y, rotation.z},
-                                      {position.x, position.y, position.z},
-                                      {scaling.x,  scaling.y,  scaling.z}};
+            node->transform = {{rotation.w, rotation.x, rotation.y, rotation.z},
+                               {position.x, position.y, position.z},
+                               {scaling.x,  scaling.y,  scaling.z}};
 
             for (std::size_t nodeMeshIdx = 0; nodeMeshIdx < assimpNode->mNumMeshes; nodeMeshIdx++) {
                 auto assimpMeshId = assimpNode->mMeshes[nodeMeshIdx];
                 auto meshId = meshIdMap.at(assimpMeshId);
                 auto materialId = materialIdMap.at(scene->mMeshes[assimpMeshId]->mMaterialIndex);
-                currentNode->graphics.emplace_back(meshId, materialId);
+                node->graphics.emplace_back(meshId, materialId);
             }
 
             for (std::size_t childIdx; childIdx < assimpNode->mNumChildren; childIdx++) {
@@ -238,8 +239,35 @@ namespace citty::graphics {
     }
 
     engine::Entity RenderingSystem::buildModelInstance(std::size_t modelId) {
-        auto entity = newEntity();
-        return entity;
+        auto rootEntity = newEntity();
+        auto &rootNode = models.at(modelId);
+
+        std::queue<std::pair<engine::Entity, Model *>> unexploredNodes;
+        rootEntity.addComponent<engine::Transform>();
+        unexploredNodes.emplace(rootEntity, &rootNode);
+
+        while (!unexploredNodes.empty()) {
+            auto [entity, node] = unexploredNodes.front();
+            unexploredNodes.pop();
+
+            for (auto &graphics: node->graphics) {
+                auto childEntity = newEntity();
+                childEntity.addComponent<engine::Transform>();
+                auto &childTransform = childEntity.getComponent<engine::Transform>();
+                childTransform.parent = entity;
+                childEntity.addComponent<Graphics>(graphics);
+            }
+
+            for (auto &childNode: node->childNodes) {
+                auto childEntity = newEntity();
+                childEntity.addComponent<engine::Transform>(node->transform);
+                childEntity.getComponent<engine::Transform>().parent = entity;
+
+                unexploredNodes.emplace(childEntity, childNode.get());
+            }
+        }
+
+        return rootEntity;
     }
 
     std::optional<std::size_t> RenderingSystem::loadAssimpTexture(aiMaterial *material, aiTextureType textureType) {
@@ -247,10 +275,7 @@ namespace citty::graphics {
             aiString str;
             material->GetTexture(textureType, 0, &str);
             std::filesystem::path texturePath{str.C_Str()};
-            std::size_t textureId;
             return loadTexture(texturePath, TextureSettings{});
-
-            return textureId;
         }
         return {};
     }

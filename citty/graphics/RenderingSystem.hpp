@@ -88,7 +88,7 @@ namespace citty::graphics {
 
         std::vector<Model> models;
 
-        std::size_t emptyTextureId;
+        std::size_t emptyTextureId = 0;
     };
 
 } // graphics

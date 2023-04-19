@@ -10,10 +10,10 @@
 
 namespace citty::engine {
     struct Transform {
-        Eigen::Quaternionf rotation;
-        Eigen::Vector3f position;
-        Eigen::Vector3f scale;
-        std::optional<Entity> parent;
+        Eigen::Quaternionf rotation{1.0f, 0.0f, 0.0f, 0.0f};
+        Eigen::Vector3f position{0.0f, 0.0f, 0.0f};
+        Eigen::Vector3f scale{1.0f, 1.0f, 1.0f};
+        std::optional<Entity> parent{};
     };
 }
 

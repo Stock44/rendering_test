@@ -108,7 +108,24 @@ int main(int argc, char *argv[]) {
                                 5, 6, 7,
                         }
                 };
+                graphics::Mesh pyramidMesh{
+                        {
+//                                 vertices (pos, normal, tangent, bitangent, texture)
+                                {{0.0f, 0.0f, 0.0f}, {}, {}, {}, {}},
+                                {{1.0f, 0.0f, 0.0f}, {}, {}, {}, {}},
+                                {{0.5f, 0.0f, 1.0f}, {}, {}, {}, {}},
+                                {{0.5f, 1.0f, 0.5f}, {}, {}, {}, {}},
+                        },
+                        {
+//                                indices
+                                0, 2, 3,
+                                1, 0, 3,
+                                2, 1, 3,
+                                1, 2, 0,
+                        }
+                };
                 auto cubeMeshId = renderingSystem->loadMesh(cubeMesh);
+                auto pyramidMeshId = renderingSystem->loadMesh(pyramidMesh);
 
                 auto testEntity = engine::Entity{entityStore.newEntityId(), componentStore};
                 testEntity.addComponent<engine::Transform>(
@@ -123,13 +140,22 @@ int main(int argc, char *argv[]) {
                         Eigen::Vector3f{0.0f, 0.0f, 2.0f},
                         Eigen::Vector3f{1.0f, 1.0f, 1.0f},
                         testEntity);
-                testEntity2.addComponent<graphics::Graphics>(cubeMeshId, testMaterialId);
+                testEntity2.addComponent<graphics::Graphics>(pyramidMeshId, testMaterialId);
 
-                auto model = renderingSystem->loadModel("assets/car.dae");
+                auto testEntity3 = engine::Entity{entityStore.newEntityId(), componentStore};
+                testEntity3.addComponent<engine::Transform>(
+                        Eigen::Quaternionf{Eigen::AngleAxisf(0.0f, Eigen::Vector3f{0.0f, 1.0f, 0.0f})},
+                        Eigen::Vector3f{2.0f, 0.0f, 0.0f},
+                        Eigen::Vector3f{1.0f, 1.0f, 1.0f},
+                        testEntity2);
+                testEntity3.addComponent<graphics::Graphics>(cubeMeshId, testMaterialId);
+
+                auto model = renderingSystem->loadModel("assets/car.obj");
+                auto modelEntity = renderingSystem->buildModelInstance(model);
+                modelEntity.getComponent<engine::Transform>().position = {10.0f, 0.0f, 5.0f};
                 while (!stopToken.stop_requested()) {
-
                     engine.update();
-                    testEntity.getComponent<engine::Transform>().rotation *= Eigen::Quaternionf(
+                    modelEntity.getComponent<engine::Transform>().rotation *= Eigen::Quaternionf(
                             Eigen::AngleAxisf(0.0001f, rotation));
 
                 }

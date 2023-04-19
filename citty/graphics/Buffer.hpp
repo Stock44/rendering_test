@@ -82,21 +82,20 @@ namespace citty::graphics {
         template<typename R>
         requires BufferMappableRange<R, T>
         void append(R &data) {
-            unsigned int newBufferName;
-            glCreateBuffers(1, &newBufferName);
-            glNamedBufferData(newBufferName, (size + std::ranges::size(data)) * sizeof(T), nullptr,
+            unsigned int tempBuffer;
+            std::size_t newSize = size + std::ranges::size(data);
+            glCreateBuffers(1, &tempBuffer);
+            glNamedBufferData(tempBuffer, newSize * sizeof(T), nullptr,
                               asGlEnum(bufferUsage));
-            glCopyNamedBufferSubData(bufferName, newBufferName, 0, 0, size * sizeof(T));
-
+            glCopyNamedBufferSubData(bufferName, tempBuffer, 0, 0, size * sizeof(T));
+            glNamedBufferSubData(tempBuffer, size * sizeof(T), std::ranges::size(data) * sizeof(T), std::ranges::data(data));
             checkOpenGlErrors();
 
-            glDeleteBuffers(1, &bufferName);
-            checkOpenGlErrors();
-            bufferName = newBufferName;
-            std::size_t oldSize = size;
-            size = size + std::ranges::size(data);
+            reallocate(newSize, bufferUsage);
+            glCopyNamedBufferSubData(tempBuffer, bufferName, 0, 0, size * sizeof(T));
 
-            setSubData(data, oldSize);
+            glDeleteBuffers(1, &tempBuffer);
+            checkOpenGlErrors();
         }
 
         /**

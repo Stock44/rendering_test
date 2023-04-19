@@ -119,10 +119,9 @@ namespace citty::graphics {
             }
             auto &meshRecord = meshRecords.at(drawCommand.meshId);
             auto &vao = meshRecord.vertexArrayObject;
-            auto &transformBuffer = meshRecord.transformBuffer;
-            vao.bindBuffer(transformBuffer, drawCommand.offset);
             vao.drawElementsInstanced(DrawMode::TRIANGLES, meshRecord.indicesSize, drawCommand.instanceCount,
-                                      meshRecord.indicesOffset, meshRecord.verticesOffset);
+                                      meshRecord.indicesOffset, 0, drawCommand.offset);
+//            vao.drawElementsInstanced(DrawMode::TRIANGLES, 36, 1, 0, 0, 0);
         }
 
         glFlush();

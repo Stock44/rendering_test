@@ -44,7 +44,7 @@ namespace citty::graphics {
             boundBuffers.try_emplace(binding, std::shared_ptr(buffer));
 
             nextBufferBinding++;
-            glVertexArrayVertexBuffer(vertexArrayName, binding, buffer->getBufferName(), offset, sizeof(T));
+            glVertexArrayVertexBuffer(vertexArrayName, binding, buffer->getBufferName(), offset * sizeof(T), sizeof(T));
             checkOpenGlErrors();
         }
 
@@ -80,9 +80,9 @@ namespace citty::graphics {
 
         void disableAttrib(unsigned int attributeIndex);
 
-        void drawElementsInstanced(DrawMode mode, int count, int instanceCount,
-                                   unsigned int indicesIndex = 0,
-                                   int baseVertex = 0);
+        void drawElementsInstanced(DrawMode mode, int elementCount, int instanceCount,
+                                   unsigned int indicesOffset = 0,
+                                   int baseVertex = 0, int baseInstance = 0);
 
     private:
         unsigned int vertexArrayName = 0;
