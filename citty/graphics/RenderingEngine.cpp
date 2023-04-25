@@ -68,13 +68,14 @@ namespace citty::graphics {
     }
 
     RenderingEngine::TextureId RenderingEngine::loadTexture(Image const &image, TextureSettings settings) {
-        auto &texture = textures.emplace_back(image);
+        auto &texture = materialTextures.emplace_back();
+        texture.setImage(image);
         texture.setTextureMagFilter(settings.magFilter);
         texture.setTextureMinFilter(settings.minFilter);
         texture.setTextureSWrapMode(settings.sWrapMode);
         texture.setTextureTWrapMode(settings.tWrapMode);
 
-        return textures.size() - 1;
+        return materialTextures.size() - 1;
     }
 
     RenderingEngine::MaterialId RenderingEngine::loadMaterial(Material const &material) {
@@ -121,7 +122,6 @@ namespace citty::graphics {
             auto &vao = meshRecord.vertexArrayObject;
             vao.drawElementsInstanced(DrawMode::TRIANGLES, meshRecord.indicesSize, drawCommand.instanceCount,
                                       meshRecord.indicesOffset, 0, drawCommand.offset);
-//            vao.drawElementsInstanced(DrawMode::TRIANGLES, 36, 1, 0, 0, 0);
         }
 
         glFlush();
@@ -180,15 +180,15 @@ namespace citty::graphics {
     }
 
     bool RenderingEngine::textureIsLoaded(std::size_t textureId) const {
-        return textures.size() > textureId;
+        return materialTextures.size() > textureId;
     }
 
     void RenderingEngine::useMaterial(std::size_t materialId) {
         auto &material = materials.at(materialId);
-        auto &diffuseMap = textures.at(material.diffuseMap);
-        auto &specularMap = textures.at(material.specularMap);
-        auto &normalMap = textures.at(material.normalMap);
-        auto &heightMap = textures.at(material.heightMap);
+        auto &diffuseMap = materialTextures.at(material.diffuseMap);
+        auto &specularMap = materialTextures.at(material.specularMap);
+        auto &normalMap = materialTextures.at(material.normalMap);
+        auto &heightMap = materialTextures.at(material.heightMap);
 
         shaderProgram.setUniform("diffuse", material.diffuse);
         shaderProgram.setUniform("specular", material.specular);

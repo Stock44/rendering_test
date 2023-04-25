@@ -9,7 +9,7 @@
 #include <citty/graphics/Image.hpp>
 
 namespace citty::graphics {
-    template <typename T>
+    template<typename T>
     int asParam(T value) {
         return static_cast<std::underlying_type_t<T>>(value);
     }
@@ -35,13 +35,20 @@ namespace citty::graphics {
         LINEAR_MIPMAP_LINEAR = GL_LINEAR_MIPMAP_LINEAR,
     };
 
+    enum class TextureFormat {
+        R = GL_RED,
+        RG = GL_RG,
+        RGB = GL_RGB,
+        RGBA = GL_RGBA,
+    };
+
+    enum class PixelType {
+        UNSIGNED_BYTE = GL_UNSIGNED_BYTE,
+    };
+
     class Texture {
     public:
-        explicit Texture(Image const &textureImage);
-
-        Texture(Texture const &other) = delete;
-
-        Texture &operator=(Texture const &other) = delete;
+        Texture();
 
         Texture(Texture &&other) noexcept;
 
@@ -55,17 +62,16 @@ namespace citty::graphics {
 
         void setTextureMinFilter(MinFilter filter);
 
-        void setTextureMagFilter(MagFilter filter);
+        void setTextureMagFilter(MagFilter filter) const;
 
         void generateMipmaps();
 
-        void bindToTextureUnit(unsigned int unit);
+        void bindToTextureUnit(unsigned int unit) const;
 
-    protected:
-        [[nodiscard]] unsigned int getTextureName() const;
+        [[nodiscard]] unsigned int getName() const;
 
     private:
-        unsigned int textureObjectName = 0;
+        unsigned int name = 0;
 
     };
 

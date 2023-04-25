@@ -22,6 +22,10 @@ namespace citty::graphics {
         DYNAMIC_COPY = GL_DYNAMIC_COPY,
     };
 
+    enum class BufferTarget {
+        SHADER_STORAGE_BUFFER = GL_SHADER_STORAGE_BUFFER,
+    };
+
     template<typename R, typename T>
     concept BufferMappableRange = requires {
         requires std::ranges::sized_range<R>;
@@ -35,7 +39,7 @@ namespace citty::graphics {
         using DataType = T;
 
         explicit Buffer(BufferUsage usage, std::size_t initialSize = 0) : bufferUsage(usage) {
-            glCreateBuffers(1, &bufferName);
+            glCreateBuffers(1, &name);
             checkOpenGlErrors();
 
             // First call to resize initializes the buffer
@@ -46,34 +50,31 @@ namespace citty::graphics {
 
         Buffer &operator=(Buffer const &other) = delete;
 
-        Buffer(Buffer &&other) noexcept {
-            bufferName = other.bufferName;
-            bufferUsage = other.bufferUsage;
-            size = other.size;
-            other.bufferName = 0;
+        Buffer(Buffer &&other) noexcept: name(other.name), size(other.size), bufferUsage(other.bufferUsage) {
+            other.name = 0;
             other.size = 0;
         }
 
         Buffer &operator=(Buffer &&other) noexcept {
-            if (bufferName == other.bufferName) {
+            if (name == other.name) {
                 return *this;
             }
 
-            bufferName = other.bufferName;
+            name = other.name;
             bufferUsage = other.bufferUsage;
             size = other.size;
-            other.bufferName = 0;
+            other.name = 0;
             other.size = 0;
 
             return *this;
         }
 
         ~Buffer() {
-            glDeleteBuffers(1, &bufferName);
+            glDeleteBuffers(1, &name);
         }
 
         void reallocate(std::size_t elementCount, BufferUsage usage) {
-            glNamedBufferData(bufferName, elementCount * sizeof(T), nullptr, asGlEnum(usage));
+            glNamedBufferData(name, elementCount * sizeof(T), nullptr, asGlEnum(usage));
             checkOpenGlErrors();
             size = elementCount;
             bufferUsage = usage;
@@ -87,16 +88,23 @@ namespace citty::graphics {
             glCreateBuffers(1, &tempBuffer);
             glNamedBufferData(tempBuffer, newSize * sizeof(T), nullptr,
                               asGlEnum(bufferUsage));
-            glCopyNamedBufferSubData(bufferName, tempBuffer, 0, 0, size * sizeof(T));
-            glNamedBufferSubData(tempBuffer, size * sizeof(T), std::ranges::size(data) * sizeof(T), std::ranges::data(data));
+            glCopyNamedBufferSubData(name, tempBuffer, 0, 0, size * sizeof(T));
+            glNamedBufferSubData(tempBuffer, size * sizeof(T), std::ranges::size(data) * sizeof(T),
+                                 std::ranges::data(data));
             checkOpenGlErrors();
 
             reallocate(newSize, bufferUsage);
-            glCopyNamedBufferSubData(tempBuffer, bufferName, 0, 0, size * sizeof(T));
+            glCopyNamedBufferSubData(tempBuffer, name, 0, 0, size * sizeof(T));
 
             glDeleteBuffers(1, &tempBuffer);
             checkOpenGlErrors();
         }
+
+        void bindToTarget(unsigned int index, BufferTarget target) {
+            glBindBufferBase(asGlEnum(target), index, name);
+            checkOpenGlErrors();
+        }
+
 
         /**
          * Reallocates the buffer to exactly fit the elements of the data range. The new allocation is performed
@@ -108,7 +116,7 @@ namespace citty::graphics {
         template<typename R>
         requires BufferMappableRange<R, T>
         void setData(R &data, BufferUsage usage) {
-            glNamedBufferData(bufferName, std::ranges::size(data) * sizeof(T),
+            glNamedBufferData(name, std::ranges::size(data) * sizeof(T),
                               std::ranges::data(data), asGlEnum(usage));
             checkOpenGlErrors();
             size = std::ranges::size(data);
@@ -121,12 +129,12 @@ namespace citty::graphics {
             if (offset + std::ranges::size(data) > size) {
                 throw std::runtime_error("data does not fit in buffer");
             }
-            glNamedBufferSubData(bufferName, offset, std::ranges::size(data) * sizeof(T), std::ranges::data(data));
+            glNamedBufferSubData(name, offset, std::ranges::size(data) * sizeof(T), std::ranges::data(data));
             checkOpenGlErrors();
         }
 
         [[nodiscard]] unsigned int getBufferName() const {
-            return bufferName;
+            return name;
         }
 
         [[nodiscard]] std::size_t getSize() const {
@@ -135,7 +143,7 @@ namespace citty::graphics {
 
     private:
         BufferUsage bufferUsage = BufferUsage::STATIC_DRAW;
-        unsigned int bufferName = 0;
+        unsigned int name = 0;
         std::size_t size = 0;
     };
 

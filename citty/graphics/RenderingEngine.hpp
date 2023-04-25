@@ -12,6 +12,7 @@
 #include <citty/graphics/ShaderProgram.hpp>
 #include <citty/graphics/TextureSettings.hpp>
 #include <mutex>
+#include <citty/graphics/Texture2D.hpp>
 
 namespace citty::graphics {
 
@@ -86,7 +87,7 @@ namespace citty::graphics {
         Eigen::Projective3f projection{};
 
         std::vector<MeshRecord> meshRecords;
-        std::vector<Texture> textures;
+        std::vector<Texture2D> materialTextures;
         std::vector<Material> materials;
         std::shared_ptr<Buffer<Vertex>> vertexBuffer = std::make_shared<Buffer<Vertex>>(BufferUsage::STATIC_DRAW);
         std::shared_ptr<Buffer<unsigned int>> indexBuffer = std::make_shared<Buffer<unsigned int>>(BufferUsage::STATIC_DRAW);

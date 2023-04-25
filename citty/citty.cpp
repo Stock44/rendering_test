@@ -157,6 +157,8 @@ int main(int argc, char *argv[]) {
                     engine.update();
                     modelEntity.getComponent<engine::Transform>().rotation *= Eigen::Quaternionf(
                             Eigen::AngleAxisf(0.0001f, rotation));
+                    testEntity.getComponent<engine::Transform>().rotation *= Eigen::Quaternionf(
+                            Eigen::AngleAxisf(0.0001f, rotation));
 
                 }
             });
