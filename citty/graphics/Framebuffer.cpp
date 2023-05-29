@@ -29,11 +29,6 @@ namespace citty::graphics {
         return name;
     }
 
-    void Framebuffer::addTexture(Texture2D const &texture, AttachmentType type, int level) {
-        glNamedFramebufferTexture(name, asGlEnum(type), texture.getName(), level);
-        checkOpenGlErrors();
-    }
-
     void Framebuffer::setNoDrawBuffer() {
         glNamedFramebufferDrawBuffer(name, GL_NONE);
         checkOpenGlErrors();
@@ -64,8 +59,35 @@ namespace citty::graphics {
         checkOpenGlErrors();
     }
 
-    void Framebuffer::addRenderbuffer(Renderbuffer const &renderbuffer, AttachmentType type) {
-        glNamedFramebufferRenderbuffer(name, asGlEnum(type), GL_RENDERBUFFER, renderbuffer.getName());
+    void Framebuffer::setColorAttachment(std::shared_ptr<Texture2D> texture2D, unsigned int position, int level) {
+        glNamedFramebufferTexture(name, GL_COLOR_ATTACHMENT0 + position, texture2D->getName(), level);
         checkOpenGlErrors();
+        if (colorAttachments.contains(position)) {
+            colorAttachments.at(position) = std::move(texture2D);
+        } else {
+            colorAttachments.try_emplace(position, std::move(texture2D));
+        }
+    }
+
+    void Framebuffer::setColorAttachment(std::shared_ptr<Renderbuffer> renderbuffer, unsigned int position) {
+        glNamedFramebufferRenderbuffer(name, GL_COLOR_ATTACHMENT0 + position, GL_RENDERBUFFER, renderbuffer->getName());
+        checkOpenGlErrors();
+        if (colorAttachments.contains(position)) {
+            colorAttachments.at(position) = std::move(renderbuffer);
+        } else {
+            colorAttachments.try_emplace(position, std::move(renderbuffer));
+        }
+    }
+
+    void Framebuffer::setDepthAttachment(std::shared_ptr<Texture2D> texture2D, int level) {
+        glNamedFramebufferTexture(name, GL_DEPTH_ATTACHMENT, texture2D->getName(), level);
+        checkOpenGlErrors();
+        depthAttachment = std::move(texture2D);
+    }
+
+    void Framebuffer::setDepthAttachment(std::shared_ptr<Renderbuffer> renderbuffer) {
+        glNamedFramebufferRenderbuffer(name, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderbuffer->getName());
+        checkOpenGlErrors();
+        depthAttachment = std::move(renderbuffer);
     }
 } // graphics

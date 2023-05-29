@@ -25,13 +25,15 @@
 
 namespace citty::graphics {
     struct CanonicalPathHash {
+        std::hash<std::string> hasher{};
+
         /**
          * Obtains the hash for a given path by hashing its canonical representation.
          * @param path the path to hash
          * @return the hash value
          */
         std::size_t operator()(std::filesystem::path const &path) const {
-            return std::hash<std::string>()(std::filesystem::canonical(path).string());
+            return hasher(std::filesystem::canonical(path).string());
         }
     };
 
@@ -63,8 +65,12 @@ namespace citty::graphics {
 
         void handleGraphicsEntities();
 
+        void handlePointLightEntities();
+
     private:
         void uploadGraphicsEntities();
+
+        void uploadPointLightEntities();
 
         void processLoadingQueues();
 
@@ -78,6 +84,9 @@ namespace citty::graphics {
 
         std::vector<GraphicsEntity> graphicEntities;
         std::timed_mutex graphicEntityMutex;
+
+        std::vector<PointLightEntity> pointLightEntities;
+        std::timed_mutex pointLightMutex;
 
         std::unordered_map<std::filesystem::path, std::size_t, CanonicalPathHash, EquivalentPathComparison> loadedTextures;
 

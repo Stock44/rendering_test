@@ -7,8 +7,9 @@
 #include "AsGlEnum.hpp"
 
 namespace citty::graphics {
-    Renderbuffer::Renderbuffer() {
+    Renderbuffer::Renderbuffer(SizedImageFormat format, int width, int height) {
         glCreateRenderbuffers(1, &name);
+        glNamedRenderbufferStorage(name, asGlEnum(format), width, height);
         checkOpenGlErrors();
     }
 
@@ -27,11 +28,6 @@ namespace citty::graphics {
 
     Renderbuffer::~Renderbuffer() {
         glDeleteRenderbuffers(1, &name);
-    }
-
-    void Renderbuffer::reallocate(SizedImageFormat format, int width, int height) {
-        glNamedRenderbufferStorage(name, asGlEnum(format), width, height);
-        checkOpenGlErrors();
     }
 
     unsigned int Renderbuffer::getName() const {

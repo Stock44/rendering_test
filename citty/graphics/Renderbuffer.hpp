@@ -10,15 +10,13 @@
 namespace citty::graphics {
     class Renderbuffer {
     public:
-        Renderbuffer();
+        Renderbuffer(SizedImageFormat format, int width, int height);
 
         Renderbuffer(Renderbuffer &&other) noexcept;
 
         Renderbuffer &operator=(Renderbuffer &&other) noexcept;
 
         ~Renderbuffer();
-
-        void reallocate(SizedImageFormat format, int width, int height);
 
         [[nodiscard]] unsigned int getName() const;
 

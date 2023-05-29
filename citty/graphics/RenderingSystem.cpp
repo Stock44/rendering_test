@@ -15,21 +15,26 @@
 
 namespace citty::graphics {
     RenderingSystem::RenderingSystem(Gtk::GLArea *glArea) {
+        glArea->set_has_depth_buffer(true);
+
         glArea->signal_realize().connect([this, glArea]() {
             glArea->make_current();
             renderingEngine = std::make_unique<RenderingEngine>();
-            renderingEngine->setView(lookAt({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}));
+            renderingEngine->setViewpoint({0.0f, 0.0f, 0.0f},
+                                          Eigen::Quaternionf::Identity());
+            renderingEngine->setViewportDimensions(1920, 1080);
             renderingEngine->setProjection(
                     perspectiveProjection(90.0f, static_cast<float>(1920) / static_cast<float>(1080), 5.0f, 50.0f));
         });
 
-        glArea->signal_render().connect([this, glArea](Glib::RefPtr<Gdk::GLContext> const &glContext) {
+        glArea->signal_render().connect([this](Glib::RefPtr <Gdk::GLContext> const &glContext) {
             render();
 
             return true;
         }, false);
 
         glArea->signal_resize().connect([this](int width, int height) {
+            renderingEngine->setViewportDimensions(width, height);
             renderingEngine->setProjection(
                     perspectiveProjection(45.0f, static_cast<float>(width) / static_cast<float>(height), 0.0f, 100.0f));
         });
@@ -43,12 +48,14 @@ namespace citty::graphics {
 
     void RenderingSystem::update() {
         handleGraphicsEntities();
+        handlePointLightEntities();
     }
 
     void RenderingSystem::render() {
         processLoadingQueues();
 
         uploadGraphicsEntities();
+        uploadPointLightEntities();
 
         renderingEngine->render();
     }
@@ -60,6 +67,15 @@ namespace citty::graphics {
         }
         std::lock_guard lock{graphicEntityMutex, std::adopt_lock};
         renderingEngine->setGraphicsEntities(graphicEntities);
+    }
+
+    void RenderingSystem::uploadPointLightEntities() {
+        using namespace std::chrono_literals;
+        if (!pointLightMutex.try_lock_for(50ms)) {
+            return;
+        }
+        std::lock_guard lock{pointLightMutex, std::adopt_lock};
+        renderingEngine->setPointLightEntities(pointLightEntities);
     }
 
     void RenderingSystem::processLoadingQueues() {
@@ -172,8 +188,6 @@ namespace citty::graphics {
             graphicsIt++;
 
         }
-
-        return;
     }
 
     std::size_t RenderingSystem::loadModel(std::filesystem::path const &modelPath) {
@@ -337,6 +351,27 @@ namespace citty::graphics {
         }
 
         return loadMesh(mesh);
+    }
+
+    void RenderingSystem::handlePointLightEntities() {
+        auto [transforms, pointLights] = getComponents<engine::Transform, PointLight>();
+
+        auto transformIt = transforms.begin();
+        auto transformsEnd = transforms.end();
+        auto pointLightsIt = pointLights.begin();
+        auto pointLightsEnd = pointLights.end();
+
+        std::scoped_lock lock{pointLightMutex};
+        pointLightEntities.clear();
+        while (transformIt != transformsEnd && pointLightsIt != pointLightsEnd) {
+            auto &transform = *transformIt;
+            auto &pointLight = *pointLightsIt;
+
+            pointLightEntities.emplace_back(transform.position, pointLight.color, pointLight.radius);
+
+            transformIt++;
+            pointLightsIt++;
+        }
     }
 }
 

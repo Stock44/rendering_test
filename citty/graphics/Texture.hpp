@@ -7,6 +7,7 @@
 #include <epoxy/gl.h>
 #include <type_traits>
 #include <citty/graphics/Image.hpp>
+#include <Eigen/Dense>
 
 namespace citty::graphics {
     template<typename T>
@@ -56,19 +57,23 @@ namespace citty::graphics {
 
         ~Texture();
 
-        void setTextureSWrapMode(WrapMode mode);
+        void setSWrapMode(WrapMode mode);
 
-        void setTextureTWrapMode(WrapMode mode);
+        void setTWrapMode(WrapMode mode);
 
-        void setTextureMinFilter(MinFilter filter);
+        void setMinFilter(MinFilter filter);
 
-        void setTextureMagFilter(MagFilter filter) const;
+        void setMagFilter(MagFilter filter) const;
+
+        void setBorderColor(Eigen::Vector4f color);
 
         void generateMipmaps();
 
         void bindToTextureUnit(unsigned int unit) const;
 
         [[nodiscard]] unsigned int getName() const;
+
+        static void unbindTextureUnit(int unit);
 
     private:
         unsigned int name = 0;

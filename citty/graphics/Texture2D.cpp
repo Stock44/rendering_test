@@ -8,12 +8,16 @@
 #include "SizedImageFormat.hpp"
 
 namespace citty::graphics {
-    void Texture2D::reallocate(SizedImageFormat format, int width, int height) {
+    Texture2D::Texture2D(SizedImageFormat format, int width, int height) {
+        if (width < 1 || height < 1) {
+            throw std::runtime_error("2d texture width and height cannot be less than 1");
+        }
+
         glTextureStorage2D(getName(), 1, asGlEnum(format), width, height);
         checkOpenGlErrors();
     }
 
-    void Texture2D::setImage(Image const &image) {
+    Texture2D::Texture2D(Image const &image) {
         SizedImageFormat internalFormat;
         TextureFormat imageFormat;
 
@@ -36,12 +40,12 @@ namespace citty::graphics {
                 break;
         }
 
-        reallocate(internalFormat, image.getWidth(), image.getHeight());
+        glTextureStorage2D(getName(), 1, asGlEnum(internalFormat), image.getWidth(), image.getHeight());
+        checkOpenGlErrors();
 
         glTextureSubImage2D(getName(), 0, 0, 0, image.getWidth(), image.getHeight(), asGlEnum(imageFormat),
                             GL_UNSIGNED_BYTE,
                             image.getData());
         checkOpenGlErrors();
     }
-
 } // graphics

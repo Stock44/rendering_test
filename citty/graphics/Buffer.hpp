@@ -7,7 +7,7 @@
 #include <ranges>
 #include <citty/graphics/AsGlEnum.hpp>
 #include <epoxy/gl.h>
-#include "OpenGlError.hpp"
+#include <citty/graphics/OpenGlError.hpp>
 
 namespace citty::graphics {
     enum class BufferUsage {
@@ -24,13 +24,6 @@ namespace citty::graphics {
 
     enum class BufferTarget {
         SHADER_STORAGE_BUFFER = GL_SHADER_STORAGE_BUFFER,
-    };
-
-    template<typename R, typename T>
-    concept BufferMappableRange = requires {
-        requires std::ranges::sized_range<R>;
-        requires std::ranges::sized_range<R>;
-        requires std::is_same_v<std::ranges::range_value_t<R>, T>;
     };
 
     template<typename T> requires std::is_standard_layout_v<T>
@@ -80,17 +73,15 @@ namespace citty::graphics {
             bufferUsage = usage;
         }
 
-        template<typename R>
-        requires BufferMappableRange<R, T>
-        void append(R &data) {
+        void append(std::span<T const> data) {
             unsigned int tempBuffer;
-            std::size_t newSize = size + std::ranges::size(data);
+            std::size_t newSize = size + data.size();
             glCreateBuffers(1, &tempBuffer);
             glNamedBufferData(tempBuffer, newSize * sizeof(T), nullptr,
                               asGlEnum(bufferUsage));
             glCopyNamedBufferSubData(name, tempBuffer, 0, 0, size * sizeof(T));
-            glNamedBufferSubData(tempBuffer, size * sizeof(T), std::ranges::size(data) * sizeof(T),
-                                 std::ranges::data(data));
+            glNamedBufferSubData(tempBuffer, size * sizeof(T), data.size() * sizeof(T),
+                                 data.data());
             checkOpenGlErrors();
 
             reallocate(newSize, bufferUsage);
@@ -113,23 +104,19 @@ namespace citty::graphics {
          * @param data
          * @param usage
          */
-        template<typename R>
-        requires BufferMappableRange<R, T>
-        void setData(R &data, BufferUsage usage) {
-            glNamedBufferData(name, std::ranges::size(data) * sizeof(T),
-                              std::ranges::data(data), asGlEnum(usage));
+        void setData(std::span<T const> data, BufferUsage usage) {
+            glNamedBufferData(name, data.size() * sizeof(T),
+                              data.data(), asGlEnum(usage));
             checkOpenGlErrors();
-            size = std::ranges::size(data);
+            size = data.size();
             bufferUsage = usage;
         }
 
-        template<typename R>
-        requires BufferMappableRange<R, T>
-        void setSubData(R &data, std::size_t offset = 0) {
-            if (offset + std::ranges::size(data) > size) {
+        void setSubData(std::span<T const> data, std::size_t offset = 0) {
+            if (offset + data.size() > size) {
                 throw std::runtime_error("data does not fit in buffer");
             }
-            glNamedBufferSubData(name, offset, std::ranges::size(data) * sizeof(T), std::ranges::data(data));
+            glNamedBufferSubData(name, offset, data.size() * sizeof(T), data.data());
             checkOpenGlErrors();
         }
 

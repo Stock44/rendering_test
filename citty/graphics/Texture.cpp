@@ -33,22 +33,22 @@ namespace citty::graphics {
         return name;
     }
 
-    void Texture::setTextureSWrapMode(WrapMode mode) {
+    void Texture::setSWrapMode(WrapMode mode) {
         glTextureParameteri(name, GL_TEXTURE_WRAP_S, asParam(mode));
         checkOpenGlErrors();
     }
 
-    void Texture::setTextureTWrapMode(WrapMode mode) {
+    void Texture::setTWrapMode(WrapMode mode) {
         glTextureParameteri(name, GL_TEXTURE_WRAP_T, asParam(mode));
         checkOpenGlErrors();
     }
 
-    void Texture::setTextureMinFilter(MinFilter filter) {
+    void Texture::setMinFilter(MinFilter filter) {
         glTextureParameteri(name, GL_TEXTURE_MIN_FILTER, asParam(filter));
         checkOpenGlErrors();
     }
 
-    void Texture::setTextureMagFilter(MagFilter filter) const {
+    void Texture::setMagFilter(MagFilter filter) const {
         glTextureParameteri(name, GL_TEXTURE_MAG_FILTER, asParam(filter));
         checkOpenGlErrors();
     }
@@ -60,6 +60,16 @@ namespace citty::graphics {
 
     void Texture::bindToTextureUnit(unsigned int unit) const {
         glBindTextureUnit(unit, name);
+        checkOpenGlErrors();
+    }
+
+    void Texture::setBorderColor(Eigen::Vector4f color) {
+        glTextureParameterfv(name, GL_TEXTURE_BORDER_COLOR, color.data());
+        checkOpenGlErrors();
+    }
+
+    void Texture::unbindTextureUnit(int unit) {
+        glBindTextureUnit(unit, 0);
         checkOpenGlErrors();
     }
 

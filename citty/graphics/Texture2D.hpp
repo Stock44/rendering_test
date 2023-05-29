@@ -7,17 +7,15 @@
 #include <citty/graphics/Texture.hpp>
 #include <citty/graphics/AsGlEnum.hpp>
 #include <citty/graphics/OpenGlError.hpp>
-#include "SizedImageFormat.hpp"
+#include <citty/graphics/SizedImageFormat.hpp>
 
 
 namespace citty::graphics {
     class Texture2D : public Texture {
     public:
-        void reallocate(SizedImageFormat format, int width, int height);
+        Texture2D(SizedImageFormat format, int width, int height);
 
-
-        void setImage(Image const &image);
-
+        explicit Texture2D(Image const &image);
     };
 
 } // graphics

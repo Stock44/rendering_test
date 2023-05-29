@@ -13,6 +13,11 @@
 #include <citty/graphics/TextureSettings.hpp>
 #include <mutex>
 #include <citty/graphics/Texture2D.hpp>
+#include <citty/graphics/Framebuffer.hpp>
+#include <citty/graphics/Renderbuffer.hpp>
+#include <citty/graphics/components/PointLight.hpp>
+#include <citty/graphics/PointLightEntity.hpp>
+#include <citty/graphics/GraphicsEntity.hpp>
 
 namespace citty::graphics {
 
@@ -25,14 +30,9 @@ namespace citty::graphics {
         std::size_t indicesSize;
     };
 
-    struct GraphicsEntity {
-        Eigen::Affine3f transform;
-        std::size_t materialId{};
-        std::size_t meshId{};
-
-        [[nodiscard]] std::size_t key() const {
-            return (materialId << 16) | meshId;
-        }
+    struct QuadVertex {
+        Eigen::Vector3f position;
+        Eigen::Vector2f texCoords;
     };
 
     class RenderingEngine {
@@ -53,15 +53,15 @@ namespace citty::graphics {
 
         bool textureIsLoaded(std::size_t textureId) const;
 
-        void setGraphicsEntities(const std::vector<GraphicsEntity> &graphicsEntities);
+        void setGraphicsEntities(std::span<GraphicsEntity> graphicsEntities);
 
-        [[nodiscard]] const std::pair<int, int> &getViewportDimensions() const;
+        void setPointLightEntities(std::span<PointLightEntity> pointLightEntities);
 
-        void setViewportDimensions(int width, int height);
+        [[nodiscard]] const std::pair<unsigned int, unsigned int> &getViewportDimensions() const;
 
-        [[nodiscard]] Eigen::Affine3f const &getView() const;
+        void setViewportDimensions(unsigned int width, unsigned int height);
 
-        void setView(Eigen::Affine3f const &newView);
+        void setViewpoint(Eigen::Vector3f const &position, Eigen::Quaternionf const &rotation);
 
         [[nodiscard]] Eigen::Projective3f const &getProjection() const;
 
@@ -69,6 +69,8 @@ namespace citty::graphics {
 
     private:
         void useMaterial(std::size_t materialId);
+
+        void issueDrawCommands();
 
         struct RenderCommand {
             std::size_t instanceCount{};
@@ -79,17 +81,45 @@ namespace citty::graphics {
 
         std::vector<RenderCommand> renderCommands;
 
-        ShaderProgram shaderProgram;
+        ShaderProgram depthShaderProgram;
 
-        std::pair<int, int> viewportDimensions;
+        ShaderProgram lightCullingShaderProgram;
+        unsigned int lightCullingWorkgroupsX = 0;
+        unsigned int lightCullingWorkgroupsY = 0;
+        std::size_t numberOfTiles = 0;
 
+        ShaderProgram lightAccumulationShaderProgram;
+        ShaderProgram hdrShaderProgram;
+
+        std::pair<unsigned int, unsigned int> viewportDimensions;
+
+        Eigen::Vector3f viewPosition{};
         Eigen::Affine3f view{};
         Eigen::Projective3f projection{};
+
+        // Lights
+        unsigned int pointLightCount = 0;
+        std::shared_ptr<Buffer<PointLightEntity>> pointLightsBuffer = std::make_shared<Buffer<PointLightEntity>>(
+                BufferUsage::STREAM_DRAW);
+        std::shared_ptr<Buffer<int>> visiblePointLightIndexBuffer = std::make_shared<Buffer<int>>(
+                BufferUsage::STREAM_DRAW);
+
+        // Depth
+        Framebuffer depthFramebuffer;
+        std::shared_ptr<Texture2D> depthTexture = nullptr;
+
+        // HDR
+        Framebuffer hdrFramebuffer;
+        std::shared_ptr<Texture2D> hdrColorTexture = nullptr;
+        std::shared_ptr<Renderbuffer> hdrDepthRenderbuffer = nullptr;
+        std::shared_ptr<Buffer<QuadVertex>> hdrQuadBuffer = std::make_shared<Buffer<QuadVertex>>(BufferUsage::STATIC_DRAW);
+        VertexArray hdrQuadVAO{};
 
         std::vector<MeshRecord> meshRecords;
         std::vector<Texture2D> materialTextures;
         std::vector<Material> materials;
         std::shared_ptr<Buffer<Vertex>> vertexBuffer = std::make_shared<Buffer<Vertex>>(BufferUsage::STATIC_DRAW);
-        std::shared_ptr<Buffer<unsigned int>> indexBuffer = std::make_shared<Buffer<unsigned int>>(BufferUsage::STATIC_DRAW);
+        std::shared_ptr<Buffer<unsigned int>> indexBuffer = std::make_shared<Buffer<unsigned int>>(
+                BufferUsage::STATIC_DRAW);
     };
 } // graphics

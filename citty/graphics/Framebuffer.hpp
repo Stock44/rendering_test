@@ -6,14 +6,11 @@
 
 #include <citty/graphics/Texture2D.hpp>
 #include <citty/graphics/Renderbuffer.hpp>
+#include <vector>
+#include <variant>
+#include <optional>
 
 namespace citty::graphics {
-
-    enum class AttachmentType {
-        DEPTH = GL_DEPTH_ATTACHMENT,
-        STENCIL = GL_STENCIL_ATTACHMENT,
-        DEPTH_STENCIL = GL_DEPTH_STENCIL,
-    };
 
     class Framebuffer {
     public:
@@ -29,9 +26,13 @@ namespace citty::graphics {
 
         void bind();
 
-        void addTexture(Texture2D const &texture, AttachmentType type, int level = 0);
+        void setColorAttachment(std::shared_ptr<Texture2D> texture2D, unsigned int position, int level = 0);
 
-        void addRenderbuffer(Renderbuffer const &renderbuffer, AttachmentType type);
+        void setColorAttachment(std::shared_ptr<Renderbuffer> renderbuffer, unsigned int position);
+
+        void setDepthAttachment(std::shared_ptr<Texture2D> texture2D, int level = 0);
+
+        void setDepthAttachment(std::shared_ptr<Renderbuffer> renderbuffer);
 
         void setNoDrawBuffer();
 
@@ -49,6 +50,9 @@ namespace citty::graphics {
 
     private:
         unsigned int name = 0;
+        using Attachment = std::variant<std::shared_ptr<Texture2D>, std::shared_ptr<Renderbuffer>>;
+        std::optional<Attachment> depthAttachment;
+        std::unordered_map<unsigned int, std::optional<Attachment>> colorAttachments;
     };
 
 } // graphics

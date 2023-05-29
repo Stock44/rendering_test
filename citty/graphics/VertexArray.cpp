@@ -63,4 +63,10 @@ namespace citty::graphics {
         checkOpenGlErrors();
     }
 
+    void VertexArray::draw(DrawMode drawMode, int indicesCount, int indexOffset) {
+        bind();
+        glDrawArrays(asGlEnum(drawMode), indexOffset, indicesCount);
+        checkOpenGlErrors();
+    }
+
 } // graphics

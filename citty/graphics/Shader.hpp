@@ -11,6 +11,7 @@ namespace citty::graphics {
     enum class ShaderType {
         VERTEX = GL_VERTEX_SHADER,
         FRAGMENT = GL_FRAGMENT_SHADER,
+        COMPUTE = GL_COMPUTE_SHADER,
     };
 
     class Shader {

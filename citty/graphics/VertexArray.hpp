@@ -17,6 +17,7 @@ namespace citty::graphics {
 
     enum class DrawMode {
         TRIANGLES = GL_TRIANGLES,
+        TRIANGLE_STRIP = GL_TRIANGLE_STRIP,
     };
 
     class VertexArray {
@@ -64,7 +65,7 @@ namespace citty::graphics {
                 throw std::runtime_error("offset can't be bigger than the the size of the buffer's data type");
             }
 
-            glEnableVertexArrayAttrib(vertexArrayName, attributeIndex);
+            enableAttrib(attributeIndex);
             glVertexArrayAttribFormat(vertexArrayName, attributeIndex, size, asGlEnum(type), normalize, offset);
             glVertexArrayAttribBinding(vertexArrayName, attributeIndex, bufferBindings.at(buffer->getBufferName()));
             checkOpenGlErrors();
@@ -79,6 +80,8 @@ namespace citty::graphics {
         void enableAttrib(unsigned int attributeIndex);
 
         void disableAttrib(unsigned int attributeIndex);
+
+        void draw(DrawMode drawMode, int indicesCount, int indicesOffset = 0);
 
         void drawElementsInstanced(DrawMode mode, int elementCount, int instanceCount,
                                    unsigned int indicesOffset = 0,
