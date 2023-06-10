@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "../../../citty-debug/libboost-hana-1.78.0/include/boost/hana/tuple.hpp"
-#include "../../../citty-debug/libboost-hana-1.78.0/include/boost/hana/integral_constant.hpp"
+#include <boost/hana/tuple.hpp>
+#include <boost/hana/integral_constant.hpp>
 #include <cstddef>
 #include <iostream>
 
