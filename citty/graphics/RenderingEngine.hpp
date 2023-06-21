@@ -97,6 +97,9 @@ namespace citty::graphics {
         Eigen::Affine3f view{};
         Eigen::Projective3f projection{};
 
+
+        int defaultFramebuffer = 0;
+
         // Lights
         unsigned int pointLightCount = 0;
         std::shared_ptr<Buffer<PointLightEntity>> pointLightsBuffer = std::make_shared<Buffer<PointLightEntity>>(

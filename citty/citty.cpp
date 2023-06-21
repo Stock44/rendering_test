@@ -5,6 +5,8 @@
 #include <gtkmm-4.0/gtkmm.h>
 #include <citty/engine/components/Transform.hpp>
 #include <citty/graphics/components/PointLight.hpp>
+#include <chrono>
+
 
 int main(int argc, char *argv[]) {
     using namespace citty;
@@ -23,6 +25,7 @@ int main(int argc, char *argv[]) {
 
     auto renderingSystem = engine.addSystem<graphics::RenderingSystem>(glArea);
 
+    using std::chrono::steady_clock;
     app->signal_activate().connect(
             [&app, &builder, glArea]() {
                 auto mainWindow = builder->get_widget<Gtk::Window>("main_window");
@@ -31,11 +34,11 @@ int main(int argc, char *argv[]) {
 
                 mainWindow->show();
 
-                mainWindow->get_frame_clock()->signal_paint().connect([glArea]() {
+                mainWindow->get_frame_clock()->signal_paint().connect([mainWindow, glArea]() {
+                    double fps = mainWindow->get_frame_clock()->get_fps();
+                    std::cout << fps << " fps\n";
                     glArea->queue_draw();
                 });
-
-
             });
 
 //    engine.registerSystem(std::make_unique<input::InputSystem>(window));
@@ -165,7 +168,8 @@ int main(int argc, char *argv[]) {
                 auto startTime = std::chrono::steady_clock::now();
                 while (!stopToken.stop_requested()) {
                     auto currentTime = std::chrono::steady_clock::now();
-                    auto deltaTime = duration_cast<std::chrono::duration<float, std::milli>>(currentTime - startTime).count();
+                    auto deltaTime = duration_cast<std::chrono::duration<float, std::milli>>(
+                            currentTime - startTime).count();
                     startTime = currentTime;
 
                     engine.update();

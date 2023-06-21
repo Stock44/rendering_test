@@ -16,6 +16,7 @@ namespace citty::graphics {
         glEnable(GL_CULL_FACE);
         glEnable(GL_MULTISAMPLE);
 
+
         // initialize shaders
         ShaderProgramBuilder depthShaderBuilder;
         depthShaderBuilder.addShader({"shaders/depth.vsh", ShaderType::VERTEX});
@@ -157,10 +158,8 @@ namespace citty::graphics {
     }
 
     void RenderingEngine::render() {
-        int defaultFramebuffer;
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, &defaultFramebuffer);
         if (renderCommands.empty()) {
-            glFlush();
             return;
         }
 
@@ -177,10 +176,10 @@ namespace citty::graphics {
         lightCullingShaderProgram.setUniform("lightCount", pointLightCount);
         lightCullingShaderProgram.setUniform("projection", projection.matrix());
         lightCullingShaderProgram.setUniform("view", view.matrix());
-
+//
         depthTexture->bindToTextureUnit(4);
         lightCullingShaderProgram.setUniform("depthMap", 4);
-
+//
         pointLightsBuffer->bindToTarget(0, BufferTarget::SHADER_STORAGE_BUFFER);
         visiblePointLightIndexBuffer->bindToTarget(1, BufferTarget::SHADER_STORAGE_BUFFER);
 
@@ -205,8 +204,6 @@ namespace citty::graphics {
 //        hdrShaderProgram.setUniform("hdrBuffer", 0);
 //        hdrShaderProgram.setUniform("exposure", 1.0f);
 //        hdrQuadVAO.draw(DrawMode::TRIANGLE_STRIP, 4);
-
-        glFlush();
     }
 
     void RenderingEngine::setGraphicsEntities(std::span<GraphicsEntity> graphicsEntities) {

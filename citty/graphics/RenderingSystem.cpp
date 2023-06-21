@@ -27,7 +27,7 @@ namespace citty::graphics {
                     perspectiveProjection(90.0f, static_cast<float>(1920) / static_cast<float>(1080), 5.0f, 50.0f));
         });
 
-        glArea->signal_render().connect([this](Glib::RefPtr <Gdk::GLContext> const &glContext) {
+        glArea->signal_render().connect([this](Glib::RefPtr<Gdk::GLContext> const &glContext) {
             render();
 
             return true;
@@ -142,19 +142,11 @@ namespace citty::graphics {
     }
 
     void RenderingSystem::handleGraphicsEntities() {
-        auto [transforms, graphics] = getComponents<engine::Transform, Graphics>();
-
-        auto transformIt = transforms.begin();
-        auto transformsEnd = transforms.end();
-        auto graphicsIt = graphics.begin();
-        auto graphicsEnd = graphics.end();
+        auto components = getComponents<engine::Transform, Graphics>();
 
         std::scoped_lock lock{graphicEntityMutex};
         graphicEntities.clear();
-        while (transformIt != transformsEnd && graphicsIt != graphicsEnd) {
-            auto &transform = *transformIt;
-            auto &graphic = *graphicsIt;
-
+        for (auto const &[transform, graphic]: components) {
             Eigen::Affine3f transformMatrix;
 
             if (transform.parent) {
@@ -183,10 +175,6 @@ namespace citty::graphics {
                                   Eigen::AlignedScaling3f{transform.scale};
             }
             graphicEntities.emplace_back(transformMatrix, graphic.material, graphic.mesh);
-
-            transformIt++;
-            graphicsIt++;
-
         }
     }
 
@@ -267,7 +255,7 @@ namespace citty::graphics {
             for (auto &graphics: node->graphics) {
                 auto childEntity = newEntity();
                 childEntity.addComponent<engine::Transform>();
-                auto &childTransform = childEntity.getComponent<engine::Transform>();
+                engine::Transform &childTransform = childEntity.getComponent<engine::Transform>();
                 childTransform.parent = entity;
                 childEntity.addComponent<Graphics>(graphics);
             }
@@ -354,23 +342,12 @@ namespace citty::graphics {
     }
 
     void RenderingSystem::handlePointLightEntities() {
-        auto [transforms, pointLights] = getComponents<engine::Transform, PointLight>();
-
-        auto transformIt = transforms.begin();
-        auto transformsEnd = transforms.end();
-        auto pointLightsIt = pointLights.begin();
-        auto pointLightsEnd = pointLights.end();
+        auto components = getComponents<engine::Transform, PointLight>();
 
         std::scoped_lock lock{pointLightMutex};
         pointLightEntities.clear();
-        while (transformIt != transformsEnd && pointLightsIt != pointLightsEnd) {
-            auto &transform = *transformIt;
-            auto &pointLight = *pointLightsIt;
-
+        for (auto const &[transform, pointLight]: components) {
             pointLightEntities.emplace_back(transform.position, pointLight.color, pointLight.radius);
-
-            transformIt++;
-            pointLightsIt++;
         }
     }
 }

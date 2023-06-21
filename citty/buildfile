@@ -9,12 +9,11 @@ import libs = \
     gtkmm-4.0%lib{gtkmm} \
     assimp%lib{assimp} \
 
-import testlibs = \
-    catch2%lib{catch2} \
-    catch2%lib{catch2wmain}
+import catch2 = \
+    catch2%liba{catch2wmain}
 
-exe{citty}: {hxx h cxx c}{** -**.test.cpp} $libs
-//exe{tests}: {hxx h cxx c}{** -main.cpp} $libs $testlibs
-//exe{tests}: test = true
+exe{citty}: {hxx cxx}{** -**.test.cpp} $libs
+
+exe{tests}: {hxx cxx}{** -citty.cpp} $libs $catch2
 
 cc.poptions =+ "-I$out_root" "-I$src_root"

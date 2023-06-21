@@ -10,6 +10,7 @@
 #include <citty/engine/ArchetypeRecord.hpp>
 #include <citty/engine/ArchetypeGraph.hpp>
 #include <boost/hana.hpp>
+#include <ranges>
 #include <citty/engine/HanaTupleDestructure.hpp>
 
 namespace citty::engine {
@@ -129,11 +130,12 @@ namespace citty::engine {
             using boost::hana::make_tuple;
             using boost::hana::type_c;
             using boost::hana::transform;
-            using boost::hana::prepend;
+            using boost::hana::unpack;
 
             using std::ranges::ref_view;
             using std::ranges::owning_view;
             using std::views::join;
+            using std::ranges::zip_view;
 
             ArchetypeFlyweight archetype = makeArchetype<ComponentTypes...>();
             auto supersets = archetypeGraph.getSupersets(archetype);
@@ -157,8 +159,9 @@ namespace citty::engine {
                                                     return owning_view(std::move(componentContainers)) | join;
                                                 });
 
-
-            return completeContainers;
+            return unpack(completeContainers, [](auto &... views) {
+                return zip_view(owning_view(std::move(views))...);
+            });
         }
 
     private:
