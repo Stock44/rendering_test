@@ -4,7 +4,7 @@ version: 0.1.0
 summary: citty
 license: other: TODO
 
-requires: c++20
+requires: c++23
 requires: gtkmm-4.0 ^4.8.0
 requires: libepoxy ^1.5.10
 requires: assimp ^5.2.0
