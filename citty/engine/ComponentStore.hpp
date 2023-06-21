@@ -11,7 +11,6 @@
 #include <citty/engine/ArchetypeGraph.hpp>
 #include <boost/hana.hpp>
 #include <ranges>
-#include <citty/engine/HanaTupleDestructure.hpp>
 
 namespace citty::engine {
     class ComponentStore {

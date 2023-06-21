@@ -5,7 +5,7 @@
 #include <gtkmm-4.0/gtkmm.h>
 #include <citty/engine/components/Transform.hpp>
 #include <citty/graphics/components/PointLight.hpp>
-#include <chrono>
+#include <iostream>
 
 
 int main(int argc, char *argv[]) {
