@@ -1,4 +1,4 @@
-#version 460 core
+#version 450 core
 
 in VERTEX_OUT{
     vec3 fragmentPosition;
@@ -9,8 +9,8 @@ in VERTEX_OUT{
 } fragment_in;
 
 struct PointLight {
-    vec3 position;
-    vec3 color;
+    vec4 position;
+    vec4 color;
     float radius;
 };
 
@@ -51,6 +51,12 @@ void main() {
 
 //    // Get color and normal components from texture maps
     vec4 base_diffuse = vec4(diffuse, 1.0f) * texture(diffuseMap, fragment_in.textureCoordinates);
+
+    // Use the mask to discard any fragments that are transparent
+    if (base_diffuse.a <= 0.2) {
+        discard;
+    }
+
     vec4 base_specular = vec4(specular, 1.0f) * texture(specularMap, fragment_in.textureCoordinates);
     vec3 normal = texture(normalMap, fragment_in.textureCoordinates).rgb;
     normal = normalize(normal * 2.0 - 1.0);
@@ -66,8 +72,8 @@ void main() {
         uint lightIndex = visibleLightIndicesBuffer.indices[offset + i];
         PointLight light = lightBuffer.lights[lightIndex];
 
-        vec4 lightColor = vec4(light.color, 1.0);
-        vec3 tangentLightPosition = fragment_in.TBN * light.position;
+        vec4 lightColor = light.color;
+        vec3 tangentLightPosition = fragment_in.TBN * light.position.xyz;
         float lightRadius = light.radius;
 
 //         Calculate the light attenuation on the pre-normalized lightDirection
@@ -94,10 +100,7 @@ void main() {
 
     color.rgb += base_diffuse.rgb * 0.08;
 
-    // Use the mask to discard any fragments that are transparent
-    if (base_diffuse.a <= 0.2) {
-        discard;
-    }
+
 
     fragColor = color;
 }

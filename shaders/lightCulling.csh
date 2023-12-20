@@ -1,8 +1,8 @@
-#version 460 core
+#version 450 core
 
 struct PointLight {
-    vec3 position;
-    vec3 color;
+    vec4 position;
+    vec4 color;
     float radius;
 };
 
@@ -113,7 +113,7 @@ void main() {
             break;
         }
 
-        vec4 position = vec4(lightBuffer.lights[lightIndex].position, 1.0);
+        vec4 position = lightBuffer.lights[lightIndex].position;
         float radius = lightBuffer.lights[lightIndex].radius;
 
         // We check if the light exists in our frustum

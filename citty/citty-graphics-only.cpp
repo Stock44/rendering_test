@@ -6,40 +6,46 @@
 #include <citty/engine/components/Transform.hpp>
 #include <citty/graphics/components/PointLight.hpp>
 #include <iostream>
+#include <epoxy/gl.h>
+#include <GLFW/glfw3.h>
+#include "citty/graphics/GLFWRenderingSystem.hpp"
 
 
 int main(int argc, char *argv[]) {
     using namespace citty;
 
-    Glib::init();
 
-    auto app = Gtk::Application::create("org.hiram.citty.main");
+    if (!glfwInit()) return -1;
 
-    auto builder = Gtk::Builder::create_from_file("citty.ui");
+    GLFWwindow *window = glfwCreateWindow(640, 480, "citty", nullptr, nullptr);
 
-    auto glArea = builder->get_widget<Gtk::GLArea>("gl_area");
+    if (!window) {
+        glfwTerminate();
+        return 1;
+    }
 
     engine::Engine engine;
     auto &entityStore = engine.getEntityStore();
     auto &componentStore = engine.getComponentStore();
 
-    auto renderingSystem = engine.addSystem<graphics::RenderingSystem>(glArea);
+    auto renderingSystem = engine.addSystem<graphics::GLFWRenderingSystem>(window);
 
-    using std::chrono::steady_clock;
-    app->signal_activate().connect(
-            [&app, &builder, glArea]() {
-                auto mainWindow = builder->get_widget<Gtk::Window>("main_window");
 
-                app->add_window(*mainWindow);
-
-                mainWindow->show();
-
-                mainWindow->get_frame_clock()->signal_paint().connect([mainWindow, glArea]() {
-                    double fps = mainWindow->get_frame_clock()->get_fps();
-                    std::cout << fps << " fps\n";
-                    glArea->queue_draw();
-                });
-            });
+//    using std::chrono::steady_clock;
+//    app->signal_activate().connect(
+//            [&app, &builder, glArea]() {
+//                auto mainWindow = builder->get_widget<Gtk::Window>("main_window");
+//
+//                app->add_window(*mainWindow);
+//
+//                mainWindow->show();
+//
+//                mainWindow->get_frame_clock()->signal_paint().connect([mainWindow, glArea]() {
+//                    double fps = mainWindow->get_frame_clock()->get_fps();
+//                    std::cout << fps << " fps\n";
+//                    glArea->queue_draw();
+//                });
+//            });
 
 //    engine.registerSystem(std::make_unique<input::InputSystem>(window));
 //    engine.registerSystem(std::make_unique<map::MapRenderingSystem>());
@@ -157,13 +163,13 @@ int main(int argc, char *argv[]) {
                 auto modelEntity = renderingSystem->buildModelInstance(model);
                 modelEntity.getComponent<engine::Transform>().position = {10.0f, -3.0f, 0.0f};
 
-//                auto pointLightEntity = engine::Entity{entityStore.newEntityId(), componentStore};
-//                pointLightEntity.addComponent<engine::Transform>(
-//                        Eigen::Quaternionf::Identity(),
-//                        Eigen::Vector3f{7.0f, 0.0f, 0.0f},
-//                        Eigen::Vector3f::Identity()
-//                );
-//                pointLightEntity.addComponent<graphics::PointLight>(Eigen::Vector3f(1.0f, 1.0f, 1.0f), 20.0f);
+                auto pointLightEntity = engine::Entity{entityStore.newEntityId(), componentStore};
+                pointLightEntity.addComponent<engine::Transform>(
+                        Eigen::Quaternionf::Identity(),
+                        Eigen::Vector3f{7.0f, 0.0f, 0.0f},
+                        Eigen::Vector3f::Identity()
+                );
+                pointLightEntity.addComponent<graphics::PointLight>(Eigen::Vector3f(1.0f, 1.0f, 1.0f), 20.0f);
 
                 auto startTime = std::chrono::steady_clock::now();
                 while (!stopToken.stop_requested()) {
@@ -181,7 +187,8 @@ int main(int argc, char *argv[]) {
                 }
             });
 
-    return app->run(argc, argv);
+    renderingSystem->start();
+    return 0;
 
 //
 //    while (!window.shouldWindowClose()) {

@@ -8,8 +8,8 @@
 
 namespace citty::graphics {
     struct PointLightEntity {
-        Eigen::Vector3f position;
-        Eigen::Vector3f color;
+        Eigen::Vector4f position;
+        Eigen::Vector4f color;
         float radius;
     };
 }

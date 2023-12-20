@@ -12,7 +12,12 @@ import libs = \
 import catch2 = \
     catch2%liba{catch2wmain}
 
-exe{citty}: {hxx cxx}{** -**.test.cpp} $libs
+import glfw = \
+    glfw%lib{glfw}
+
+exe{citty}: {hxx cxx}{** -citty-graphics-only.cpp -**.test.cpp} $libs $glfw
+
+exe{citty-graphics-only}: {hxx cxx}{** -citty.cpp -**.test.cpp} $libs $glfw
 
 exe{tests}: {hxx cxx}{** -citty.cpp} $libs $catch2
 

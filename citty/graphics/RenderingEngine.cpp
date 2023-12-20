@@ -130,6 +130,7 @@ namespace citty::graphics {
         lightCullingWorkgroupsX = (width + (width % 16)) / 16;
         lightCullingWorkgroupsY = (height + (height % 16)) / 16;
         numberOfTiles = lightCullingWorkgroupsY * lightCullingWorkgroupsY;
+        visiblePointLightIndexBuffer->reallocate(1024 * numberOfTiles, BufferUsage::STREAM_DRAW);
         lightCullingShaderProgram.setUniform("screenSize", width, height);
 
         lightAccumulationShaderProgram.setUniform("numberOfTilesX", lightCullingWorkgroupsX);
@@ -162,6 +163,7 @@ namespace citty::graphics {
         if (renderCommands.empty()) {
             return;
         }
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         depthShaderProgram.use();
         depthShaderProgram.setUniform("projection", projection.matrix());
@@ -176,10 +178,10 @@ namespace citty::graphics {
         lightCullingShaderProgram.setUniform("lightCount", pointLightCount);
         lightCullingShaderProgram.setUniform("projection", projection.matrix());
         lightCullingShaderProgram.setUniform("view", view.matrix());
-//
+
         depthTexture->bindToTextureUnit(4);
         lightCullingShaderProgram.setUniform("depthMap", 4);
-//
+
         pointLightsBuffer->bindToTarget(0, BufferTarget::SHADER_STORAGE_BUFFER);
         visiblePointLightIndexBuffer->bindToTarget(1, BufferTarget::SHADER_STORAGE_BUFFER);
 
@@ -188,12 +190,13 @@ namespace citty::graphics {
         Texture::unbindTextureUnit(4);
 
 //        hdrFramebuffer.bind();
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         lightAccumulationShaderProgram.use();
         lightAccumulationShaderProgram.setUniform("projection", projection.matrix());
         lightAccumulationShaderProgram.setUniform("view", view.matrix());
         lightAccumulationShaderProgram.setUniform("viewPosition", viewPosition);
+        pointLightsBuffer->bindToTarget(0, BufferTarget::SHADER_STORAGE_BUFFER);
+        visiblePointLightIndexBuffer->bindToTarget(1, BufferTarget::SHADER_STORAGE_BUFFER);
 
         issueDrawCommands();
 //        Framebuffer::unbind();

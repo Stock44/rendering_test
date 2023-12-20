@@ -5,7 +5,7 @@
 #include <iterator>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
-#include <citty/graphics/RenderingSystem.hpp>
+#include <citty/graphics/GLFWRenderingSystem.hpp>
 #include <citty/engine/components/Transform.hpp>
 #include <citty/graphics/ShaderProgramBuilder.hpp>
 #include <citty/graphics/Math.hpp>
@@ -15,44 +15,41 @@
 
 
 namespace citty::graphics {
-    RenderingSystem::RenderingSystem(Gtk::GLArea *glArea) {
-        glArea->set_has_depth_buffer(true);
+    GLFWRenderingSystem::GLFWRenderingSystem(GLFWwindow *window) : window(window) {
+        glfwSetWindowUserPointer(window, this);
 
-        glArea->signal_realize().connect([this, glArea]() {
-            glArea->make_current();
-            renderingEngine = std::make_unique<RenderingEngine>();
-            renderingEngine->setViewpoint({0.0f, 0.0f, 0.0f},
-                                          Eigen::Quaternionf::Identity());
-            renderingEngine->setViewportDimensions(1920, 1080);
-            renderingEngine->setProjection(
-                    perspectiveProjection(90.0f, static_cast<float>(1920) / static_cast<float>(1080), 5.0f, 50.0f));
-        });
+        glfwSetFramebufferSizeCallback(window, GLFWRenderingSystem::windowChangeHandler);
 
-        glArea->signal_render().connect([this](Glib::RefPtr<Gdk::GLContext> const &glContext) {
-            render();
+        glfwMakeContextCurrent(window);
 
-            return true;
-        }, false);
-
-        glArea->signal_resize().connect([this](int width, int height) {
-            renderingEngine->setViewportDimensions(width, height);
-            renderingEngine->setProjection(
-                    perspectiveProjection(45.0f, static_cast<float>(width) / static_cast<float>(height), 0.0f, 100.0f));
-        });
-
+        renderingEngine = std::make_unique<RenderingEngine>();
+        renderingEngine->setViewpoint({0.0f, 0.0f, 0.0f},
+                                      Eigen::Quaternionf::Identity());
+        renderingEngine->setViewportDimensions(1920, 1080);
+        renderingEngine->setProjection(
+                perspectiveProjection(90.0f, static_cast<float>(1920) / static_cast<float>(1080), 5.0f, 50.0f));
     }
 
-    void RenderingSystem::init() {
+    void GLFWRenderingSystem::start() {
+        glfwMakeContextCurrent(window);
+        while (!glfwWindowShouldClose(window)) {
+            render();
+            glfwSwapBuffers(window);
+            glfwPollEvents();
+        }
+    }
+
+    void GLFWRenderingSystem::init() {
         emptyTextureId = loadTexture("resources/no_texture.png",
                                      graphics::TextureSettings{});
     }
 
-    void RenderingSystem::update() {
+    void GLFWRenderingSystem::update() {
         handleGraphicsEntities();
         handlePointLightEntities();
     }
 
-    void RenderingSystem::render() {
+    void GLFWRenderingSystem::render() {
         processLoadingQueues();
 
         uploadGraphicsEntities();
@@ -61,7 +58,7 @@ namespace citty::graphics {
         renderingEngine->render();
     }
 
-    void RenderingSystem::uploadGraphicsEntities() {
+    void GLFWRenderingSystem::uploadGraphicsEntities() {
         using namespace std::chrono_literals;
         if (!graphicEntityMutex.try_lock_for(50ms)) {
             return;
@@ -70,7 +67,7 @@ namespace citty::graphics {
         renderingEngine->setGraphicsEntities(graphicEntities);
     }
 
-    void RenderingSystem::uploadPointLightEntities() {
+    void GLFWRenderingSystem::uploadPointLightEntities() {
         using namespace std::chrono_literals;
         if (!pointLightMutex.try_lock_for(50ms)) {
             return;
@@ -79,7 +76,7 @@ namespace citty::graphics {
         renderingEngine->setPointLightEntities(pointLightEntities);
     }
 
-    void RenderingSystem::processLoadingQueues() {
+    void GLFWRenderingSystem::processLoadingQueues() {
         while (!textureLoadQueue.empty()) {
             std::scoped_lock lock{loadMutex};
             auto &[idPromise, texturePath, textureSettings] = textureLoadQueue.front();
@@ -106,7 +103,7 @@ namespace citty::graphics {
         }
     }
 
-    std::size_t RenderingSystem::loadTexture(std::filesystem::path const &texturePath, TextureSettings settings) {
+    std::size_t GLFWRenderingSystem::loadTexture(std::filesystem::path const &texturePath, TextureSettings settings) {
         if (loadedTextures.contains(texturePath)) {
             return loadedTextures.at(texturePath);
         }
@@ -122,7 +119,7 @@ namespace citty::graphics {
         return textureId;
     }
 
-    std::size_t RenderingSystem::loadMaterial(Material const &material) {
+    std::size_t GLFWRenderingSystem::loadMaterial(Material const &material) {
         std::promise<std::size_t> idPromise;
         auto idFuture = idPromise.get_future();
         {
@@ -132,7 +129,7 @@ namespace citty::graphics {
         return idFuture.get();
     }
 
-    std::size_t RenderingSystem::loadMesh(Mesh const &mesh) {
+    std::size_t GLFWRenderingSystem::loadMesh(Mesh const &mesh) {
         std::promise<std::size_t> idPromise;
         auto idFuture = idPromise.get_future();
         {
@@ -142,7 +139,7 @@ namespace citty::graphics {
         return idFuture.get();
     }
 
-    void RenderingSystem::handleGraphicsEntities() {
+    void GLFWRenderingSystem::handleGraphicsEntities() {
         auto components = getComponents<engine::Transform, Graphics>();
 
         std::scoped_lock lock{graphicEntityMutex};
@@ -180,10 +177,11 @@ namespace citty::graphics {
         });
     }
 
-    std::size_t RenderingSystem::loadModel(std::filesystem::path const &modelPath) {
+    std::size_t GLFWRenderingSystem::loadModel(std::filesystem::path const &modelPath) {
         Assimp::Importer importer;
         aiScene const *scene = importer.ReadFile(modelPath.c_str(),
-                                                 aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs |
+                                                 aiProcess_Triangulate | aiProcess_GenSmoothNormals |
+                                                 aiProcess_FlipUVs |
                                                  aiProcess_JoinIdenticalVertices | aiProcess_FixInfacingNormals |
                                                  aiProcess_CalcTangentSpace);
 
@@ -243,7 +241,7 @@ namespace citty::graphics {
         return models.size() - 1;
     }
 
-    engine::Entity RenderingSystem::buildModelInstance(std::size_t modelId) {
+    engine::Entity GLFWRenderingSystem::buildModelInstance(std::size_t modelId) {
         auto rootEntity = newEntity();
         auto &rootNode = models.at(modelId);
 
@@ -275,7 +273,7 @@ namespace citty::graphics {
         return rootEntity;
     }
 
-    std::optional<std::size_t> RenderingSystem::loadAssimpTexture(aiMaterial *material, aiTextureType textureType) {
+    std::optional<std::size_t> GLFWRenderingSystem::loadAssimpTexture(aiMaterial *material, aiTextureType textureType) {
         if (material->GetTextureCount(textureType) > 0) {
             aiString str;
             material->GetTexture(textureType, 0, &str);
@@ -285,7 +283,7 @@ namespace citty::graphics {
         return {};
     }
 
-    std::size_t RenderingSystem::loadAssimpMaterial(aiMaterial *assimpMaterial) {
+    std::size_t GLFWRenderingSystem::loadAssimpMaterial(aiMaterial *assimpMaterial) {
         aiColor3D diffuseColor;
         aiColor3D specularColor;
         assimpMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
@@ -311,7 +309,7 @@ namespace citty::graphics {
         return materialId;
     }
 
-    std::size_t RenderingSystem::loadAssimpMesh(aiMesh *assimpMesh) {
+    std::size_t GLFWRenderingSystem::loadAssimpMesh(aiMesh *assimpMesh) {
         Mesh mesh;
 
         for (std::size_t vertexId = 0; vertexId < assimpMesh->mNumVertices; vertexId++) {
@@ -344,7 +342,7 @@ namespace citty::graphics {
         return loadMesh(mesh);
     }
 
-    void RenderingSystem::handlePointLightEntities() {
+    void GLFWRenderingSystem::handlePointLightEntities() {
         auto components = getComponents<engine::Transform, PointLight>();
 
         std::scoped_lock lock{pointLightMutex};
@@ -356,6 +354,16 @@ namespace citty::graphics {
             pointLightEntities.emplace_back(position,
                                             color, pointLight.radius);
         }
+    }
+
+    void GLFWRenderingSystem::onWindowSizeChange(int width, int height) {
+        renderingEngine->setViewportDimensions(width, height);
+        renderingEngine->setProjection(
+                perspectiveProjection(45.0f, static_cast<float>(width) / static_cast<float>(height), 0.0f, 100.0f));
+    }
+
+    void GLFWRenderingSystem::windowChangeHandler(GLFWwindow *window, int width, int height) {
+        static_cast<GLFWRenderingSystem *>(glfwGetWindowUserPointer(window))->onWindowSizeChange(width, height);
     }
 }
 

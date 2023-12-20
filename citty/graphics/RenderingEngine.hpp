@@ -103,9 +103,9 @@ namespace citty::graphics {
         // Lights
         unsigned int pointLightCount = 0;
         std::shared_ptr<Buffer<PointLightEntity>> pointLightsBuffer = std::make_shared<Buffer<PointLightEntity>>(
-                BufferUsage::STREAM_DRAW);
+                BufferUsage::STREAM_DRAW, 0);
         std::shared_ptr<Buffer<int>> visiblePointLightIndexBuffer = std::make_shared<Buffer<int>>(
-                BufferUsage::STREAM_DRAW);
+                BufferUsage::STREAM_DRAW, 0);
 
         // Depth
         Framebuffer depthFramebuffer;
