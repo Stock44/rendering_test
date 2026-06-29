@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
     Eigen::Vector3f rotation{0.0f, 1.0f, 0.0f};
     rotation.normalize();
     auto emptyTextureId = renderingSystem->loadTexture(
-        "resources/no_texture.png", graphics::TextureSettings{});
+        "assets/no_texture.png", graphics::TextureSettings{});
     graphics::Material testMaterial{Eigen::Vector3f{1.0f, 1.0f, 1.0f},
                                     Eigen::Vector3f{1.0f, 1.0f, 1.0f},
                                     emptyTextureId,
