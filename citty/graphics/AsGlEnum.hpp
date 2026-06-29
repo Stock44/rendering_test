@@ -8,9 +8,7 @@
 #include <type_traits>
 
 namespace citty::graphics {
-    template<typename T>
-    GLenum asGlEnum(T type) {
-        return static_cast<std::underlying_type_t<T>>(type);
-    }
+template <typename T> GLenum asGlEnum(T type) {
+  return static_cast<std::underlying_type_t<T>>(type);
 }
-
+} // namespace citty::graphics

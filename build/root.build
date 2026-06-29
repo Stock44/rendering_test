@@ -1,9 +1,0 @@
-cxx.std = latest
-cxx.internal.scope = current
-
-using cxx
-
-hxx{*}: extension = hpp
-cxx{*}: extension = cpp
-
-hxx{*}: cxx.importable = true

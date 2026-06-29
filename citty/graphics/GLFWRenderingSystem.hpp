@@ -5,91 +5,117 @@
 #pragma once
 
 #include <epoxy/gl.h>
+
 #include <GLFW/glfw3.h>
+#include <assimp/material.h>
+#include <assimp/mesh.h>
+#include <assimp/texture.h>
 #include <citty/engine/System.hpp>
-#include <citty/graphics/components/Camera.hpp>
-#include <citty/graphics/components/Graphics.hpp>
 #include <citty/graphics/Buffer.hpp>
-#include <citty/graphics/VertexArray.hpp>
+#include <citty/graphics/Model.hpp>
+#include <citty/graphics/RenderingEngine.hpp>
 #include <citty/graphics/Shader.hpp>
 #include <citty/graphics/ShaderProgram.hpp>
-#include <citty/graphics/Model.hpp>
-#include <mutex>
-#include <citty/graphics/RenderingEngine.hpp>
+#include <citty/graphics/VertexArray.hpp>
+#include <citty/graphics/components/Camera.hpp>
+#include <citty/graphics/components/Graphics.hpp>
 #include <cmath>
-#include <numbers>
-#include <future>
-#include <assimp/mesh.h>
-#include <assimp/material.h>
-#include <assimp/texture.h>
 #include <filesystem>
-#include "RenderingSystem.hpp"
+#include <future>
+#include <mutex>
+#include <numbers>
 
 namespace citty::graphics {
-    class GLFWRenderingSystem : public engine::System {
-    public:
-        explicit GLFWRenderingSystem(GLFWwindow *window);
 
-        void init() override;
+struct CanonicalPathHash {
+  std::hash<std::string> hasher{};
 
-        void update() override;
+  /**
+   * Obtains the hash for a given path by hashing its canonical representation.
+   * @param path the path to hash
+   * @return the hash value
+   */
+  std::size_t operator()(std::filesystem::path const &path) const {
+    return hasher(std::filesystem::canonical(path).string());
+  }
+};
 
-        void render();
+struct EquivalentPathComparison {
+  bool operator()(std::filesystem::path const &lhs,
+                  std::filesystem::path const &rhs) const {
+    return std::filesystem::equivalent(lhs, rhs);
+  }
+};
 
-        std::size_t loadTexture(std::filesystem::path const &texturePath, TextureSettings settings);
+class GLFWRenderingSystem : public engine::System {
+public:
+  explicit GLFWRenderingSystem(GLFWwindow *window);
 
-        std::size_t loadMaterial(Material const &material);
+  void init() override;
 
-        std::size_t loadMesh(Mesh const &mesh);
+  void update() override;
 
-        std::size_t loadModel(std::filesystem::path const &modelPath);
+  void render();
 
-        engine::Entity buildModelInstance(std::size_t modelId);
+  std::size_t loadTexture(std::filesystem::path const &texturePath,
+                          TextureSettings settings);
 
-        void handleGraphicsEntities();
+  std::size_t loadMaterial(Material const &material);
 
-        void handlePointLightEntities();
+  std::size_t loadMesh(Mesh const &mesh);
 
-        void start();
+  std::size_t loadModel(std::filesystem::path const &modelPath);
 
-        static void windowChangeHandler(GLFWwindow *window, int width, int height);
+  engine::Entity buildModelInstance(std::size_t modelId);
 
-        void onWindowSizeChange(int width, int height);
+  void handleGraphicsEntities();
 
-    private:
+  void handlePointLightEntities();
 
-        void uploadGraphicsEntities();
+  void start();
 
-        void uploadPointLightEntities();
+  static void windowChangeHandler(GLFWwindow *window, int width, int height);
 
-        void processLoadingQueues();
+  void onWindowSizeChange(int width, int height);
 
-        std::optional<std::size_t> loadAssimpTexture(aiMaterial *assimpMaterial, aiTextureType textureType);
+private:
+  void uploadGraphicsEntities();
 
-        std::size_t loadAssimpMaterial(aiMaterial *assimpMaterial);
+  void uploadPointLightEntities();
 
-        std::size_t loadAssimpMesh(aiMesh *assimpMesh);
+  void processLoadingQueues();
 
-        std::unique_ptr<RenderingEngine> renderingEngine = nullptr;
+  std::optional<std::size_t> loadAssimpTexture(aiMaterial *assimpMaterial,
+                                               aiTextureType textureType);
 
-        std::vector<GraphicsEntity> graphicEntities;
-        std::timed_mutex graphicEntityMutex;
+  std::size_t loadAssimpMaterial(aiMaterial *assimpMaterial);
 
-        std::vector<PointLightEntity> pointLightEntities;
-        std::timed_mutex pointLightMutex;
+  std::size_t loadAssimpMesh(aiMesh *assimpMesh);
 
-        std::unordered_map<std::filesystem::path, std::size_t, CanonicalPathHash, EquivalentPathComparison> loadedTextures;
+  std::unique_ptr<RenderingEngine> renderingEngine = nullptr;
 
-        std::queue<std::tuple<std::promise<std::size_t>, std::filesystem::path, TextureSettings>> textureLoadQueue;
-        std::queue<std::pair<std::promise<std::size_t>, Material>> materialLoadQueue;
-        std::queue<std::pair<std::promise<std::size_t>, Mesh>> meshLoadQueue;
-        std::mutex loadMutex;
+  std::vector<GraphicsEntity> graphicEntities;
+  std::timed_mutex graphicEntityMutex;
 
-        std::vector<Model> models;
+  std::vector<PointLightEntity> pointLightEntities;
+  std::timed_mutex pointLightMutex;
 
-        GLFWwindow *window;
+  std::unordered_map<std::filesystem::path, std::size_t, CanonicalPathHash,
+                     EquivalentPathComparison>
+      loadedTextures;
 
-        std::size_t emptyTextureId = 0;
-    };
+  std::queue<std::tuple<std::promise<std::size_t>, std::filesystem::path,
+                        TextureSettings>>
+      textureLoadQueue;
+  std::queue<std::pair<std::promise<std::size_t>, Material>> materialLoadQueue;
+  std::queue<std::pair<std::promise<std::size_t>, Mesh>> meshLoadQueue;
+  std::mutex loadMutex;
 
-} // graphics
+  std::vector<Model> models;
+
+  GLFWwindow *window;
+
+  std::size_t emptyTextureId = 0;
+};
+
+} // namespace citty::graphics

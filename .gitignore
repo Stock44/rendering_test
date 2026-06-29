@@ -64,3 +64,5 @@ citty/tests
 
 build/bootstrap/
 
+vcpkg_installed/
+build/
