@@ -16,10 +16,11 @@ namespace citty::graphics {
     }
 
     Texture &Texture::operator=(Texture &&other) noexcept {
-        if (name == other.name) {
+        if (this == &other) {
             return *this;
         }
 
+        glDeleteTextures(1, &name);
         name = other.name;
         other.name = 0;
         return *this;

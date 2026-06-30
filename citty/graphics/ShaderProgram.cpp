@@ -10,6 +10,7 @@ namespace citty::graphics {
 
     ShaderProgram::ShaderProgram(ShaderProgram &&other) noexcept {
         programName = other.programName;
+        uniformLocations = std::move(other.uniformLocations);
         other.programName = 0;
     }
 
@@ -19,6 +20,7 @@ namespace citty::graphics {
         }
 
         programName = other.programName;
+        uniformLocations = std::move(other.uniformLocations);
         other.programName = 0;
 
         return *this;
@@ -32,33 +34,36 @@ namespace citty::graphics {
         glUseProgram(programName);
     }
 
+    int ShaderProgram::getUniformLocation(std::string_view name) {
+        auto [it, inserted] = uniformLocations.try_emplace(std::string(name), -1);
+        if (inserted) {
+            it->second = glGetUniformLocation(programName, it->first.c_str());
+        }
+        return it->second;
+    }
+
     void ShaderProgram::setUniform(std::string_view name, int value) {
-        use();
-        glUniform1i(glGetUniformLocation(programName, name.data()), value);
+        glProgramUniform1i(programName, getUniformLocation(name), value);
         checkOpenGlErrors();
     }
 
     void ShaderProgram::setUniform(std::string_view name, float value) {
-        use();
-        glUniform1f(glGetUniformLocation(programName, name.data()), value);
+        glProgramUniform1f(programName, getUniformLocation(name), value);
         checkOpenGlErrors();
     }
 
     void ShaderProgram::setUniform(std::string_view name, Eigen::Matrix4f value, bool transpose) {
-        use();
-        glUniformMatrix4fv(glGetUniformLocation(programName, name.data()), 1, transpose, &value(0));
+        glProgramUniformMatrix4fv(programName, getUniformLocation(name), 1, transpose, &value(0));
         checkOpenGlErrors();
     }
 
     void ShaderProgram::setUniform(std::string_view name, Eigen::Vector3f value) {
-        use();
-        glUniform3fv(glGetUniformLocation(programName, name.data()), 1, &value[0]);
+        glProgramUniform3fv(programName, getUniformLocation(name), 1, &value[0]);
         checkOpenGlErrors();
     }
 
     void ShaderProgram::setUniform(std::string_view name, int first, int second) {
-        use();
-        glUniform2i(glGetUniformLocation(programName, name.data()), first, second);
+        glProgramUniform2i(programName, getUniformLocation(name), first, second);
         checkOpenGlErrors();
     }
 
@@ -69,20 +74,17 @@ namespace citty::graphics {
     }
 
     void ShaderProgram::setUniform(std::string_view name, Eigen::Vector4f value) {
-        use();
-        glUniform4fv(glGetUniformLocation(programName, name.data()), 1, &value[0]);
+        glProgramUniform4fv(programName, getUniformLocation(name), 1, &value[0]);
         checkOpenGlErrors();
     }
 
     void ShaderProgram::setUniform(std::string_view name, unsigned int first, unsigned int second) {
-        use();
-        glUniform2ui(glGetUniformLocation(programName, name.data()), first, second);
+        glProgramUniform2ui(programName, getUniformLocation(name), first, second);
         checkOpenGlErrors();
     }
 
     void ShaderProgram::setUniform(std::string_view name, unsigned int value) {
-        use();
-        glUniform1ui(glGetUniformLocation(programName, name.data()), value);
+        glProgramUniform1ui(programName, getUniformLocation(name), value);
         checkOpenGlErrors();
     }
 } // graphics

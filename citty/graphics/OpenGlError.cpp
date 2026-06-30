@@ -14,7 +14,9 @@ namespace citty::graphics {
     }
 
     void checkOpenGlErrors() {
+#ifndef NDEBUG
         auto error = glGetError();
         if (error) throw OpenGLError(error);
+#endif
     }
 } // graphics

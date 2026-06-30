@@ -11,12 +11,21 @@ namespace citty::graphics {
         glCreateFramebuffers(1, &name);
     }
 
-    Framebuffer::Framebuffer(Framebuffer &&other) noexcept: name(other.name) {
+    Framebuffer::Framebuffer(Framebuffer &&other) noexcept
+        : name(other.name), depthAttachment(std::move(other.depthAttachment)),
+          colorAttachments(std::move(other.colorAttachments)) {
         other.name = 0;
     }
 
     Framebuffer &Framebuffer::operator=(Framebuffer &&other) noexcept {
+        if (this == &other) {
+            return *this;
+        }
+
+        glDeleteFramebuffers(1, &name);
         name = other.name;
+        depthAttachment = std::move(other.depthAttachment);
+        colorAttachments = std::move(other.colorAttachments);
         other.name = 0;
         return *this;
     }

@@ -30,6 +30,7 @@ uniform sampler2D diffuseMap;
 uniform sampler2D specularMap;
 uniform sampler2D normalMap;
 uniform uint numberOfTilesX;
+uniform float shininess;
 
 out vec4 fragColor;
 
@@ -86,8 +87,7 @@ void main() {
 
 //         Calculate the diffuse and specular components of the irradiance, then irradiance, and accumulate onto color
         float diffuse = max(dot(lightDirection, normal), 0.0);
-//         How do I change the material propery for the spec exponent? is it the alpha of the spec texture?
-        float specular = pow(max(dot(normal, halfway), 0.0), 32.0);
+        float specular = pow(max(dot(normal, halfway), 0.0), shininess);
 
 //         Hacky fix to handle issue where specular light still effects scene once point light has passed into an object
         if (diffuse == 0.0) {

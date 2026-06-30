@@ -54,7 +54,7 @@ RenderingEngine::RenderingEngine() {
   hdrQuadVAO.bindBuffer(hdrQuadBuffer);
   hdrQuadVAO.configureAttrib(0, hdrQuadBuffer, 3, AttributeType::FLOAT, false,
                              0);
-  hdrQuadVAO.configureAttrib(1, hdrQuadBuffer, 2, AttributeType::FLOAT, false,
+  hdrQuadVAO.configureAttrib(4, hdrQuadBuffer, 2, AttributeType::FLOAT, false,
                              offsetof(QuadVertex, texCoords));
 
   setViewportDimensions(1, 1);
@@ -159,6 +159,8 @@ void RenderingEngine::setViewportDimensions(unsigned int width,
   depthTexture->setBorderColor({1.0f, 1.0f, 1.0f, 1.0f});
 
   depthFramebuffer.setDepthAttachment(depthTexture);
+  depthFramebuffer.setNoDrawBuffer();
+  depthFramebuffer.setNoReadBuffer();
 
   // initialize hdr framebuffer
   hdrColorTexture =
@@ -176,11 +178,9 @@ void RenderingEngine::setViewportDimensions(unsigned int width,
 }
 
 void RenderingEngine::render() {
-  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &defaultFramebuffer);
   if (renderCommands.empty()) {
     return;
   }
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   depthShaderProgram.use();
   depthShaderProgram.setUniform("projection", projection.matrix());
@@ -190,7 +190,7 @@ void RenderingEngine::render() {
   glClear(GL_DEPTH_BUFFER_BIT);
   issueDrawCommands();
 
-  glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
   lightCullingShaderProgram.use();
   lightCullingShaderProgram.setUniform("lightCount", pointLightCount);
   lightCullingShaderProgram.setUniform("projection", projection.matrix());
@@ -205,10 +205,12 @@ void RenderingEngine::render() {
 
   lightCullingShaderProgram.dispatchCompute(lightCullingWorkgroupsX,
                                             lightCullingWorkgroupsY, 1);
+  glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
   Texture::unbindTextureUnit(4);
 
-  //        hdrFramebuffer.bind();
+  hdrFramebuffer.bind();
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   lightAccumulationShaderProgram.use();
   lightAccumulationShaderProgram.setUniform("projection", projection.matrix());
@@ -219,14 +221,15 @@ void RenderingEngine::render() {
       1, BufferTarget::SHADER_STORAGE_BUFFER);
 
   issueDrawCommands();
-  //        Framebuffer::unbind();
 
-  //        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  //        hdrShaderProgram.use();
-  //        hdrColorTexture->bindToTextureUnit(0);
-  //        hdrShaderProgram.setUniform("hdrBuffer", 0);
-  //        hdrShaderProgram.setUniform("exposure", 1.0f);
-  //        hdrQuadVAO.draw(DrawMode::TRIANGLE_STRIP, 4);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  hdrShaderProgram.use();
+  hdrColorTexture->bindToTextureUnit(0);
+  hdrShaderProgram.setUniform("hdrBuffer", 0);
+  hdrShaderProgram.setUniform("exposure", 1.0f);
+  glDisable(GL_DEPTH_TEST);
+  hdrQuadVAO.draw(DrawMode::TRIANGLE_STRIP, 4);
+  glEnable(GL_DEPTH_TEST);
 }
 
 void RenderingEngine::setGraphicsEntities(
@@ -334,8 +337,6 @@ void RenderingEngine::setPointLightEntities(
   if (pointLightsBuffer->getSize() < pointLightEntities.size()) {
     pointLightsBuffer->reallocate(pointLightEntities.size() * 2,
                                   BufferUsage::STREAM_DRAW);
-    visiblePointLightIndexBuffer->reallocate(pointLightEntities.size() * 2,
-                                             BufferUsage::STREAM_DRAW);
   }
   pointLightsBuffer->setSubData(pointLightEntities);
 

@@ -39,11 +39,11 @@ GLFWRenderingSystem::GLFWRenderingSystem(GLFWwindow *window) : window(window) {
   renderingEngine->setViewportDimensions(
       static_cast<unsigned int>(framebufferWidth),
       static_cast<unsigned int>(framebufferHeight));
-  renderingEngine->setProjection(perspectiveProjection(
-      kFieldOfView,
-      static_cast<float>(framebufferWidth) /
-          static_cast<float>(framebufferHeight),
-      kNearPlane, kFarPlane));
+  renderingEngine->setProjection(
+      perspectiveProjection(kFieldOfView,
+                            static_cast<float>(framebufferWidth) /
+                                static_cast<float>(framebufferHeight),
+                            kNearPlane, kFarPlane));
 }
 
 void GLFWRenderingSystem::start() {
@@ -75,21 +75,29 @@ void GLFWRenderingSystem::render() {
 }
 
 void GLFWRenderingSystem::uploadGraphicsEntities() {
-  using namespace std::chrono_literals;
-  if (!graphicEntityMutex.try_lock_for(50ms)) {
-    return;
+  std::vector<GraphicsEntity> entitiesToUpload;
+  {
+    std::scoped_lock lock{graphicEntityMutex};
+    if (!graphicEntitiesDirty) {
+      return;
+    }
+    entitiesToUpload = std::move(graphicEntities);
+    graphicEntitiesDirty = false;
   }
-  std::lock_guard lock{graphicEntityMutex, std::adopt_lock};
-  renderingEngine->setGraphicsEntities(graphicEntities);
+  renderingEngine->setGraphicsEntities(entitiesToUpload);
 }
 
 void GLFWRenderingSystem::uploadPointLightEntities() {
-  using namespace std::chrono_literals;
-  if (!pointLightMutex.try_lock_for(50ms)) {
-    return;
+  std::vector<PointLightEntity> entitiesToUpload;
+  {
+    std::scoped_lock lock{pointLightMutex};
+    if (!pointLightEntitiesDirty) {
+      return;
+    }
+    entitiesToUpload = std::move(pointLightEntities);
+    pointLightEntitiesDirty = false;
   }
-  std::lock_guard lock{pointLightMutex, std::adopt_lock};
-  renderingEngine->setPointLightEntities(pointLightEntities);
+  renderingEngine->setPointLightEntities(entitiesToUpload);
 }
 
 void GLFWRenderingSystem::processLoadingQueues() {
@@ -153,7 +161,8 @@ GLFWRenderingSystem::loadTexture(std::filesystem::path const &texturePath,
                                  TextureSettings settings) {
   {
     std::scoped_lock lock{loadMutex};
-    if (auto it = loadedTextures.find(texturePath); it != loadedTextures.end()) {
+    if (auto it = loadedTextures.find(texturePath);
+        it != loadedTextures.end()) {
       return it->second;
     }
   }
@@ -195,11 +204,10 @@ std::size_t GLFWRenderingSystem::loadMesh(Mesh const &mesh) {
 void GLFWRenderingSystem::handleGraphicsEntities() {
   auto components = getComponents<engine::Transform, Graphics>();
 
-  std::scoped_lock lock{graphicEntityMutex};
-  graphicEntities.clear();
+  std::vector<GraphicsEntity> newGraphicEntities;
 
   std::ranges::transform(
-      components, std::back_inserter(graphicEntities), [](auto components) {
+      components, std::back_inserter(newGraphicEntities), [](auto components) {
         auto const &[transform, graphic] = components;
         Eigen::Affine3f transformMatrix;
         if (transform.parent) {
@@ -235,6 +243,10 @@ void GLFWRenderingSystem::handleGraphicsEntities() {
         }
         return GraphicsEntity{transformMatrix, graphic.material, graphic.mesh};
       });
+
+  std::scoped_lock lock{graphicEntityMutex};
+  graphicEntities = std::move(newGraphicEntities);
+  graphicEntitiesDirty = true;
 }
 
 std::size_t
@@ -264,7 +276,8 @@ GLFWRenderingSystem::loadModel(std::filesystem::path const &modelPath) {
   for (std::size_t modelMaterialId = 0; modelMaterialId < scene->mNumMaterials;
        modelMaterialId++) {
     auto assimpMaterial = scene->mMaterials[modelMaterialId];
-    auto materialId = loadAssimpMaterial(assimpMaterial, modelPath.parent_path());
+    auto materialId =
+        loadAssimpMaterial(assimpMaterial, modelPath.parent_path());
     materialIdMap.try_emplace(modelMaterialId, materialId);
   }
 
@@ -363,15 +376,21 @@ GLFWRenderingSystem::loadAssimpMaterial(aiMaterial *assimpMaterial,
                                         std::filesystem::path const &baseDir) {
   aiColor3D diffuseColor;
   aiColor3D specularColor;
+  float shininess = 32.0f;
   assimpMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
   assimpMaterial->Get(AI_MATKEY_COLOR_SPECULAR, specularColor);
+  assimpMaterial->Get(AI_MATKEY_SHININESS, shininess);
   Eigen::Vector3f diffuse{diffuseColor.r, diffuseColor.g, diffuseColor.b};
   Eigen::Vector3f specular{specularColor.r, specularColor.g, specularColor.b};
 
-  auto diffuseMap = loadAssimpTexture(assimpMaterial, aiTextureType_DIFFUSE, baseDir);
-  auto specularMap = loadAssimpTexture(assimpMaterial, aiTextureType_SPECULAR, baseDir);
-  auto heightMap = loadAssimpTexture(assimpMaterial, aiTextureType_HEIGHT, baseDir);
-  auto normalMap = loadAssimpTexture(assimpMaterial, aiTextureType_NORMALS, baseDir);
+  auto diffuseMap =
+      loadAssimpTexture(assimpMaterial, aiTextureType_DIFFUSE, baseDir);
+  auto specularMap =
+      loadAssimpTexture(assimpMaterial, aiTextureType_SPECULAR, baseDir);
+  auto heightMap =
+      loadAssimpTexture(assimpMaterial, aiTextureType_HEIGHT, baseDir);
+  auto normalMap =
+      loadAssimpTexture(assimpMaterial, aiTextureType_NORMALS, baseDir);
 
   Material material{
       diffuse,
@@ -380,6 +399,7 @@ GLFWRenderingSystem::loadAssimpMaterial(aiMaterial *assimpMaterial,
       specularMap ? specularMap.value() : emptyTextureId,
       normalMap ? normalMap.value() : emptyTextureId,
       heightMap ? heightMap.value() : emptyTextureId,
+      shininess,
   };
 
   auto materialId = loadMaterial(material);
@@ -426,14 +446,17 @@ std::size_t GLFWRenderingSystem::loadAssimpMesh(aiMesh *assimpMesh) {
 void GLFWRenderingSystem::handlePointLightEntities() {
   auto components = getComponents<engine::Transform, PointLight>();
 
-  std::scoped_lock lock{pointLightMutex};
-  pointLightEntities.clear();
+  std::vector<PointLightEntity> newPointLightEntities;
   for (auto const &[transform, pointLight] : components) {
     Eigen::Vector4f position, color;
     position << transform.position, 1.0f;
     color << pointLight.color, 1.0f;
-    pointLightEntities.emplace_back(position, color, pointLight.radius);
+    newPointLightEntities.emplace_back(position, color, pointLight.radius);
   }
+
+  std::scoped_lock lock{pointLightMutex};
+  pointLightEntities = std::move(newPointLightEntities);
+  pointLightEntitiesDirty = true;
 }
 
 void GLFWRenderingSystem::onWindowSizeChange(int width, int height) {

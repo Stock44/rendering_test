@@ -8,6 +8,8 @@
 #include <citty/graphics/Texture.hpp>
 #include <Eigen/Dense>
 #include <span>
+#include <string>
+#include <unordered_map>
 
 namespace citty::graphics {
     class ShaderProgram {
@@ -45,6 +47,9 @@ namespace citty::graphics {
         ~ShaderProgram();
 
     private:
+        int getUniformLocation(std::string_view name);
+
         unsigned int programName;
+        std::unordered_map<std::string, int> uniformLocations;
     };
 } // graphics

@@ -1,12 +1,18 @@
 #include <epoxy/gl.h>
 
 #include <GLFW/glfw3.h>
+#include <chrono>
 #include <citty/engine/Engine.hpp>
 #include <citty/engine/components/Transform.hpp>
 #include <citty/graphics/GLFWRenderingSystem.hpp>
 #include <citty/graphics/RenderingEngine.hpp>
 #include <citty/graphics/components/PointLight.hpp>
 #include <thread>
+#include <vector>
+
+namespace {
+constexpr auto kTickInterval = std::chrono::duration<float>(1.0f / 240.0f);
+} // namespace
 
 int main(int argc, char *argv[]) {
   using namespace citty;
@@ -36,29 +42,59 @@ int main(int argc, char *argv[]) {
     rotation.normalize();
 
     auto model = renderingSystem->loadModel("assets/car.obj");
-    auto modelEntity = renderingSystem->buildModelInstance(model);
-    modelEntity.getComponent<engine::Transform>().position = {10.0f, 0.0f,
-                                                              0.0f};
 
-    auto pointLightEntity =
-        engine::Entity{entityStore.newEntityId(), componentStore};
-    pointLightEntity.addComponent<engine::Transform>(
-        Eigen::Quaternionf::Identity(), Eigen::Vector3f{7.0f, 0.0f, 0.0f},
-        Eigen::Vector3f::Identity());
-    pointLightEntity.addComponent<graphics::PointLight>(
-        Eigen::Vector3f(10.0f, 1.0f, 1.0f), 20.0f);
+    // Camera looks down +X with +Y up, so spreading along Z fans the cars
+    // out across the screen left-to-right.
+    std::vector<float> const carOffsetsZ{-8.0f, -4.0f, 0.0f, 4.0f, 8.0f};
+    std::vector<engine::Entity> carEntities;
+    for (float offsetZ : carOffsetsZ) {
+      auto carEntity = renderingSystem->buildModelInstance(model);
+      carEntity.getComponent<engine::Transform>().position = {16.0f, 0.0f,
+                                                               offsetZ};
+      carEntities.push_back(carEntity);
+    }
+
+    struct LightSpec {
+      float offsetZ;
+      Eigen::Vector3f color;
+    };
+    constexpr float kLightIntensity = 6.0f;
+    std::vector<LightSpec> const lightSpecs{
+        {-8.0f, kLightIntensity * Eigen::Vector3f{1.0f, 0.0f, 0.0f}}, // red
+        {-4.0f, kLightIntensity * Eigen::Vector3f{0.0f, 1.0f, 0.0f}}, // green
+        {0.0f, kLightIntensity * Eigen::Vector3f{0.0f, 0.0f, 1.0f}},  // blue
+        {4.0f, kLightIntensity * Eigen::Vector3f{1.0f, 1.0f, 0.0f}},  // yellow
+        {8.0f, kLightIntensity * Eigen::Vector3f{0.0f, 1.0f, 1.0f}},  // cyan
+    };
+    for (auto const &lightSpec : lightSpecs) {
+      auto pointLightEntity =
+          engine::Entity{entityStore.newEntityId(), componentStore};
+      pointLightEntity.addComponent<engine::Transform>(
+          Eigen::Quaternionf::Identity(),
+          Eigen::Vector3f{10.0f, 5.0f, lightSpec.offsetZ},
+          Eigen::Vector3f::Identity());
+      pointLightEntity.addComponent<graphics::PointLight>(lightSpec.color,
+                                                           10.0f);
+    }
 
     auto startTime = std::chrono::steady_clock::now();
     while (!stopToken.stop_requested()) {
-      auto currentTime = std::chrono::steady_clock::now();
+      auto tickStart = std::chrono::steady_clock::now();
       auto deltaTime = duration_cast<std::chrono::duration<float, std::milli>>(
-                           currentTime - startTime)
+                           tickStart - startTime)
                            .count();
-      startTime = currentTime;
+      startTime = tickStart;
 
       engine.update();
-      modelEntity.getComponent<engine::Transform>().rotation *=
+      auto rotationDelta =
           Eigen::Quaternionf(Eigen::AngleAxisf(deltaTime * 0.001f, rotation));
+      for (auto &carEntity : carEntities) {
+        carEntity.getComponent<engine::Transform>().rotation *= rotationDelta;
+      }
+
+      std::this_thread::sleep_until(
+          tickStart + std::chrono::duration_cast<
+                          std::chrono::steady_clock::duration>(kTickInterval));
     }
   });
 

@@ -100,10 +100,12 @@ private:
   std::unique_ptr<RenderingEngine> renderingEngine = nullptr;
 
   std::vector<GraphicsEntity> graphicEntities;
-  std::timed_mutex graphicEntityMutex;
+  std::mutex graphicEntityMutex;
+  bool graphicEntitiesDirty = false;
 
   std::vector<PointLightEntity> pointLightEntities;
-  std::timed_mutex pointLightMutex;
+  std::mutex pointLightMutex;
+  bool pointLightEntitiesDirty = false;
 
   std::unordered_map<std::filesystem::path, std::size_t, CanonicalPathHash,
                      EquivalentPathComparison>

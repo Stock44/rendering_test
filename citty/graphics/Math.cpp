@@ -17,6 +17,7 @@ namespace citty::graphics {
         projection(1, 1) /= tanHalfFoV;
         projection(2, 2) = -(zFar + zNear) / (zFar - zNear);
         projection(3, 2) = -1.0f;
+        projection(3, 3) = 0.0f;
         projection(2, 3) = -(2.0f * zFar * zNear) / (zFar - zNear);
         return projection;
     }
@@ -24,12 +25,12 @@ namespace citty::graphics {
     Eigen::Affine3f
     lookAt(const Eigen::Vector3f &cameraPos, const Eigen::Vector3f &targetPosition, const Eigen::Vector3f &up) {
         Eigen::Vector3f front = (cameraPos - targetPosition).normalized();
-        Eigen::Vector3f right = front.cross(up);
+        Eigen::Vector3f right = up.cross(front);
 
         Eigen::Affine3f lookAt;
-        lookAt.matrix() << right.x(), right.y(), right.z(), -cameraPos.x(),
-                up.x(), up.y(), up.z(), -cameraPos.y(),
-                front.x(), front.y(), front.z(), -cameraPos.z(),
+        lookAt.matrix() << right.x(), right.y(), right.z(), -right.dot(cameraPos),
+                up.x(), up.y(), up.z(), -up.dot(cameraPos),
+                front.x(), front.y(), front.z(), -front.dot(cameraPos),
                 0.0f, 0.0f, 0.0f, 1.0f;
 
         return lookAt;

@@ -18,9 +18,10 @@ Renderbuffer::Renderbuffer(Renderbuffer &&other) noexcept : name(other.name) {
 }
 
 Renderbuffer &Renderbuffer::operator=(Renderbuffer &&other) noexcept {
-  if (other.name == this->name)
+  if (this == &other)
     return *this;
 
+  glDeleteRenderbuffers(1, &name);
   name = other.name;
   other.name = 0;
 
