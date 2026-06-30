@@ -31,19 +31,22 @@ struct CanonicalPathHash {
   std::hash<std::string> hasher{};
 
   /**
-   * Obtains the hash for a given path by hashing its canonical representation.
+   * Obtains the hash for a given path by hashing its weakly-canonical
+   * representation. Uses weakly_canonical (rather than canonical) so that
+   * paths which don't exist on disk yet don't throw.
    * @param path the path to hash
    * @return the hash value
    */
   std::size_t operator()(std::filesystem::path const &path) const {
-    return hasher(std::filesystem::canonical(path).string());
+    return hasher(std::filesystem::weakly_canonical(path).string());
   }
 };
 
 struct EquivalentPathComparison {
   bool operator()(std::filesystem::path const &lhs,
                   std::filesystem::path const &rhs) const {
-    return std::filesystem::equivalent(lhs, rhs);
+    return std::filesystem::weakly_canonical(lhs) ==
+           std::filesystem::weakly_canonical(rhs);
   }
 };
 
@@ -85,10 +88,12 @@ private:
 
   void processLoadingQueues();
 
-  std::optional<std::size_t> loadAssimpTexture(aiMaterial *assimpMaterial,
-                                               aiTextureType textureType);
+  std::optional<std::size_t> loadAssimpTexture(
+      aiMaterial *assimpMaterial, aiTextureType textureType,
+      std::filesystem::path const &baseDir);
 
-  std::size_t loadAssimpMaterial(aiMaterial *assimpMaterial);
+  std::size_t loadAssimpMaterial(aiMaterial *assimpMaterial,
+                                 std::filesystem::path const &baseDir);
 
   std::size_t loadAssimpMesh(aiMesh *assimpMesh);
 
