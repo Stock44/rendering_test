@@ -4,22 +4,28 @@
 
 #include <citty/graphics/Image.hpp>
 
+#include <stdexcept>
+
 #define STB_IMAGE_IMPLEMENTATION
 
 #include <stb_image.h>
 
 
-namespace citty::graphics {
-    Image::Image(Image &&other) noexcept: data(other.data), width(other.width), height(other.height),
-                                          channels(other.channels) {
+namespace citty::graphics
+{
+    Image::Image(Image&& other) noexcept : data(other.data), width(other.width), height(other.height),
+                                           channels(other.channels)
+    {
         other.data = nullptr;
         other.width = 0;
         other.height = 0;
     }
 
-    Image &Image::operator=(Image &&other) noexcept {
+    Image& Image::operator=(Image&& other) noexcept
+    {
         // they point to the same data
-        if (data == other.data) {
+        if (data == other.data)
+        {
             return *this;
         }
 
@@ -35,29 +41,39 @@ namespace citty::graphics {
         return *this;
     }
 
-    unsigned char const *Image::getData() const {
+    unsigned char const* Image::getData() const
+    {
         return data;
     }
 
-    int Image::getWidth() const {
+    int Image::getWidth() const
+    {
         return width;
     }
 
-    int Image::getHeight() const {
+    int Image::getHeight() const
+    {
         return height;
     }
 
-    Image::Image(std::filesystem::path const &pathToTexture) {
+    Image::Image(std::filesystem::path const& pathToTexture)
+    {
         int numberOfChannels;
         data = stbi_load(pathToTexture.c_str(), &width, &height, &numberOfChannels, 0);
+        if (!data)
+        {
+            throw std::runtime_error("failed to load image: " + pathToTexture.string());
+        }
         channels = static_cast<ColorChannels>(numberOfChannels);
     }
 
-    Image::~Image() {
+    Image::~Image()
+    {
         stbi_image_free(data);
     }
 
-    ColorChannels Image::getChannels() const {
+    ColorChannels Image::getChannels() const
+    {
         return channels;
     }
 } // graphics

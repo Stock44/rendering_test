@@ -12,12 +12,15 @@
 #include <boost/hana.hpp>
 #include <ranges>
 
-namespace citty::engine {
-    class ComponentStore {
+namespace citty::engine
+{
+    class ComponentStore
+    {
     public:
-        template<Component T>
-        bool has(EntityId entity) {
-            auto &archetype = entityArchetypes[entity];
+        template <Component T>
+        bool has(EntityId entityId)
+        {
+            const auto& archetype = entityArchetypes[entityId];
             return archetype.get().contains(typeid(T));
         }
 
@@ -25,28 +28,35 @@ namespace citty::engine {
          * Add a new component to the given entity, constructing it in place using the provided arguments
          * @tparam T Type of the component to add
          * @tparam Args Types of the arguments to the component's constructor
-         * @param entity entity for which to add the component
+         * @param entityId entity for which to add the component
          * @param args the arguments for the component's constructor
          */
-        template<Component T, typename ...Args>
-        void add(EntityId entity, Args &&...args) {
-            auto &archetype = entityArchetypes[entity];
+        template <Component T, typename... Args>
+        void add(EntityId entityId, Args&&... args)
+        {
+            auto& archetype = entityArchetypes[entityId];
             auto nextArchetype = archetypeGraph.next<T>(archetype);
 
-            auto &archetypeRecord = archetypeRecords[archetype];
-            if (archetype.get().empty()) {
-                archetypeRecord.add(entity);
+            auto& archetypeRecord = archetypeRecords[archetype];
+            if (archetype.get().empty())
+            {
+                archetypeRecord.add(entityId);
             }
 
             // attempt to get the next archetype record, if it doesn't exist, create it as a derived record from the
             // current archetype
-            try {
-                auto &nextArchetypeRecord = archetypeRecords.at(nextArchetype);
-                archetypeRecord.moveToNextArchetype<T>(entity, nextArchetypeRecord, std::forward<Args>(args)...);
-            } catch (std::out_of_range const &) {
+            try
+            {
+                auto& nextArchetypeRecord = archetypeRecords.at(nextArchetype);
+                archetypeRecord.moveToNextArchetype<
+                    T>(entityId, nextArchetypeRecord, std::forward<Args>(args)...);
+            }
+            catch (std::out_of_range const&)
+            {
                 archetypeRecords.try_emplace(nextArchetype, archetypeRecord.constructDerivedRecord<T>());
-                auto &nextArchetypeRecord = archetypeRecords.at(nextArchetype);
-                archetypeRecord.moveToNextArchetype<T>(entity, nextArchetypeRecord, std::forward<Args>(args)...);
+                auto& nextArchetypeRecord = archetypeRecords.at(nextArchetype);
+                archetypeRecord.moveToNextArchetype<
+                    T>(entityId, nextArchetypeRecord, std::forward<Args>(args)...);
             }
             archetype = nextArchetype;
         }
@@ -54,68 +64,70 @@ namespace citty::engine {
         /**
          * Attempts to get the specified component type assigned to the given entity
          * @tparam T component type
-         * @param entity entity for which to query its component
+         * @param entityId entity for which to query its component
          * @return a reference to the component. Becomes a dangling reference if entity has a component added or removed.
          */
-        template<Component T>
-        T &get(EntityId entity) {
-            auto archetype = entityArchetypes.at(entity);
-            auto &archetypeRecord = archetypeRecords.at(archetype);
-            return archetypeRecord.get<T>(entity);
+        template <Component T>
+        T& get(EntityId entityId)
+        {
+            auto archetype = entityArchetypes.at(entityId);
+            auto& archetypeRecord = archetypeRecords.at(archetype);
+            return archetypeRecord.get<T>(entityId);
         }
 
         /**
          * Attempts to get the specified component type assigned to the given entity
          * @tparam T component type
-         * @param entity entity for which to query its component
+         * @param entityId entity for which to query its component
          * @return a reference to the component. Becomes a dangling reference if entity has a component added or removed.
          */
-        template<Component T>
-        T const &get(EntityId entity) const {
-            auto archetype = entityArchetypes.at(entity);
-            auto &archetypeRecord = archetypeRecords.at(archetype);
-            return archetypeRecord.get<T>(entity);
+        template <Component T>
+        T const& get(EntityId entityId) const
+        {
+            auto archetype = entityArchetypes.at(entityId);
+            auto& archetypeRecord = archetypeRecords.at(archetype);
+            return archetypeRecord.get<T>(entityId);
         }
 
         /**
          * Attempts to remove the specified component from the specified entity
          * @tparam T type of component to remove
-         * @param entity entity from which to removeAll the component
+         * @param entityId entity from which to removeAll the component
          */
-        template<Component T>
-        void remove(EntityId entity) {
-            auto &archetype = entityArchetypes[entity];
+        template <Component T>
+        void remove(EntityId entityId)
+        {
+            auto& archetype = entityArchetypes[entityId];
             auto prevArchetype = archetypeGraph.prev<T>(archetype);
 
-            auto &archetypeRecord = archetypeRecords.at(archetype);
-            auto &prevArchetypeRecord = archetypeRecords.at(prevArchetype);
-            archetypeRecord.moveToPrevArchetype<T>(entity, prevArchetypeRecord);
+            auto& archetypeRecord = archetypeRecords.at(archetype);
+            auto& prevArchetypeRecord = archetypeRecords.at(prevArchetype);
+            archetypeRecord.moveToPrevArchetype<T>(entityId, prevArchetypeRecord);
             archetype = prevArchetype;
         }
 
         /**
          * Remove all components from this entity
-         * @param entity
+         * @param entityId
          */
-        void removeAll(EntityId entity);
+        void removeAll(EntityId entityId);
 
-        template<Component ...ComponentTypes>
-        auto getAllEntities() const {
-            using std::ranges::ref_view;
-            using std::ranges::owning_view;
-            using std::views::join;
-            using EntitiesRefView = ref_view<std::vector<EntityId> const>;
+        /**
+         * For a given archetype, return all entities that have this archetype or any superset of it.
+         * @tparam ComponentTypes
+         * @return
+         */
+        template <Component ...ComponentTypes>
+        auto getAllEntityIds() const
+        {
+            const ArchetypeFlyweight archetype = makeArchetype<ComponentTypes...>();
 
-            ArchetypeFlyweight archetype = makeArchetype<ComponentTypes...>();
-            auto supersets = archetypeGraph.getSupersets(archetype);
-
-            std::vector<EntitiesRefView> entityViews;
-            for (auto const &superset: supersets) {
-                auto &entities = archetypeRecords.at(superset).getAllEntityIds();
-                entityViews.emplace_back(entities);
-            }
-
-            return owning_view(std::move(entityViews)) | join;
+            return archetypeGraph.getSupersets(archetype) // For each superset of this archetype
+                | std::views::transform([this](auto const& superset) // We get a vector of entity ids
+                {
+                    return archetypeRecords.at(superset).getAllEntityIds();
+                })
+                | std::views::join; // We join them into one big range
         }
 
         /**
@@ -124,8 +136,9 @@ namespace citty::engine {
          * @tparam ComponentTypes the component types to get
          * @return the map
          */
-        template<Component ...ComponentTypes>
-        auto getAll() {
+        template <Component ...ComponentTypes>
+        auto getAll()
+        {
             using boost::hana::make_tuple;
             using boost::hana::type_c;
             using boost::hana::transform;
@@ -142,23 +155,26 @@ namespace citty::engine {
 
 
             auto completeContainers = transform(componentTypes,
-                                                [&supersets, this](auto hanaType) {
+                                                [&supersets, this](auto hanaType)
+                                                {
                                                     using CurrentComponent = decltype(hanaType)::type;
                                                     using Container = ComponentContainer::Container<CurrentComponent>;
                                                     using ContainerRefView = ref_view<Container>;
 
                                                     std::vector<ContainerRefView> componentContainers;
 
-                                                    for (auto const &superset: supersets) {
-                                                        auto &container = archetypeRecords.at(
-                                                                superset).getAll<CurrentComponent>();
+                                                    for (auto const& superset : supersets)
+                                                    {
+                                                        auto& container = archetypeRecords.at(
+                                                            superset).getAll<CurrentComponent>();
                                                         componentContainers.emplace_back(container);
                                                     }
 
                                                     return owning_view(std::move(componentContainers)) | join;
                                                 });
 
-            return unpack(completeContainers, [](auto &... views) {
+            return unpack(completeContainers, [](auto&... views)
+            {
                 return zip_view(owning_view(std::move(views))...);
             });
         }
@@ -168,6 +184,4 @@ namespace citty::engine {
         std::unordered_map<EntityId, ArchetypeFlyweight> entityArchetypes;
         std::unordered_map<ArchetypeFlyweight, ArchetypeRecord> archetypeRecords;
     };
-
-
 } // engine

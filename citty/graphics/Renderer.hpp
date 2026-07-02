@@ -35,9 +35,9 @@ namespace citty::graphics {
         Eigen::Vector2f texCoords;
     };
 
-    class RenderingEngine {
+    class Renderer {
     public:
-        RenderingEngine();
+        Renderer();
 
         using MeshId = std::size_t;
         using TextureId = std::size_t;

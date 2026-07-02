@@ -6,47 +6,48 @@
 
 #include <vector>
 #include <citty/engine/ComponentStore.hpp>
-#include <citty/engine/EntityIdStore.hpp>
+#include <citty/engine/EntityStore.hpp>
 #include <citty/engine/Entity.hpp>
 
-namespace citty::engine {
-
-    class System {
+namespace citty::engine
+{
+    class System
+    {
     public:
         virtual ~System() = default;
 
-        void setup(ComponentStore *componentStore, EntityIdStore *entityStore);
+        void setup(ComponentStore* componentStore, EntityStore* entityStore);
 
         virtual void init() = 0;
 
         virtual void update() = 0;
 
     protected:
-        inline Entity newEntity() {
-            return {entityStore->newEntityId(), *componentStore};
+        inline Entity newEntity() const
+        {
+            return entityStore->newEntity();
         }
 
-        inline void deleteEntity(Entity entity) {
-            componentStore->removeAll(entity);
-            entityStore->freeEntityId(entity);
+        inline void deleteEntity(const Entity& entity) const
+        {
+            entityStore->deleteEntity(entity);
         }
 
-        template<Component ...ComponentTypes>
-        inline auto getEntities() const {
-            auto allEntities = componentStore->getAllEntities<ComponentTypes...>();
-            return std::views::transform(std::move(allEntities), [this](EntityId entity) {
-                return Entity(entity, *componentStore);
-            });
+        template <Component ...ComponentTypes>
+        inline auto getEntities() const
+        {
+            return componentStore->getAllEntityIds<ComponentTypes...>() | std::views::transform(
+                [this](auto const& entityId) { return Entity{entityId, componentStore}; });
         }
 
-        template<Component ...ComponentTypes>
-        inline auto getComponents() {
+        template <Component ...ComponentTypes>
+        inline auto getComponents() const
+        {
             return componentStore->getAll<ComponentTypes...>();
         }
 
     private:
-        ComponentStore *componentStore = nullptr;
-        EntityIdStore *entityStore = nullptr;
+        ComponentStore* componentStore = nullptr;
+        EntityStore* entityStore = nullptr;
     };
-
 } // engine

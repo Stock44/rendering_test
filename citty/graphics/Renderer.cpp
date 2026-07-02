@@ -5,13 +5,13 @@
 #include <Eigen/Geometry>
 #include <citty/graphics/Math.hpp>
 #include <citty/graphics/PointLightEntity.hpp>
-#include <citty/graphics/RenderingEngine.hpp>
+#include <citty/graphics/Renderer.hpp>
 #include <citty/graphics/ShaderProgramBuilder.hpp>
 #include <epoxy/gl_generated.h>
 #include <iterator>
 
 namespace citty::graphics {
-RenderingEngine::RenderingEngine() {
+Renderer::Renderer() {
   glEnable(GL_DEPTH_TEST);
   glDepthMask(GL_TRUE);
   glEnable(GL_CULL_FACE);
@@ -62,7 +62,7 @@ RenderingEngine::RenderingEngine() {
   glClearColor(0.4, 0.4, 0.8, 1);
 }
 
-RenderingEngine::MeshId RenderingEngine::loadMesh(const Mesh &mesh) {
+Renderer::MeshId Renderer::loadMesh(const Mesh &mesh) {
   auto &meshRecord = meshRecords.emplace_back(
       std::make_shared<Buffer<Eigen::Affine3f>>(BufferUsage::STREAM_DRAW),
       std::vector<Eigen::Affine3f>{}, VertexArray{}, vertexBuffer->getSize(),
@@ -100,8 +100,8 @@ RenderingEngine::MeshId RenderingEngine::loadMesh(const Mesh &mesh) {
   return meshRecords.size() - 1;
 }
 
-RenderingEngine::TextureId
-RenderingEngine::loadTexture(Image const &image, TextureSettings settings) {
+Renderer::TextureId
+Renderer::loadTexture(Image const &image, TextureSettings settings) {
   auto &texture = materialTextures.emplace_back(image);
   texture.setMagFilter(settings.magFilter);
   texture.setMinFilter(settings.minFilter);
@@ -111,8 +111,8 @@ RenderingEngine::loadTexture(Image const &image, TextureSettings settings) {
   return materialTextures.size() - 1;
 }
 
-RenderingEngine::MaterialId
-RenderingEngine::loadMaterial(Material const &material) {
+Renderer::MaterialId
+Renderer::loadMaterial(Material const &material) {
   if (!textureIsLoaded(material.diffuseMap) ||
       !textureIsLoaded(material.specularMap) ||
       !textureIsLoaded(material.normalMap) ||
@@ -125,7 +125,7 @@ RenderingEngine::loadMaterial(Material const &material) {
 }
 
 const std::pair<unsigned int, unsigned int> &
-RenderingEngine::getViewportDimensions() const {
+Renderer::getViewportDimensions() const {
   return viewportDimensions;
 }
 
@@ -135,7 +135,7 @@ RenderingEngine::getViewportDimensions() const {
  * @param width width of the viewport in pixels
  * @param height height of the viewport in pixels
  */
-void RenderingEngine::setViewportDimensions(unsigned int width,
+void Renderer::setViewportDimensions(unsigned int width,
                                             unsigned int height) {
   glViewport(0, 0, width, height);
 
@@ -177,7 +177,7 @@ void RenderingEngine::setViewportDimensions(unsigned int width,
   viewportDimensions = {width, height};
 }
 
-void RenderingEngine::render() {
+void Renderer::render() {
   if (renderCommands.empty()) {
     return;
   }
@@ -232,7 +232,7 @@ void RenderingEngine::render() {
   glEnable(GL_DEPTH_TEST);
 }
 
-void RenderingEngine::setGraphicsEntities(
+void Renderer::setGraphicsEntities(
     std::span<GraphicsEntity> graphicsEntities) {
   renderCommands.clear();
   if (graphicsEntities.empty())
@@ -289,11 +289,11 @@ void RenderingEngine::setGraphicsEntities(
   }
 }
 
-bool RenderingEngine::textureIsLoaded(std::size_t textureId) const {
+bool Renderer::textureIsLoaded(std::size_t textureId) const {
   return materialTextures.size() > textureId;
 }
 
-void RenderingEngine::useMaterial(std::size_t materialId) {
+void Renderer::useMaterial(std::size_t materialId) {
   auto &material = materials.at(materialId);
   auto &diffuseMap = materialTextures.at(material.diffuseMap);
   auto &specularMap = materialTextures.at(material.specularMap);
@@ -314,22 +314,22 @@ void RenderingEngine::useMaterial(std::size_t materialId) {
   lightAccumulationShaderProgram.setUniform("heightMap", 3);
 }
 
-void RenderingEngine::setViewpoint(Eigen::Vector3f const &position,
+void Renderer::setViewpoint(Eigen::Vector3f const &position,
                                    Eigen::Quaternionf const &rotation) {
   viewPosition = position;
   view = lookAt(position, position + rotation * Eigen::Vector3f::UnitX(),
                 rotation * Eigen::Vector3f::UnitY());
 }
 
-Eigen::Projective3f const &RenderingEngine::getProjection() const {
+Eigen::Projective3f const &Renderer::getProjection() const {
   return projection;
 }
 
-void RenderingEngine::setProjection(Eigen::Projective3f const &newProjection) {
-  RenderingEngine::projection = newProjection;
+void Renderer::setProjection(Eigen::Projective3f const &newProjection) {
+  Renderer::projection = newProjection;
 }
 
-void RenderingEngine::setPointLightEntities(
+void Renderer::setPointLightEntities(
     std::span<PointLightEntity> pointLightEntities) {
   if (pointLightEntities.empty())
     return;
@@ -343,7 +343,7 @@ void RenderingEngine::setPointLightEntities(
   pointLightCount = pointLightEntities.size();
 }
 
-void RenderingEngine::issueDrawCommands() {
+void Renderer::issueDrawCommands() {
   auto &firstDrawCommand = *renderCommands.begin();
   std::size_t currentMaterial = firstDrawCommand.materialId;
   useMaterial(currentMaterial);

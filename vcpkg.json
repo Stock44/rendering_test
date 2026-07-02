@@ -1,16 +1,17 @@
 {
   "name": "citty",
   "version": "0.1.0",
+  "builtin-baseline": "1ca48a2cb8dac6b087a66ae29d05b420afbde3bd",
   "dependencies": [
-    "eigen3",
-    "pugixml",
-    "boost-hana",
+    "assimp",
     "boost-flyweight",
     "boost-graph",
-    "stb",
-    "assimp",
+    "boost-hana",
     "catch2",
-    "glfw3"
-  ],
-  "builtin-baseline": "1ca48a2cb8dac6b087a66ae29d05b420afbde3bd"
+    "eigen3",
+    "glfw3",
+    "pugixml",
+    "stb",
+    "boost-cobalt"
+  ]
 }
