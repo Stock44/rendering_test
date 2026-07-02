@@ -38,6 +38,8 @@ namespace citty::graphics {
                 internalFormat = SizedImageFormat::RGBA8;
                 imageFormat = TextureFormat::RGBA;
                 break;
+            default:
+                throw std::runtime_error("image has an unsupported number of channels");
         }
 
         glTextureStorage2D(getName(), 1, asGlEnum(internalFormat), image.getWidth(), image.getHeight());

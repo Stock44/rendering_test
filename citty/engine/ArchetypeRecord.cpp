@@ -1,6 +1,7 @@
 //
 // Created by hiram on 3/23/23.
 //
+#include <ranges>
 #include <citty/engine/ArchetypeRecord.hpp>
 
 

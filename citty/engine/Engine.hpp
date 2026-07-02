@@ -11,7 +11,7 @@ namespace citty::engine {
 
     class Engine {
     public:
-        Engine() = default;
+        Engine();
 
         Engine(Engine &&other) = default;
 
@@ -36,11 +36,11 @@ namespace citty::engine {
 
         ComponentStore &getComponentStore();
 
-        EntityIdStore &getEntityStore();
+        EntityStore &getEntityStore();
 
     private:
         ComponentStore componentStore;
-        EntityIdStore entityStore;
+        EntityStore entityStore;
         std::vector<std::unique_ptr<System>> systems;
     };
 

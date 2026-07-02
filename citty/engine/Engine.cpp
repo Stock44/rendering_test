@@ -4,41 +4,48 @@
 
 #include <citty/engine/Engine.hpp>
 
-namespace citty::engine {
+namespace citty::engine
+{
+    Engine::Engine() : entityStore(&componentStore)
+    {
+    }
 
-//    void Engine::registerSystem(std::shared_ptr<System> system) {
-//        system->setup(componentManager);
-//        systems.push_back(std::move(system));
-//    }
-    void Engine::init() {
-        for (auto const &system: systems) {
+    //    void Engine::registerSystem(std::shared_ptr<System> system) {
+    //        system->setup(componentManager);
+    //        systems.push_back(std::move(system));
+    //    }
+    void Engine::init()
+    {
+        for (auto const& system : systems)
+        {
             system->init();
         }
     }
 
-    void Engine::update() {
-        for (auto const &system: systems) {
+    void Engine::update()
+    {
+        for (auto const& system : systems)
+        {
             system->update();
         }
     }
 
-    ComponentStore &Engine::getComponentStore() {
+    ComponentStore& Engine::getComponentStore()
+    {
         return componentStore;
     }
 
-    EntityIdStore &Engine::getEntityStore() {
+    EntityStore& Engine::getEntityStore()
+    {
         return entityStore;
     }
 
 
+    //    EntityManager &Engine::getEntityManager() {
+    //        return entityManager;
+    //    }
 
-//    EntityManager &Engine::getEntityManager() {
-//        return entityManager;
-//    }
-
-//    ComponentManager &Engine::getComponentManager() {
-//        return componentManager;
-//    }
-
-
+    //    ComponentManager &Engine::getComponentManager() {
+    //        return componentManager;
+    //    }
 } // engine

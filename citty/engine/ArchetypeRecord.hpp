@@ -4,15 +4,11 @@
 
 #pragma once
 
-#include <set>
-#include <boost/hana.hpp>
 #include <typeindex>
 #include <vector>
 #include <any>
 #include <unordered_map>
-#include <map>
 #include <memory>
-#include <ranges>
 #include <citty/engine/Archetype.hpp>
 #include <citty/engine/Component.hpp>
 #include <citty/engine/ComponentContainer.hpp>
@@ -106,7 +102,7 @@ namespace citty::engine {
             std::size_t entityIndex = entityIndices.at(entity);
 
             componentContainers.at(typeid(ComponentType)).getBaseContainer<ComponentType>().at(
-                    entityIndex) = std::forward(component);
+                    entityIndex) = std::forward<T>(component);
         };
 
         /**
